@@ -1,0 +1,30 @@
+{
+  "id": "capitan_roland",
+  "name": "Capitán Roland",
+  "zone": "campamento_umbral",
+  "zone_label": "Campamento del Umbral",
+  "source_sheet": "capitán_roland_en_sus_distintas_poses.png",
+  "anchor": "bottom_center",
+  "directions": {
+    "down": {
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime": "runtime/idle_down.webp",
+      "sha256_runtime": "77f1eaabc664e6a83a4ce9e2fe95d370b02f0493717cb32979f59703cb1a33a8"
+    },
+    "up": {
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime": "runtime/idle_up.webp",
+      "sha256_runtime": "0c95a6c924f2d7fc5bc6cca30e1d996d00def6d64cd053f3783dd8f9102d24f8"
+    },
+    "left": {
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime": "runtime/idle_left.webp",
+      "sha256_runtime": "1c78e5f70d74ae8d58c15b3d2d9a28e118667f9b6d107cca709fc72d1fe05203"
+    },
+    "right": {
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime": "runtime/idle_right.webp",
+      "sha256_runtime": "75a7531d7def843d93a6951e2dc9c0b94bfa8a904e95a3a8f31efcc6c99a0370"
+    }
+  }
+}

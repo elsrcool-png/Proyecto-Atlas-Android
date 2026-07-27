@@ -1,0 +1,290 @@
+{
+  "version": "2.10.0",
+  "region": "verde",
+  "terrain": {
+    "id": "terrain_rv_a2",
+    "file": "terrain_a2.webp",
+    "status": "approved",
+    "connected": true
+  },
+  "objects": [
+    {
+      "id": "obj_rv_pino_alto_01_base",
+      "family": "fam_rv_pinos_altos",
+      "file": "tree_pine_tall_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_pino_alto_02_base",
+      "family": "fam_rv_pinos_altos",
+      "file": "tree_pine_tall_02.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_pino_alto_03_base",
+      "family": "fam_rv_pinos_altos",
+      "file": "tree_pine_tall_03.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_arbol_redondo_01_base",
+      "family": "fam_rv_arboles_redondos",
+      "file": "tree_round_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_arbol_redondo_02_base",
+      "family": "fam_rv_arboles_redondos",
+      "file": "tree_round_02.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_arbusto_medio_01_base",
+      "family": "fam_rv_arbustos_medios",
+      "file": "bush_medium_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_arbusto_medio_02_base",
+      "family": "fam_rv_arbustos_medios",
+      "file": "bush_medium_02.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_flores_silvestres_01_base",
+      "family": "fam_rv_flores_silvestres",
+      "file": "wildflowers_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_roca_mediana_01_base",
+      "family": "fam_rv_rocas_medianas",
+      "file": "rock_medium_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_puente_madera_01_base",
+      "family": "fam_rv_puentes_madera",
+      "file": "bridge_main.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_muro_ruina_01_base",
+      "family": "fam_rv_muros_ruina",
+      "file": "ruin_wall_clean.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_arco_ruina_01_base",
+      "family": "fam_rv_arcos_ruina",
+      "file": "ruin_arch_clean.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_entrada_cueva_01_base",
+      "family": "fam_rv_entradas_cueva",
+      "file": "cave_entrance_clean.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_torre_vigilancia_01_base",
+      "family": "fam_rv_torres_vigilancia",
+      "file": "watchtower_complete.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_puerta_fortificada_01_base",
+      "family": "fam_rv_puertas_fortificadas",
+      "file": "city_gate_complete.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_portal_santuario_01_base",
+      "family": "fam_rv_portales_santuario",
+      "file": "sanctuary_portal_clean.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_herreria_principal_01_base",
+      "family": "fam_rv_herrerias_principales",
+      "file": "smithy_building_main.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_carpa_roja_01_base",
+      "family": "fam_rv_carpas_rojas",
+      "file": "tent_red_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_carpa_beige_suministros_01_base",
+      "family": "fam_rv_carpas_beige_suministros",
+      "file": "tent_beige_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_carpa_beige_descanso_01_base",
+      "family": "fam_rv_carpas_beige_descanso",
+      "file": "tent_beige_02.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_carpa_verde_exploradores_01_base",
+      "family": "fam_rv_carpas_verdes_exploradores",
+      "file": "tent_green_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_hoguera_01_base",
+      "family": "fam_rv_hogueras",
+      "file": "campfire_main.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_caja_madera_01_base",
+      "family": "fam_rv_cajas_madera",
+      "file": "crate_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_barril_01_base",
+      "family": "fam_rv_barriles",
+      "file": "barrel_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_cerca_segmento_01_base",
+      "family": "fam_rv_cercas_segmento",
+      "file": "fence_segment_clean.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_monton_lenya_01_base",
+      "family": "fam_rv_montones_lenya",
+      "file": "woodpile_01.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_senal_laguna_01_base",
+      "family": "fam_rv_senales_direccion",
+      "file": "sign_to_lagoon.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_senal_verdalia_01_base",
+      "family": "fam_rv_senales_direccion",
+      "file": "sign_to_city.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_senal_bosque_01_base",
+      "family": "fam_rv_senales_direccion",
+      "file": "sign_to_forest.webp",
+      "status": "approved",
+      "updatedInPatch": true
+    },
+    {
+      "id": "obj_rv_tablon_anuncios_01_base",
+      "family": "fam_rv_tablones_anuncios",
+      "file": "sign_notice_small.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_estandarte_aventureros_01_base",
+      "family": "fam_rv_estandartes_aventureros",
+      "file": "prop_banner.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_verdalia_ayuntamiento_01_base",
+      "family": "fam_rv_verdalia_ayuntamientos",
+      "file": "city_hall.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_verdalia_cuartel_01_base",
+      "family": "fam_rv_verdalia_cuarteles",
+      "file": "city_barracks.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_verdalia_herreria_01_base",
+      "family": "fam_rv_verdalia_herrerias",
+      "file": "city_smithy.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_verdalia_posada_01_base",
+      "family": "fam_rv_verdalia_posadas",
+      "file": "city_inn.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_robledal_vivienda_01_base",
+      "family": "fam_rv_robledal_viviendas",
+      "file": "village_house_green.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_robledal_tienda_01_base",
+      "family": "fam_rv_robledal_tiendas",
+      "file": "village_shop.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_robledal_posada_01_base",
+      "family": "fam_rv_robledal_posadas",
+      "file": "village_inn.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    },
+    {
+      "id": "obj_rv_robledal_herreria_01_base",
+      "family": "fam_rv_robledal_herrerias",
+      "file": "village_smithy.webp",
+      "status": "approved",
+      "updatedInPatch": false
+    }
+  ],
+  "summary": {
+    "objects": 39,
+    "updatedAssets": 25,
+    "preservedAssets": 14
+  }
+}

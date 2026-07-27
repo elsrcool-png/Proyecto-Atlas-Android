@@ -1,0 +1,24 @@
+VALIDACIÓN ATLAS VISUAL v2.12.1 — PORTALES DE INVOCACIÓN
+
+RESULTADO: CORRECTO
+
+Comprobaciones realizadas:
+- package.json y package-lock.json actualizados a 2.12.1.
+- A2, B2 y C2 poseen plataforma de interacción elíptica alineada con el portal visual.
+- El botón A solo se habilita cuando los pies del jugador están sobre la plataforma.
+- Acercarse por los lados, por detrás o permanecer fuera de la plataforma no activa la opción.
+- Portal inactivo muestra «Activar Portal de Invocación».
+- Portal activo muestra «Usar Portal de Invocación».
+- Un portal ya activo abre el menú sin reactivarse ni restaurar al jugador automáticamente.
+- El descanso permanece como acción explícita dentro del menú.
+- Validadores v2.11 y v2.12 continúan aprobados.
+- Sintaxis JavaScript comprobada con node --check.
+- Sintaxis JSX de ExploreMode comprobada con TypeScript transpileModule.
+
+Validadores ejecutados:
+node scripts/validate-portals-v2-12-1.mjs
+node scripts/validate-region-verde-maestro-v1.mjs
+node scripts/validate-green-scenes.mjs
+node scripts/validate-green-composition-v2-12.mjs
+
+Nota: npm run build requiere las dependencias instaladas y debe ejecutarse en Termux después de aplicar el parche.

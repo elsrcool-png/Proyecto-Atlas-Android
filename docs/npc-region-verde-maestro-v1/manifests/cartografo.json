@@ -1,0 +1,30 @@
+{
+  "id": "cartografo",
+  "name": "El Cartógrafo",
+  "zone": "pueblo_robledal",
+  "zone_label": "Pueblo de Robledal",
+  "source_sheet": "cartógrafo_anciano_en_4_vistas.png",
+  "anchor": "bottom_center",
+  "directions": {
+    "down": {
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime": "runtime/idle_down.webp",
+      "sha256_runtime": "887dc3ac17db817b161b4ef74965b9837e967f364d53caf864269d968ea2864a"
+    },
+    "up": {
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime": "runtime/idle_up.webp",
+      "sha256_runtime": "58acabd2d1488b3142e5166eb5d23838f7d38285d8c1374b8b038ade9d775a40"
+    },
+    "left": {
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime": "runtime/idle_left.webp",
+      "sha256_runtime": "1e3f70faa1f4c3e10f8d278e17f6062c07d590cc6fe843f859754f7567dc79cc"
+    },
+    "right": {
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime": "runtime/idle_right.webp",
+      "sha256_runtime": "72fb22f18b08eb587a1ddb88015ace239edb11c01ffd965f120578de8d518d91"
+    }
+  }
+}

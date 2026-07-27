@@ -1,0 +1,11 @@
+{
+  "name": "Proyecto Atlas",
+  "short_name": "Atlas",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "description": "RPG táctico Proyecto Atlas"
+}

@@ -1,0 +1,4 @@
+ATLAS v2.19.6 — COMPILACIÓN NO EJECUTADA
+
+La instalación de dependencias no terminó dentro del límite disponible.
+Las validaciones de sintaxis, imports y lógica sí fueron completadas.

@@ -1,0 +1,22 @@
+ATLAS VISUAL v2.15.0 · PERSONAJES JUGABLES MAESTRO
+Base requerida: Atlas Visual v2.14.0
+
+AÑADE
+- public/assets/atlas/heroes/maestro_v1/README.md
+- public/assets/atlas/heroes/maestro_v1/manifest.json
+- public/assets/atlas/heroes/maestro_v1/inventario.csv
+- public/assets/atlas/heroes/maestro_v1/checksums_sha256.json
+- public/assets/atlas/heroes/maestro_v1/runtime/* (36 WebP)
+- public/assets/atlas/heroes/maestro_v1/masters/* (36 WebP)
+- src/lib/atlasHeroAssetSprites.js
+- scripts/validate-hero-visuals-v2-15.mjs
+- scripts/validate-region-artica-maestro-v1.mjs (compatibilidad v2.14+)
+- PATCH_README_VISUAL_V2_15.md
+- PATCH_MANIFEST_V2_15.txt
+
+REEMPLAZA
+- src/lib/atlasHeroSprites.js
+- src/components/atlas/CharacterSelect.jsx
+- package.json
+- package-lock.json
+- VERSION_ATLAS_VISUAL.txt

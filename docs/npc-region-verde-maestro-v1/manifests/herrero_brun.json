@@ -1,0 +1,30 @@
+{
+  "id": "herrero_brun",
+  "name": "Herrero Brun",
+  "zone": "ciudad_verdalia",
+  "zone_label": "Ciudad de Verdalia",
+  "source_sheet": "herrero_brun_en_cuatro_direcciones.png",
+  "anchor": "bottom_center",
+  "directions": {
+    "down": {
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime": "runtime/idle_down.webp",
+      "sha256_runtime": "1cfe9c701c937e0e7e6a331bdf7d96146eb3b3f9233d5571b3cbc5bc33a6ec6a"
+    },
+    "up": {
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime": "runtime/idle_up.webp",
+      "sha256_runtime": "640ddb93874aa72713eda7447b83274076b889e4287c990f2dfb8f2993effebd"
+    },
+    "left": {
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime": "runtime/idle_left.webp",
+      "sha256_runtime": "829e7d702a64edf43f0ef7463385cab28be6633d53ab71d0ee127a9f1545f910"
+    },
+    "right": {
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime": "runtime/idle_right.webp",
+      "sha256_runtime": "3ae682aae7410613436735334d2a8750dc42ed731dade87b9d47c15d2fc6ddac"
+    }
+  }
+}

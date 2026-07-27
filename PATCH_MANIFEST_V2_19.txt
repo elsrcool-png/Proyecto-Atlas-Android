@@ -1,0 +1,36 @@
+PROYECTO ATLAS — v2.19.0
+Combate Dinámico Fase 1 + Audio Región Verde
+
+BASE CONSOLIDADA:
+- v2.18 Combate Dinámico Fase 1
+- v2.18 Audio Región Verde
+- ambas derivadas de v2.17
+
+INTEGRACIÓN PRINCIPAL:
+- El director temporal de combate gobierna también los sonidos.
+- Cada impacto múltiple tiene audio sincronizado.
+- La intro sonora se suma a combatBusy sin reemplazarlo.
+- Música, ambiente, intros, dados, ataques, impactos, muerte, victoria y portales activos.
+- Controles de volumen integrados en ajustes generales y Hub.
+
+ARCHIVOS NUEVOS PRINCIPALES:
+- src/lib/atlasAudioCatalog.js
+- src/lib/atlasAudioEngine.js
+- src/hooks/useAtlasAudio.js
+- src/components/atlas/CombatAudioIntro.jsx
+- public/assets/audio/**
+- scripts/validate-audio-green-v2-19.mjs
+- docs/ATLAS_V2_19_CONSOLIDACION_AUDIO_ANIMACION.md
+
+ARCHIVOS FUSIONADOS/MODIFICADOS PRINCIPALES:
+- src/pages/Game.jsx
+- src/components/atlas/SettingsModal.jsx
+- src/components/atlas/hub/HubSettings.jsx
+- src/lib/atlasSettings.js
+- package.json
+- package-lock.json
+- VERSION_ATLAS_VISUAL.txt
+
+VALIDACIÓN RECOMENDADA:
+- npm run validate:v2-19
+- npm run build

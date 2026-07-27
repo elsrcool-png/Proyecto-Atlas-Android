@@ -1,0 +1,16 @@
+PROYECTO ATLAS VISUAL v2.12.0
+Base requerida: Atlas Visual v2.11.0 Región Verde Maestro
+
+ARCHIVOS DEL PARCHE
+VERSION_ATLAS_VISUAL.txt
+package.json
+package-lock.json
+PATCH_README_VISUAL_V2_12.md
+PATCH_MANIFEST_V2_12.txt
+src/lib/atlasGreenVisualScenes.js
+src/components/atlas/ExploreMode.jsx
+scripts/validate-region-verde-maestro-v1.mjs
+scripts/validate-green-composition-v2-12.mjs
+docs/VALIDACION_ATLAS_VISUAL_V2_12.txt
+docs/Atlas_v2_12_Region_Verde_Composicion_PREVIEW.jpg
+docs/Atlas_v2_12_Asentamientos_Debug.jpg

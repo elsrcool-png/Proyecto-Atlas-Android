@@ -1,0 +1,29 @@
+ATLAS VISUAL v2.9 — VALIDACIÓN FINAL
+
+Atlas Visual v2.6: CORRECTO
+- 9/9 escenas
+- melee conectado
+- fallo animado
+- impacto conectado
+- poses sincronizadas
+
+Atlas Visual v2.8: CORRECTO
+- 9/9 héroes
+- 34 NPC regionales
+- animaciones de arma y combate conectadas
+
+Atlas Visual v2.9: CORRECTO
+- Región Verde: 15/15 misiones principales, 61 objetivos, 9/9 sectores
+- Región Ártica: 15/15 misiones principales, 61 objetivos, 9/9 sectores
+- Región Árida: 15/15 misiones principales, 57 objetivos, 9/9 sectores
+- Puntos de interés genéricos eliminados
+- Puntos narrativos huérfanos filtrados
+- NPC con movimiento independiente
+- Assets recortados desconectados de Región Verde
+- ESLint: correcto
+- Vite build: correcto
+- Módulos transformados: 2286
+- Servidor de producción y assets: HTTP 200
+
+Advertencia no bloqueante:
+- El chunk principal supera 500 kB después de minificación.

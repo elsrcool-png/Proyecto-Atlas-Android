@@ -1,0 +1,40 @@
+{
+  "id": "lobo_salvaje",
+  "name": "Lobo Salvaje",
+  "zone": "region_verde",
+  "zone_label": "Región Verde",
+  "kind": "mob",
+  "archetype": "quadruped",
+  "master_canvas": [
+    1024,
+    1024
+  ],
+  "runtime_candidate_canvas": [
+    112,
+    80
+  ],
+  "anchor": "bottom_center",
+  "integration_status": "connected_in_atlas_v2_16",
+  "directions": {
+    "down": {
+      "source": "lobo_feroz_de_estilo_fantasía.png",
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime_candidate": "runtime_candidato/idle_down.webp"
+    },
+    "up": {
+      "source": "lobo_de_espalda_sobre_fondo_transparente.png",
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime_candidate": "runtime_candidato/idle_up.webp"
+    },
+    "left": {
+      "source": "lobo_estilizado_con_postura_cautelosa.png",
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime_candidate": "runtime_candidato/idle_left.webp"
+    },
+    "right": {
+      "source": "lobo_feroz_en_perfil_estilizado.png",
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime_candidate": "runtime_candidato/idle_right.webp"
+    }
+  }
+}

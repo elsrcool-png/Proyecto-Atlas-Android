@@ -1,0 +1,14 @@
+VALIDACIÓN EJECUTADA
+
+- validate-green-scenes.mjs: OK, 9/9 sectores accesibles.
+- validate-consolidated-v2.mjs: OK.
+- Zonas liberadas comprobadas: A2, B2, C2.
+- C3 comprobado como sector no eliminado.
+- Objetos de la base de aventureros: 9.
+- Colisiones modulares de la base: comprobadas.
+- Entrada de dungeon C3 alcanzable: OK.
+- Salida norte C3 alcanzable: OK.
+- Salida oeste C3 alcanzable: OK.
+- Zona del antiguo Guardián alcanzable: OK.
+- ESLint: OK.
+- Vite build: OK, 2273 módulos transformados.

@@ -1,0 +1,19 @@
+ATLAS v2.19.7 — ESTADO DE COMPILACIÓN
+
+Resultado:
+- npm install fue iniciado con --prefer-offline --no-audit --no-fund.
+- La instalación no terminó dentro del límite de 180 segundos del entorno.
+- Vite no quedó disponible, por lo que npm run build no pudo ejecutarse aquí.
+
+Validaciones completadas antes del empaquetado:
+- npm run validate:v2-19-7: APROBADO.
+- 164/164 controles específicos de NPC Ártica.
+- 238 archivos JS/JSX/MJS sin errores sintácticos.
+- 504 imports locales resueltos.
+- Toda la batería histórica v2.19.6 → v2.10.1 aprobada.
+
+Comprobación final requerida en Termux/PC:
+  npm install
+  npm run validate:v2-19-7
+  npm run build
+  npm run dev -- --host 0.0.0.0

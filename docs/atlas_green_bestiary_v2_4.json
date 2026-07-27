@@ -1,0 +1,26 @@
+{
+  "version": "2.4.0",
+  "regionId": "verde",
+  "monsters": [
+    {"id":"pantera_sombria","name":"Pantera Sombría","type":"Bestia","visual":"felino cuadrúpedo oscuro"},
+    {"id":"lobo_salvaje","name":"Lobo Salvaje","type":"Bestia","visual":"canino cuadrúpedo de manada"},
+    {"id":"brujo_feral","name":"Brujo Feral","type":"Bestia","visual":"hechicero feral encorvado"},
+    {"id":"asesino_orco","name":"Asesino Orco","type":"Humanoide","visual":"orco ligero con dos dagas"},
+    {"id":"orco_bruto","name":"Orco Bruto","type":"Humanoide","visual":"orco pesado con maza"},
+    {"id":"chaman_orco","name":"Chamán Orco","type":"Humanoide","visual":"orco místico con bastón"}
+  ],
+  "bosses": [
+    {"id":"guardian_verde","name":"Guardián Verde","type":"Jefe","visual":"guardián de raíces y piedra"}
+  ],
+  "sectors": {
+    "A1":["pantera_sombria","brujo_feral"],
+    "B1":["lobo_salvaje","brujo_feral","asesino_orco"],
+    "C1":["pantera_sombria","asesino_orco","brujo_feral"],
+    "A2":["pantera_sombria"],
+    "B2":["asesino_orco"],
+    "C2":["orco_bruto","chaman_orco","asesino_orco"],
+    "A3":["pantera_sombria","lobo_salvaje","brujo_feral"],
+    "B3":["orco_bruto","chaman_orco","brujo_feral"],
+    "C3":[]
+  }
+}

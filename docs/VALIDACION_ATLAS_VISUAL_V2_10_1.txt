@@ -1,0 +1,16 @@
+ATLAS VISUAL v2.10.1 — VALIDACIÓN LOCAL
+
+VALIDACIÓN A2 v2.10.1 CORRECTA
+- 26/26 assets presentes
+- terrain_a2.webp conectado
+- portal, torre, carpas, utilería y naturaleza aprobados conectados
+- arquitectura modular y colisiones preservadas
+
+VALIDACIÓN A2 PROFUNDIDAD v2.10.1 CORRECTA
+- 21 árboles con tronco fuera del agua
+- 30 objetos grandes con depthY y colisión de base
+- jugador, NPC, mobs y objetos comparten orden sur/norte
+- spawn libre y renderer preparado para Región Verde
+
+BUILD:
+No completado en el entorno de generación porque el registro npm respondió 503 durante la instalación de dependencias. Ejecutar `npm run build` en Termux después de `npm install`.

@@ -1,0 +1,33 @@
+{
+  "sector": "B2",
+  "name": "Ciudad de Verdalia",
+  "terrain": "terrain_b2.webp",
+  "assets": [
+    "tree_pine_tall_01.webp",
+    "tree_pine_tall_02.webp",
+    "tree_pine_tall_03.webp",
+    "tree_round_01.webp",
+    "tree_round_02.webp",
+    "city_gate_complete.webp",
+    "city_hall.webp",
+    "city_barracks.webp",
+    "city_smithy.webp",
+    "city_inn.webp",
+    "sanctuary_portal_clean.webp",
+    "watchtower_complete.webp",
+    "sign_notice_small.webp"
+  ],
+  "placements_before_boss": {
+    "tree": 6,
+    "city_gate_complete.webp": 1,
+    "city_hall.webp": 1,
+    "city_barracks.webp": 1,
+    "city_smithy.webp": 1,
+    "city_inn.webp": 1,
+    "sanctuary_portal_clean.webp": 1,
+    "watchtower_complete.webp": 2,
+    "sign_notice_small.webp": 1
+  },
+  "placements_after_boss": null,
+  "depth_rule": "north-first_south-last_by_ground_anchor_y"
+}

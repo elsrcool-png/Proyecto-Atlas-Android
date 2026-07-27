@@ -1,0 +1,21 @@
+ATLAS VISUAL v2.15.0 · VALIDACIÓN PERSONAJES JUGABLES
+
+CORRECTO
+- 9/9 combinaciones raza-clase conectadas
+- 36/36 sprites runtime presentes
+- 36/36 sprites maestros presentes
+- 72/72 checksums SHA-256 correctos
+- selección, mundo libre y combate usan el arte maestro
+- respaldo procedural conservado
+- cargador de imágenes probado
+- sintaxis JS/MJS correcta
+- importaciones locales resueltas
+- Región Ártica Maestro validada
+- Horizontal, HUD y balance validados
+- Portales validados
+- Región Verde Maestro, escenas y composición validadas
+
+PENDIENTE EN TERMUX
+- npm install
+- npm run build
+Motivo: el registro interno npm del entorno de empaquetado respondió HTTP 503.

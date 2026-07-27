@@ -1,0 +1,191 @@
+[
+  {
+    "archivo": "campfire_01.webp",
+    "sha256": "dd8c57a371f0bafa33124831e8399d8bfc451464cae9fa132d062e4317742f43",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "crate_01.webp",
+    "sha256": "9b843d57759d5e67c2dccfbec0b076b9955efdedbefa53b8ec2166efb4aafa75",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_arch_01.webp",
+    "sha256": "d8aa3cc9039af36cc5cb7439a37b0207b1d0e215ff63638abfdc3679dc4f61f8",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_bridge_01.webp",
+    "sha256": "dfe765e3a1987da5139312d2a10967aa5f164fbded454a91a175c18e9b8bfda3",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_cave_01.webp",
+    "sha256": "6b398ff4b9d827d692e6bd7aed4ce105353fcc855eead4145922c1f28ab30d30",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_crystal_01.webp",
+    "sha256": "c8d17d64b5f07927782c1134aea12c868ef8adf3d7c258fc77980c7bf2861ee6",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_fortress_01.webp",
+    "sha256": "bff072bd81eab33db8d112e7ef63c222a3015309861db0c3180812f238f135b7",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_hall_01.webp",
+    "sha256": "ed4ebb176180826a35d481194666075a74c35bf80ea17e65788a268ba5e6950f",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_house_01.webp",
+    "sha256": "0ae10c561121c3018693dba629b94e9b6ae2f30741ffe71f247ae3b688563291",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_rock_01.webp",
+    "sha256": "7729b7c68ddf680871896687e279c89c59a0dafad016cffeefcac3fc25c69d00",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "ice_watchtower_01.webp",
+    "sha256": "3219f2cdc4127e50615b4b94540d1f086780ae07a4669b96c158785177b4cc51",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "portal_ice.webp",
+    "sha256": "35e40884a9db0ba485f71fc646602d64544d29680027d3b562daa6b083e51dda",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "shipwreck_01.webp",
+    "sha256": "7403255f245587027f50330580ba85153688b60af920dad8f93c612ea24f81be",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "snow_bush_01.webp",
+    "sha256": "f1cba9bb89f5eb1243f966831ff464ad3db683fff04d29c77f6b901f43741aee",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "tent_boreal_01.webp",
+    "sha256": "e8945209f10d9b9920618edc0e9763f1e7ee07cc583a3764aac560d3b092c68e",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "tent_boreal_blue.webp",
+    "sha256": "fd937bd231e5fde0eaedc82c786a92adfebc47dd3988904000bcf653eac36d5f",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "terrain_a1.webp",
+    "sha256": "e4c3b1753a4238f6d5c214f62e80c4c55cf5a22e4bc9af46aea88339971ea0ed",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_a2.webp",
+    "sha256": "954ee0c9caa835af7bc2d12068930da5817bfa7b0452b7b1850a927ef8450588",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_a3.webp",
+    "sha256": "4ea11734aa803e942cac68591740b77a1f0351338b2a7d9fe99003adf22d8b40",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_b1.webp",
+    "sha256": "83da0117085f410c3c9304e4cf7220427400985a2fbb802318cefaf07d7f63f4",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_b2.webp",
+    "sha256": "1a58daa5ac64baa8f3714e16b606823ab43c33f257c66fbd5359da38999b44e5",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_b3.webp",
+    "sha256": "f87bdc786819737c1491cecdf8239bc0e2ec510c110d7f8d318b223ddba1ae3c",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_c1.webp",
+    "sha256": "c93bf2fe31a0dfa23600cf116ddf9dc85fab98b6dd564d8c66a5849c3de38735",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_c2.webp",
+    "sha256": "e637b2ec309001da254c8d372d8b16c011bdeb815e30733de5e0b1d7f1d98500",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "terrain_c3.webp",
+    "sha256": "f97ef841e073cd31694a7fb1e4e70210ad7232b273cbded78b6553e3574a20c3",
+    "modo": "RGB",
+    "ancho": 1448,
+    "alto": 1086
+  },
+  {
+    "archivo": "tree_snow_01.webp",
+    "sha256": "44faf1ae22020ea284095f9a35699afcfff5dd5ef97b2bcffe56a2f1eab4b0c0",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  },
+  {
+    "archivo": "tree_snow_02.webp",
+    "sha256": "dfd48f5927ae66af6845f94cdee8d56abdf84ee2f64f89a29ae1598fb9ad64b8",
+    "modo": "RGBA",
+    "ancho": 1024,
+    "alto": 1024
+  }
+]

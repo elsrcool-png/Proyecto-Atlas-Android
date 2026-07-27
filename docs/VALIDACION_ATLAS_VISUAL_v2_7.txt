@@ -1,0 +1,23 @@
+ATLAS VISUAL v2.7 — INFORME DE VALIDACIÓN
+
+Base: Atlas Visual v2.6.1
+
+Escenas nuevas:
+- Reino Ártico: 9/9
+- Reino Árido: 9/9
+- Total nuevo: 18/18
+
+Comprobaciones:
+- Terreno continuo presente: correcto
+- Assets declarados existentes: correcto
+- Objetos individuales transparentes: correcto
+- Spawns sin colisión: correcto
+- Anclajes principales accesibles: correcto
+- Santuarios canónicos: correcto
+- Registro de escenas: correcto
+- ESLint: correcto
+- Vite build: correcto
+- Módulos transformados: 2281
+
+Advertencia no bloqueante:
+- El chunk principal supera 500 kB después de minificación.

@@ -1,0 +1,189 @@
+{
+  "name": "Atlas_A2_Assets_Reales_v1",
+  "canvas": {
+    "width": 960,
+    "height": 720
+  },
+  "files": [
+    {
+      "file": "bren_forge.webp",
+      "width": 310,
+      "height": 255,
+      "mode": "RGBA"
+    },
+    {
+      "file": "campfire.webp",
+      "width": 155,
+      "height": 135,
+      "mode": "RGBA"
+    },
+    {
+      "file": "forest_bottom_left.webp",
+      "width": 405,
+      "height": 200,
+      "mode": "RGBA"
+    },
+    {
+      "file": "forest_bottom_mid.webp",
+      "width": 390,
+      "height": 155,
+      "mode": "RGBA"
+    },
+    {
+      "file": "forest_bottom_right.webp",
+      "width": 310,
+      "height": 220,
+      "mode": "RGBA"
+    },
+    {
+      "file": "forest_right.webp",
+      "width": 140,
+      "height": 560,
+      "mode": "RGBA"
+    },
+    {
+      "file": "forest_top_left.webp",
+      "width": 410,
+      "height": 125,
+      "mode": "RGBA"
+    },
+    {
+      "file": "forest_top_right.webp",
+      "width": 440,
+      "height": 145,
+      "mode": "RGBA"
+    },
+    {
+      "file": "notice_board.webp",
+      "width": 160,
+      "height": 145,
+      "mode": "RGBA"
+    },
+    {
+      "file": "npc_clear_dirt.webp",
+      "width": 82,
+      "height": 72,
+      "mode": "RGBA"
+    },
+    {
+      "file": "npc_clear_grass.webp",
+      "width": 82,
+      "height": 72,
+      "mode": "RGBA"
+    },
+    {
+      "file": "portal_altar.webp",
+      "width": 240,
+      "height": 205,
+      "mode": "RGBA"
+    },
+    {
+      "file": "prop_banner.webp",
+      "width": 85,
+      "height": 135,
+      "mode": "RGBA"
+    },
+    {
+      "file": "prop_barrels.webp",
+      "width": 85,
+      "height": 110,
+      "mode": "RGBA"
+    },
+    {
+      "file": "prop_crates.webp",
+      "width": 90,
+      "height": 80,
+      "mode": "RGBA"
+    },
+    {
+      "file": "prop_fence.webp",
+      "width": 125,
+      "height": 205,
+      "mode": "RGBA"
+    },
+    {
+      "file": "prop_flower_patch.webp",
+      "width": 70,
+      "height": 65,
+      "mode": "RGBA"
+    },
+    {
+      "file": "prop_logs.webp",
+      "width": 100,
+      "height": 80,
+      "mode": "RGBA"
+    },
+    {
+      "file": "prop_rock.webp",
+      "width": 90,
+      "height": 90,
+      "mode": "RGBA"
+    },
+    {
+      "file": "sign_bosque.webp",
+      "width": 160,
+      "height": 125,
+      "mode": "RGBA"
+    },
+    {
+      "file": "sign_laguna.webp",
+      "width": 150,
+      "height": 105,
+      "mode": "RGBA"
+    },
+    {
+      "file": "sign_verdalia.webp",
+      "width": 165,
+      "height": 120,
+      "mode": "RGBA"
+    },
+    {
+      "file": "tent_command.webp",
+      "width": 160,
+      "height": 150,
+      "mode": "RGBA"
+    },
+    {
+      "file": "tent_healer.webp",
+      "width": 160,
+      "height": 150,
+      "mode": "RGBA"
+    },
+    {
+      "file": "tent_rest.webp",
+      "width": 160,
+      "height": 150,
+      "mode": "RGBA"
+    },
+    {
+      "file": "tent_scout.webp",
+      "width": 160,
+      "height": 150,
+      "mode": "RGBA"
+    },
+    {
+      "file": "tent_supply.webp",
+      "width": 160,
+      "height": 150,
+      "mode": "RGBA"
+    },
+    {
+      "file": "terrain_a2_real_v1.webp",
+      "width": 960,
+      "height": 720,
+      "mode": "RGBA"
+    },
+    {
+      "file": "watchtower.webp",
+      "width": 180,
+      "height": 225,
+      "mode": "RGBA"
+    },
+    {
+      "file": "wood_bridge.webp",
+      "width": 250,
+      "height": 160,
+      "mode": "RGBA"
+    }
+  ]
+}

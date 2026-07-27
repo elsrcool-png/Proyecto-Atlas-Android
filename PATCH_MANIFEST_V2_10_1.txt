@@ -1,0 +1,13 @@
+ATLAS VISUAL v2.10.1 — MANIFIESTO
+
+BASE: v2.10
+ESCENA MODIFICADA: src/lib/atlasA2ModularV2.js
+RENDER MODIFICADO: src/components/atlas/AssetWorldLayer.jsx
+PROFUNDIDAD GLOBAL: src/lib/atlasDepth.js
+ENTIDADES MODIFICADAS: ExploreMode, AmbientNpc, ShrineMarker, Signpost, LoreMarker, ExplorationEvent, StoryPointMarker, FoliageDot
+ESTILO MODIFICADO: src/styles/atlas-world-modular.css
+VALIDADOR: scripts/validate-a2-depth-v2-10-1.mjs
+CAMBIO DE TERRENO: ningún árbol con tronco dentro del agua
+INSTALACIÓN TERMUX: INSTALACION_TERMUX_V2_10_1.md
+PREVIA: docs/Atlas_v2_10_1_A2_Profundidad_PREVIEW.jpg
+INFORME DE VALIDACIÓN: docs/VALIDACION_ATLAS_VISUAL_V2_10_1.txt

@@ -1,0 +1,23 @@
+Atlas Visual v2.4 — Archivos nuevos o modificados respecto a Visual v2.3.1 REAL FIX
+
+PATCH_README_VISUAL_V2_4.md
+README_VISUAL_V2_4.md
+VERSION_ATLAS_VISUAL.txt
+docs/ATLAS_VISUAL_V2_4_REGION_VERDE.md
+docs/AUDITORIA_MOBS_REGION_VERDE_V2_4.md
+docs/Atlas_Visual_v2_4_Region_Verde_9_Mapas.png
+docs/atlas_green_bestiary_v2_4.json
+scripts/validate-green-scenes.mjs
+scripts/validate-visual-v2-4.mjs
+src/components/atlas/AssetWorldLayer.jsx
+src/components/atlas/ExploreMode.jsx
+src/lib/atlasCanonicalWorlds.js
+src/lib/atlasDungeons.js
+src/lib/atlasEnemyAI.js
+src/lib/atlasEntitySprites.js
+src/lib/atlasGreenBestiary.js
+src/lib/atlasGreenEntitySprites.js
+src/lib/atlasGreenVisualScenes.js
+src/lib/atlasSectors.js
+src/lib/atlasVisualScenes.js
+src/styles/atlas-world-modular.css

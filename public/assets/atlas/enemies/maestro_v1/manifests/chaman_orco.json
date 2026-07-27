@@ -1,0 +1,40 @@
+{
+  "id": "chaman_orco",
+  "name": "Chamán Orco",
+  "zone": "region_verde",
+  "zone_label": "Región Verde",
+  "kind": "mob",
+  "archetype": "humanoid_caster",
+  "master_canvas": [
+    1024,
+    1024
+  ],
+  "runtime_candidate_canvas": [
+    96,
+    112
+  ],
+  "anchor": "bottom_center",
+  "integration_status": "connected_in_atlas_v2_16",
+  "directions": {
+    "down": {
+      "source": "chamán_orco_con_estandarte_tribal.png",
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime_candidate": "runtime_candidato/idle_down.webp"
+    },
+    "up": {
+      "source": "orco_chamán_de_piel_verde.png",
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime_candidate": "runtime_candidato/idle_up.webp"
+    },
+    "left": {
+      "source": "chamán_orco_con_bastón_ritual.png",
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime_candidate": "runtime_candidato/idle_left.webp"
+    },
+    "right": {
+      "source": "chamán_orco_con_bastón_decorado.png",
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime_candidate": "runtime_candidato/idle_right.webp"
+    }
+  }
+}

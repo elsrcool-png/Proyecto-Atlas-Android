@@ -1,0 +1,55 @@
+{
+  "version": "2.19.5",
+  "heroesNormalized": [
+    "elfo_guerrero",
+    "elfo_mago",
+    "elfo_picaro",
+    "enano_guerrero",
+    "enano_mago",
+    "enano_picaro",
+    "humano_guerrero",
+    "humano_mago",
+    "humano_picaro"
+  ],
+  "enemiesNormalized": [
+    "asesino_esqueletico",
+    "asesino_orco",
+    "aurel_ultimo_portador",
+    "brujo_feral",
+    "chaman_orco",
+    "guardian_verde",
+    "guerrero_esqueletico",
+    "lobo_salvaje",
+    "necromante",
+    "orco_bruto",
+    "pantera_sombria"
+  ],
+  "arcticNpcRuntimeIntegrated": [
+    "fria_astra",
+    "fria_boreas",
+    "fria_captain",
+    "fria_dvalin",
+    "fria_freya",
+    "fria_helga",
+    "fria_hostelera",
+    "fria_kael_forger",
+    "fria_lyra_cartographer",
+    "fria_lyra_researcher",
+    "fria_merchant_camp",
+    "fria_merchant_glacial",
+    "fria_merchant_royal",
+    "fria_queen",
+    "fria_refuge_keeper",
+    "fria_shaman"
+  ],
+  "directions": [
+    "down",
+    "up",
+    "left",
+    "right"
+  ],
+  "runtimeCanvasNpc": [
+    72,
+    96
+  ]
+}

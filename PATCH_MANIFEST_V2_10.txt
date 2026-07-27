@@ -1,0 +1,7 @@
+ATLAS VISUAL v2.10 — MANIFIESTO
+
+BASE: v2.9
+ESCENA MODIFICADA: src/lib/atlasA2ModularV2.js
+ASSETS NUEVOS/REEMPLAZADOS: 26 (25 objetos + terrain_a2.webp)
+REGISTRO: 39 objetos verdes aprobados
+VALIDADOR: scripts/validate-visual-v2-10-a2.mjs

@@ -1,0 +1,259 @@
+
+> base44-app@2.19.2 validate:v2-19-2
+> npm run validate:combat-facing && npm run validate:v2-19-1
+
+
+> base44-app@2.19.2 validate:combat-facing
+> node scripts/validate-combat-facing-v2-19-2.mjs
+
+✓ Existe auditoría de orientación por asset
+✓ Los tres enanos corrigen left/right invertido
+✓ Pantera Sombría usa toma izquierda real
+✓ Guardián Verde corrige exportación invertida
+✓ Asesino esquelético y necromante se reflejan desde toma canónica
+✓ EntitySprite posee modo de combate normalizado
+✓ El reflejo horizontal no depende del nombre left/right
+✓ Jugador y enemigo activan combatMode en la arena
+✓ La arena mide posiciones reales de ambos actores
+✓ El avance cuerpo a cuerpo se limita por la distancia real
+✓ Los VFX se renderizan sobre la arena, no dentro del monstruo
+✓ Cada acción captura origen y objetivo antes de moverse
+✓ Los números de daño usan el anclaje del objetivo
+✓ CombatVfx usa vectores entre origen y objetivo
+✓ Proyectiles nacen en el atacante y viajan al objetivo
+✓ Bola de Fuego posee carga en origen e impacto en objetivo
+✓ No quedan coordenadas fijas PX/EX del sistema anterior
+✓ Los flotantes viven dentro de la arena de combate
+✓ Asset presente: Enano Guerrero canónico
+✓ Asset presente: Enano Mago canónico
+✓ Asset presente: Enano Pícaro canónico
+✓ Asset presente: Pantera Sombría canónica
+✓ Asset presente: Guardián Verde canónico
+✓ Sintaxis válida: src/lib/atlasCombatFacing.js
+✓ Sintaxis válida: src/components/atlas/EntitySprite.jsx
+✓ Sintaxis válida: src/components/atlas/CombatView.jsx
+✓ Sintaxis válida: src/components/atlas/CombatVfx.jsx
+
+Atlas v2.19.2: orientación y anclaje de combate validados (27 controles).
+
+> base44-app@2.19.2 validate:v2-19-1
+> npm run validate:combat-stability && npm run validate:combat-dynamic && npm run validate:audio-green && npm run validate:v2-17-fixes && npm run validate:hero-master && npm run validate:enemy-master && npm run validate:arctic-master && npm run validate:green-composition && npm run validate:portals && npm run validate:horizontal-balance
+
+
+> base44-app@2.19.2 validate:combat-stability
+> node scripts/validate-combat-stability-v2-19-1.mjs
+
+✓ Cada acción recibe actionId monotónico
+✓ Resultados guardan instantáneas before/after
+✓ Vista reproduce por actionId
+✓ Vista no reinicia por HP, enemigo o skills
+✓ La barra usa snapshots, no HP reconstruido
+✓ Daño al escudo se separa del daño a HP
+✓ Golpe absorbido sigue contando como impacto
+✓ Derrota del jugador se difiere
+✓ Derrota del enemigo se difiere
+✓ Todos los temporizadores se limpian
+✓ Audio desactivado elimina la intro y el bloqueo
+✓ Teclado respeta intro y bloqueo global
+✓ Audio de resultado se deduplica por actionId
+✓ Multigolpes usan el mismo reloj que el daño
+✓ No queda el patrón viejo de daño de estado del jugador
+✓ No queda el patrón viejo de contraataque sobre enemigo obsoleto
+✓ Pasivas se extrajeron del hook monolítico
+✓ Runtime de combate se extrajo del hook monolítico
+✓ Acciones del jugador se extrajeron del hook monolítico
+✓ useAtlasSession bajó de 2.684 a menos de 2.350 líneas
+✓ Ganancia de energía actualiza playerRef inmediatamente
+✓ Daño enemigo conserva energía ganada por pasivas
+✓ skills está memoizado
+✓ Sintaxis válida: src/hooks/useAtlasSession.js
+✓ Sintaxis válida: src/components/atlas/CombatView.jsx
+✓ Sintaxis válida: src/hooks/useAtlasAudio.js
+✓ Sintaxis válida: src/hooks/useAtlasCombatRuntime.js
+✓ Sintaxis válida: src/hooks/useAtlasCombatPassives.js
+✓ Sintaxis válida: src/lib/atlasCombatTransactions.js
+✓ Sintaxis válida: src/lib/atlasCombatDirector.js
+✓ Sintaxis válida: src/components/atlas/ExploreMode.jsx
+✓ Sintaxis válida: src/lib/createAtlasCombatActions.js
+✓ Escudo absorbe antes de HP
+✓ Transacción conserva acción y snapshots
+✓ Escudo total no se representa como fallo
+
+Atlas v2.19.1: estabilidad de combate validada (35 controles).
+
+> base44-app@2.19.2 validate:combat-dynamic
+> node scripts/validate-combat-dynamic-v2-18.mjs
+
+✓ Director temporal presente
+✓ Corte Múltiple tiene perfil
+✓ Bola de Fuego usa secuencia
+✓ Estocada Sombría tiene perfil
+✓ Combate bloquea controles durante secuencia
+✓ VFX recibe cantidad de impactos
+✓ Barras de vida esperan al impacto
+✓ Catálogo activo sigue siendo atlasSkillDesign
+✓ Sesión importa catálogo activo
+✓ Turno enemigo queda temporizado y bloqueado
+✓ No quedan turnos enemigos fuera del programador
+✓ Derrota diferida usa temporizador cancelable
+✓ Bastonazo usa proyectil arcano
+✓ Empujón de Viento se trata como magia
+✓ Reparto multigolpe conserva daño total
+✓ Reparto progresivo no invierte la cadena
+✓ Corte Múltiple escala 2/3/4 impactos
+✓ Corte Múltiple mantiene cada total
+✓ Estocada Sombría alta remata con crítico
+✓ Bola de Fuego sincroniza impacto y estado
+✓ Turno enemigo espera el cierre visual
+✓ Fallo crítico contiene contraataque
+
+Combate dinámico Fase 1 validado (22 controles).
+
+> base44-app@2.19.2 validate:audio-green
+> node scripts/validate-audio-green-v2-19.mjs
+
+VALIDACIÓN AUDIO VERDE v2.19 CORRECTA
+ - 32 recursos OGG originales y decodificables
+ - 6 músicas en loop: menú, campamento, exploración, corrupción, combate y Guardián
+ - ambiente de bosque y campamento
+ - intros sonoras para 6 mobs verdes + Guardián Verde
+ - transición musical, dados, ataques, impactos, muerte, victoria y portal
+ - controles separados: maestro, música, ambiente y efectos
+
+> base44-app@2.19.2 validate:v2-17-fixes
+> node scripts/validate-gameplay-fixes-v2-17.mjs
+
+VALIDACIÓN ATLAS v2.17 CORRECTA
+ - Elfo Mago: izquierda y derecha diferenciadas
+ - Jugador mira a la derecha y enemigo a la izquierda en combate
+ - 44/44 sprites enemigos runtime conectables como imágenes directas
+ - Región Verde inicia solo con A2
+ - sectores reconstruidos según aceptación, objetivos y cierre de misiones
+ - viaje entre regiones conserva el progreso de desbloqueo
+ - portal ordenado por plataforma, personaje visible delante al interactuar
+
+> base44-app@2.19.2 validate:hero-master
+> node scripts/validate-hero-visuals-v2-15.mjs
+
+VALIDACIÓN PERSONAJES v2.15 CORRECTA
+ - 9/9 combinaciones raza-clase conectadas
+ - 36/36 sprites runtime presentes
+ - 36/36 sprites maestros presentes
+ - 72/72 checksums SHA-256 correctos
+ - selección, mundo libre y combate usan el mismo arte maestro
+ - respaldo procedural conservado
+
+> base44-app@2.19.2 validate:enemy-master
+> node scripts/validate-enemy-visuals-v2-16.mjs
+
+VALIDACIÓN MOBS Y JEFES v2.16 CORRECTA
+ - 11/11 entidades conectadas hasta Región Ártica
+ - 44/44 sprites runtime presentes
+ - 44/44 sprites maestros presentes
+ - 88/88 checksums SHA-256 correctos
+ - mundo libre, dungeons y combate usan el arte maestro
+ - alias aurel_portador → aurel_ultimo_portador activo
+ - proporciones, transparencia y anclaje inferior conservados
+ - respaldo procedural conservado
+
+> base44-app@2.19.2 validate:arctic-master
+> node scripts/validate-region-artica-maestro-v1.mjs
+
+✓ versión 2.19.2 compatible con Región Ártica Maestro
+✓ catálogo maestro conectado
+✓ anclaje de contacto con suelo 968/1024 activo
+✓ sin referencias activas al catálogo heredado
+✓ 27 recursos declarados en checksums
+✓ 27/27 assets coinciden con el paquete aprobado
+✓ 9/9 terrenos presentes
+✓ 9/9 escenas árticas registradas
+✓ 114/114 colocaciones conservadas
+✓ todos los objetos conservan proporción cuadrada
+✓ todos los objetos usan el contacto visible con el suelo
+✓ Y-sort correcto: norte detrás, sur delante
+
+VALIDACIÓN REGIÓN ÁRTICA MAESTRO v1.0 CORRECTA
+
+> base44-app@2.19.2 validate:green-composition
+> node scripts/validate-green-composition-v2-12.mjs
+
+VALIDACIÓN COMPOSICIÓN REGIÓN VERDE v2.12 CORRECTA
+ - escalas maestras conservan proporción 1:1
+ - orden de profundidad por feet-y activo
+ - NPC fuera de colisiones y siluetas de edificios
+ - rutas principales libres de árboles, fogatas, props y edificios sensibles
+ - árboles fuera de zonas de agua declaradas
+ - A1: 17 objetos, 0 NPC anclados, 2 rutas protegidas
+ - B1: 16 objetos, 0 NPC anclados, 2 rutas protegidas
+ - C1: 16 objetos, 0 NPC anclados, 2 rutas protegidas
+ - A2: 30 objetos, 8 NPC anclados, 2 rutas protegidas
+ - B2: 15 objetos, 5 NPC anclados, 2 rutas protegidas
+ - C2: 20 objetos, 8 NPC anclados, 2 rutas protegidas
+ - A3: 18 objetos, 0 NPC anclados, 3 rutas protegidas
+ - B3: 16 objetos, 0 NPC anclados, 1 rutas protegidas
+ - C3: 16 objetos, 0 NPC anclados, 1 rutas protegidas
+
+> base44-app@2.19.2 validate:portals
+> node scripts/validate-portals-v2-12-1.mjs
+
+✓ versión 2.19.2 compatible con portales v2.12.1
+✓ plataformas verdes A2, B2 y C2 definidas
+✓ zona de interacción propagada al mundo jugable
+✓ portales visuales y plataformas alineados
+✓ botón A se habilita únicamente sobre la plataforma
+✓ portal activo abre menú sin curación automática
+✓ prueba geométrica de las tres plataformas superada
+
+VALIDACIÓN DE PORTALES v2.12.1 CORRECTA
+- subir a la plataforma habilita A
+- acercarse por un costado no habilita A
+- portal inactivo muestra Activar Portal
+- portal activo abre destinos sin reactivarse
+
+> base44-app@2.19.2 validate:horizontal-balance
+> node scripts/validate-horizontal-ui-balance-v2-13.mjs
+
+✓ versión 2.19.2 conserva horizontal, HUD y balance v2.13
+✓ horizontal es la orientación predeterminada
+✓ HUD limpio es el modo predeterminado
+✓ ajustes anteriores migran una vez a horizontal limpio
+✓ existe bloqueo de orientación con fallback
+✓ inicio y carga solicitan horizontal desde gesto del usuario
+✓ PWA declara orientación landscape
+✓ el layout horizontal depende de la orientación real del dispositivo
+✓ escala de mapa horizontal conserva legibilidad
+✓ ExploreMode reconoce HUD limpio
+✓ brújula usa clase adaptable
+✓ HUD superior usa clase adaptable
+✓ joystick usa área segura adaptable
+✓ Ajustes permite HUD limpio
+✓ hay reglas para móviles horizontales bajos
+✓ los controles respetan recortes y bordes del teléfono
+✓ diálogos largos permiten desplazamiento horizontal legible
+✓ combate dispone de layout horizontal compacto
+✓ HUD limpio limita avisos visibles a uno
+✓ avisos repetidos se deduplican
+✓ cola interna de avisos queda limitada
+✓ nombres ambientales se reducen en HUD limpio
+✓ prepareEnemy usa balance base del jugador
+✓ enemigos comunes registran anclaje al jugador
+✓ encuentros del mapa normalizan enemigos antiguos
+✓ combates reciben estadísticas actuales del jugador
+✓ HP inicial cercano al jugador base: 13
+✓ ATK inicial cercano al jugador base: 4
+✓ DEF física inicial razonable: 2
+✓ enemigo común A2 queda anclado
+✓ HP contra Erudito evita muro artificial: 8
+✓ ATK contra Erudito conserva paridad: 4
+✓ DEF mágica mantiene identidad sin exceso: 3
+✓ C3 progresa suavemente sobre A2
+✓ progresión de HP permanece contenida: 19
+✓ progresión de ATK permanece contenida: 5
+✓ jefes conservan escalado canónico
+
+VALIDACIÓN HORIZONTAL, HUD Y BALANCE v2.13 CORRECTA
+- horizontal predeterminado con fallback legible
+- HUD limpio, avisos cercanos y cola reducida
+- controles y combate adaptados a pantalla baja
+- mobs comunes parten cerca de las estadísticas base del jugador
+- equipo del jugador conserva ventaja y jefes mantienen su escala

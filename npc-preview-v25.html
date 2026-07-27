@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atlas Visual v2.5 — NPC Región Verde</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#101813;color:#edf5e8}
+    *{box-sizing:border-box} body{margin:0;padding:24px;background:radial-gradient(circle at top,#203528,#101813 55%)}
+    h1{margin:0 0 6px;font-size:26px} p{margin:0 0 20px;color:#b7c9b5}
+    .grid{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:14px;max-width:1200px;margin:auto}
+    .card{background:#17231b;border:1px solid #3a5140;border-radius:14px;padding:12px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    canvas{width:72px;height:96px;image-rendering:auto;filter:drop-shadow(0 5px 4px rgba(0,0,0,.5))}
+    strong{font-size:13px;margin-top:6px;text-align:center}.role{font-size:11px;color:#9fba9f;text-transform:uppercase;letter-spacing:.08em;text-align:center}
+    .badge{display:inline-block;margin-bottom:18px;padding:5px 9px;border-radius:99px;background:#274b34;color:#c9f1ce;font-size:12px}
+    @media(max-width:800px){.grid{grid-template-columns:repeat(3,1fr)}}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Atlas Visual v2.5 · NPC de Región Verde</h1>
+    <p>Personajes nombrados, guardianes de dungeon y arquetipos ambientales con identidad visual propia.</p>
+    <span class="badge" id="count"></span>
+    <section class="grid" id="grid"></section>
+  </main>
+  <script type="module">
+    import { GREEN_NPC_PROFILES, drawGreenNpc } from "/src/lib/atlasGreenNpcSprites.js";
+    const grid = document.querySelector('#grid');
+    const entries = Object.entries(GREEN_NPC_PROFILES);
+    document.querySelector('#count').textContent = `${entries.length} perfiles activos`;
+    for (const [variant, profile] of entries) {
+      const card = document.createElement('article');
+      card.className = 'card';
+      const canvas = document.createElement('canvas');
+      drawGreenNpc(canvas, variant, 'down', 0, false);
+      const name = document.createElement('strong');
+      name.textContent = profile.name;
+      const role = document.createElement('span');
+      role.className = 'role';
+      role.textContent = profile.role;
+      card.append(canvas,name,role);
+      grid.append(card);
+    }
+  </script>
+</body>
+</html>

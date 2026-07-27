@@ -1,0 +1,19 @@
+ATLAS VISUAL v2.19.1
+ESTADO DE COMPILACIÓN EN EL ENTORNO DE ENTREGA
+Fecha: 2026-07-27
+
+npm ci fue intentado más de una vez.
+Resultado del registro de paquetes:
+
+npm error 503 Service Temporarily Unavailable
+GET .../npm-public/zwitch
+
+Como la instalación de dependencias no terminó, Vite no quedó disponible y no fue posible ejecutar npm run build en este entorno.
+
+Esto es una limitación del acceso al registro, no una compilación fallida del código. La validación funcional estática y la batería del proyecto sí fueron ejecutadas.
+
+Comandos de verificación final en Termux:
+
+npm install
+npm run validate:v2-19-1
+npm run build

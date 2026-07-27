@@ -1,0 +1,30 @@
+{
+  "id": "cedric",
+  "name": "Cedric",
+  "zone": "campamento_umbral",
+  "zone_label": "Campamento del Umbral",
+  "source_sheet": "explorador_cedric_en_cuatro_ángulos.png",
+  "anchor": "bottom_center",
+  "directions": {
+    "down": {
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime": "runtime/idle_down.webp",
+      "sha256_runtime": "6f642d9dfdd83a9c232201694877de14edb1a34363c2185e2a0227fb0a5f6d49"
+    },
+    "up": {
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime": "runtime/idle_up.webp",
+      "sha256_runtime": "63b478ec03f39d7d89f124a1e99e6d568b24741edfa13685af6bc469ea134e47"
+    },
+    "left": {
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime": "runtime/idle_left.webp",
+      "sha256_runtime": "58801edc980da71ca08185a6588b3314e2601b0b5af7fa33b863356506ec3360"
+    },
+    "right": {
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime": "runtime/idle_right.webp",
+      "sha256_runtime": "fe0240c741c20ab299fe950e216de2dd5d4fe17a5e0ec97f8f1f97b57f5fbdf6"
+    }
+  }
+}

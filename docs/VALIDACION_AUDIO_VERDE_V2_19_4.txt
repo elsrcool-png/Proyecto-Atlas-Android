@@ -1,0 +1,11 @@
+
+> base44-app@2.19.4 validate:audio-green
+> node scripts/validate-audio-green-v2-19.mjs
+
+VALIDACIÓN AUDIO VERDE v2.19 CORRECTA
+ - 32 recursos OGG originales y decodificables
+ - 6 músicas en loop: menú, campamento, exploración, corrupción, combate y Guardián
+ - ambiente de bosque y campamento
+ - intros sonoras para 6 mobs verdes + Guardián Verde
+ - transición musical, dados, ataques, impactos, muerte, victoria y portal
+ - controles separados: maestro, música, ambiente y efectos

@@ -1,0 +1,47 @@
+PROYECTO ATLAS — PARCHE VISUAL v2.18
+Combate Dinámico · Fase 1
+
+BASE:
+- ProyectoAtlas Visual v2.17
+
+ARCHIVOS NUEVOS:
+- src/lib/atlasCombatDirector.js
+- scripts/validate-combat-dynamic-v2-18.mjs
+- docs/ATLAS_COMBATE_DINAMICO_FASE1_v2_18.md
+- docs/VALIDACION_ATLAS_V2_18.txt
+- PATCH_CHECKSUMS_V2_18.sha256
+
+ARCHIVOS MODIFICADOS:
+- src/hooks/useAtlasSession.js
+- src/components/atlas/CombatView.jsx
+- src/components/atlas/CombatVfx.jsx
+- src/lib/atlasAbilityAnimations.js
+- src/pages/Game.jsx
+- scripts/validate-gameplay-fixes-v2-17.mjs
+- scripts/validate-enemy-visuals-v2-16.mjs
+- package.json
+- package-lock.json
+
+CAMBIOS PRINCIPALES:
+- Secuencias gobernadas por calidad del dado.
+- Corte Múltiple: 2 a 4 impactos visibles.
+- Estocada Sombría: 2 a 3 impactos visibles y remate crítico alto.
+- Bola de Fuego: preparación, proyectil, impacto y estado sincronizados.
+- Daño visual repartido sin modificar el daño total del motor.
+- Barras y cifras de vida sincronizadas con cada impacto.
+- Controles bloqueados hasta terminar la acción y comenzar el turno enemigo.
+- Temporizadores cancelables para evitar acciones tardías.
+- Golpe mortal visible antes de la animación de derrota.
+- Catálogo activo conservado en atlasSkillDesign.js.
+- Bastonazo, Movimiento Sísmico y Empujón de Viento corregidos visualmente.
+
+VALIDACIÓN:
+- npm run validate:combat-dynamic
+- npm run validate:v2-17-fixes
+- npm run validate:hero-master
+- npm run validate:enemy-master
+- npm run validate:arctic-master
+- npm run validate:green-composition
+- npm run validate:portals
+- npm run validate:horizontal-balance
+- npm run build

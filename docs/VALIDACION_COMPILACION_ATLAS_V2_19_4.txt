@@ -1,0 +1,7 @@
+ATLAS v2.19.4 — ESTADO DE COMPILACIÓN
+
+- npm run validate:v2-19-4: CORRECTO.
+- npm ci en el entorno de trabajo: NO COMPLETADO.
+- Causa externa: HTTP 503 al solicitar el paquete zwitch desde el registro interno.
+- No se detectó un error de código durante las validaciones ejecutadas.
+- La compilación Vite final debe ejecutarse localmente después de npm install.

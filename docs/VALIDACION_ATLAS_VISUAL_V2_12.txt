@@ -1,0 +1,22 @@
+PROYECTO ATLAS VISUAL v2.12.0
+VALIDACIÓN DE COMPOSICIÓN REGIÓN VERDE
+
+RESULTADOS
+- 9/9 sectores presentes.
+- 49/49 assets maestros intactos.
+- 40/40 objetos visuales disponibles.
+- Todos los objetos maestros se renderizan en contenedores cuadrados.
+- Y-sort por feet-y activo.
+- NPC de A2, B2 y C2 fuera de colisiones y siluetas de estructuras.
+- Rutas principales libres de árboles, fogatas, props y edificios sensibles.
+- Ningún árbol anclado dentro del agua declarada.
+- Spawn, NPC, objetivos, santuarios y salidas alcanzables.
+
+VALIDADORES EJECUTADOS
+1. scripts/validate-region-verde-maestro-v1.mjs
+2. scripts/validate-green-scenes.mjs
+3. scripts/validate-green-composition-v2-12.mjs
+
+ESTADO
+CORRECTO A NIVEL DE DATOS, ASSETS, POSICIONES, COLISIONES Y NAVEGACIÓN ESTÁTICA.
+La compilación Vite debe ejecutarse en el dispositivo de destino después de npm install.

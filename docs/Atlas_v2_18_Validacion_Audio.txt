@@ -1,0 +1,52 @@
+ATLAS VISUAL v2.18.0 · VALIDACIÓN AUDIO v1.0 REGIÓN VERDE
+Fecha: 2026-07-27
+Base: Atlas Visual v2.17.0
+
+RESULTADO GENERAL: CORRECTO PARA EMPAQUETAR
+
+AUDIO
+- 32/32 archivos OGG presentes.
+- 32/32 cabeceras OGG válidas.
+- 32/32 tamaños coinciden con audio_manifest.json.
+- 6 loops musicales decodificables con ffprobe y duración mayor a 20 s.
+- 2 ambientes en loop.
+- 7 introducciones individuales: 6 mobs + Guardián Verde.
+- introducción adicional para élites.
+- efectos de dados, ataques, magia, impacto, fallo, crítico, muerte, victoria y portal.
+- audio original generado mediante síntesis procedural, sin muestras externas.
+
+INTEGRACIÓN
+- motor con música, ambiente y efectos separados.
+- desbloqueo tras primer gesto para compatibilidad con autoplay móvil.
+- crossfade entre menú, exploración, combate y jefe.
+- intro de combate bloquea temporalmente las acciones.
+- Guardián Verde usa presentación y música propias.
+- enemigos élite usan presentación extendida.
+- regreso suave a música ambiental al terminar o escapar.
+- sonido de acciones resuelto por arma, magia e impacto.
+- sonido de portal conectado a activación y viaje.
+- controles: audio, maestro, música, ambiente y efectos.
+
+REGRESIÓN
+- validación v2.17 correcta.
+- 11/11 mobs y jefes, 88/88 checksums correctos.
+- 9/9 personajes, 72/72 checksums correctos.
+- Región Verde Maestro correcta.
+- Región Ártica Maestro correcta.
+- portales correctos.
+- horizontal, HUD y balance correctos.
+- 229 archivos JS/JSX analizados por TypeScript sin errores sintácticos.
+
+COMPILACIÓN
+- npm install y npm run build no pudieron completarse en este entorno.
+- causa: el proxy interno de paquetes respondió HTTP 503 al descargar dependencias.
+- no se detectaron errores estructurales, de assets, catálogo, imports o sintaxis en las validaciones locales.
+- la prueba final de Vite debe ejecutarse en CMD o Termux con npm install y npm run build.
+
+EMPAQUETADO Y PARCHE
+- ZIP completo: integridad superada con unzip -t.
+- ZIP parche: integridad superada con unzip -t.
+- node_modules y dist excluidos del paquete completo.
+- parche aplicado sobre una extracción limpia de Atlas v2.17.
+- tras aplicar el parche: audio v2.18, correcciones v2.17 y mobs v2.16 validados correctamente.
+- tras aplicar el parche: todos los JS/JSX vuelven a pasar el análisis sintáctico de TypeScript.

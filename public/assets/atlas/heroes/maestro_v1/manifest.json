@@ -1,0 +1,138 @@
+{
+  "package": "Atlas 9 personajes jugables",
+  "version": "1.0",
+  "runtime_canvas": [
+    36,
+    48
+  ],
+  "runtime_asset_size": [
+    72,
+    96
+  ],
+  "master_size": [
+    288,
+    384
+  ],
+  "anchor": "bottom-center",
+  "directions": [
+    "down",
+    "up",
+    "left",
+    "right"
+  ],
+  "characters": {
+    "humano_guerrero": {
+      "race": "Humano",
+      "class": "Guerrero",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/humano_guerrero",
+      "master": "masters/humano_guerrero",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "humano_mago": {
+      "race": "Humano",
+      "class": "Mago",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/humano_mago",
+      "master": "masters/humano_mago",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "humano_picaro": {
+      "race": "Humano",
+      "class": "Pícaro",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/humano_picaro",
+      "master": "masters/humano_picaro",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "enano_guerrero": {
+      "race": "Enano",
+      "class": "Guerrero",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/enano_guerrero",
+      "master": "masters/enano_guerrero",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "enano_mago": {
+      "race": "Enano",
+      "class": "Mago",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/enano_mago",
+      "master": "masters/enano_mago",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "enano_picaro": {
+      "race": "Enano",
+      "class": "Pícaro",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/enano_picaro",
+      "master": "masters/enano_picaro",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "elfo_guerrero": {
+      "race": "Elfo",
+      "class": "Guerrero",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/elfo_guerrero",
+      "master": "masters/elfo_guerrero",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "elfo_mago": {
+      "race": "Elfo",
+      "class": "Mago",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/elfo_mago",
+      "master": "masters/elfo_mago",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    },
+    "elfo_picaro": {
+      "race": "Elfo",
+      "class": "Pícaro",
+      "runtime": "/assets/atlas/heroes/maestro_v1/runtime/elfo_picaro",
+      "master": "masters/elfo_picaro",
+      "directions": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ]
+    }
+  },
+  "notes": [
+    "La animación de caminata usa desplazamiento de 1 px entre dos fases.",
+    "La vista up de Enano Guerrero fue reconstruida técnicamente desde modelos aprobados de la misma familia porque el archivo original se sobrescribió durante la generación."
+  ],
+  "runtime_facing_normalized": "2.19.5"
+}

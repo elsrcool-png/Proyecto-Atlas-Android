@@ -1,0 +1,28 @@
+PROYECTO ATLAS — v2.19.2
+Orientación y Anclaje de Combate
+
+BASE REQUERIDA PARA EL PARCHE:
+- Atlas Visual v2.19.1 Estabilización de Combate
+
+ARCHIVOS NUEVOS PRINCIPALES:
+- src/lib/atlasCombatFacing.js
+- scripts/validate-combat-facing-v2-19-2.mjs
+- docs/ATLAS_V2_19_2_ORIENTACION_ANCLAJE_COMBATE.md
+- docs/VALIDACION_ATLAS_V2_19_2.txt
+- docs/VALIDACION_SINTAXIS_ATLAS_V2_19_2.txt
+- docs/VALIDACION_COMPILACION_ATLAS_V2_19_2.txt
+- INSTALACION_TERMUX_V2_19_2.md
+- INICIAR_CMD_V2_19_2.md
+- PATCH_README_VISUAL_V2_19_2.md
+
+ARCHIVOS MODIFICADOS PRINCIPALES:
+- src/components/atlas/EntitySprite.jsx
+- src/components/atlas/CombatView.jsx
+- src/components/atlas/CombatVfx.jsx
+- package.json
+- package-lock.json
+- VERSION_ATLAS_VISUAL.txt
+
+VALIDACIÓN:
+- npm run validate:v2-19-2
+- npm run build

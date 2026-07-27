@@ -1,0 +1,558 @@
+{
+  "version": "2.19.7",
+  "region": "fria",
+  "npcCount": 18,
+  "directionCount": 72,
+  "runtimeCanvas": [
+    72,
+    96
+  ],
+  "directions": [
+    "down",
+    "up",
+    "left",
+    "right"
+  ],
+  "npcs": {
+    "fria_astra": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_astra/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10130,
+        "sha256": "b5b8d68a7db084ee35c431ad18fd7e533ba81a85a3e4d6fc203625906bd686f5"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_astra/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9854,
+        "sha256": "cd8a07598e8d6e4a653996858006384178f30697e5a31742915c9d04508e8efc"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_astra/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10166,
+        "sha256": "b51eeaad7d75869524fb3d0250e3464d9c4940ed4dfa65797ff7d7bb44411f42"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_astra/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10098,
+        "sha256": "3897aa7829971ca208c678656a22a8f249e1c4b1201b3295351941c54636f0b6"
+      }
+    },
+    "fria_boreas": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_boreas/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8382,
+        "sha256": "fac7086824d6a57ad8454995dbf85691212ea1bd4ef167010a65eccd92239055"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_boreas/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 7942,
+        "sha256": "3e0fe6b2acdc225374387c8176ad0d7831bf0a4a620b5ff0136d4187353cb835"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_boreas/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8686,
+        "sha256": "1e79402eac36b467c6ad450ea08d05a5d01e94d5e80e536ac23c4cf94d73ea5b"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_boreas/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8860,
+        "sha256": "d2d954488d841f2bfc2af425605c06ac8573ad11ce72974ffbf4411b8075036c"
+      }
+    },
+    "fria_borin": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_borin/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10778,
+        "sha256": "ee0b9a74b94d7ebb600c115d5c467bc6f8c22f330c6fbc1c080eae24cfe7ae42"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_borin/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9878,
+        "sha256": "ccd983000060cd98807a3625e0f5eb9dbde6343aca971e5261bad10c7bb838bb"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_borin/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9920,
+        "sha256": "901c6a83fae8a1493ce31ebdfdb535a048c5197658d6e4f24f3a403723da74e8"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_borin/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9414,
+        "sha256": "b0207a7db8bc4bc015e68b5cd59ee9100910448cc891f5b8d17346bdff880c82"
+      }
+    },
+    "fria_captain": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_captain/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8910,
+        "sha256": "5d99f299857345dc85bbd14c18d7923f211df0e2458bf169e7051880a2442d0f"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_captain/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 7968,
+        "sha256": "6b04778565cc9870214ab9eb937ab09c73784759dd1b1d39ee33d4a0935a80cf"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_captain/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9164,
+        "sha256": "46579f837f0360512dc6858b97132118d4680524d4747167958d705f4981cf25"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_captain/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8352,
+        "sha256": "b57394304c946a92ec1ddb29630f04ca569268c85594a9229be8de308390feee"
+      }
+    },
+    "fria_dvalin": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_dvalin/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9610,
+        "sha256": "137e8aad893e23f0df1a8fe52fedf49c14dca458edfbb42123cdbebe1c55f495"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_dvalin/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8720,
+        "sha256": "5f4eeaff6c16cde31d34cb24bfdeb8fa41bd3b12c8ae731da52a0a3dd0c6885c"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_dvalin/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9794,
+        "sha256": "4acb7d55d3d1504ffdb9e9f4e3281b6cfb4111378f51fa7924f74b7e417c39f7"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_dvalin/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9396,
+        "sha256": "afe2e579a3cd776ffce0e158f14efd0be1557942b399ae493d3618c12632bb24"
+      }
+    },
+    "fria_einar": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_einar/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10898,
+        "sha256": "36bfdf349e91bd5290163a59edcad429d7611f25573dddee5fdde077f0bd6b94"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_einar/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9738,
+        "sha256": "3425b15eb6bec12cbeceb4aa7c404cdc16d640cec94b13e8c8e4965c47738f7b"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_einar/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10142,
+        "sha256": "998d5cfe06086c8bc1d519cfa4c8a1bcacd4046a2105213091d1a1ec69e1d5a3"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_einar/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10082,
+        "sha256": "2f0be05d8e81de7bbdc601962676421a758186614715a680d57bd0b5250e7bf5"
+      }
+    },
+    "fria_freya": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_freya/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9362,
+        "sha256": "93fcf7620f1d737c3002ad27ea1168a086d75d6ccb1eeb2b762a6990640d89da"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_freya/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8154,
+        "sha256": "88b41412dd7f8d94a52a87188b7ea6b9c1617ae0786ad35cfd94b11a961a5445"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_freya/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9188,
+        "sha256": "3a10fe8151d77bbbd1dfabdae1fc40e9c7f9d52e5b42a2451cef3a31dbdf5267"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_freya/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9184,
+        "sha256": "fa953dff2bb37615c8721b2182b9607acfd2a2ef966ac937ecb77df9af5bfee8"
+      }
+    },
+    "fria_helga": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_helga/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10490,
+        "sha256": "36ba81c985bbe23bef572ae7424b24ecccb1f4a3be5ce7c99f4e273dbe16f4af"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_helga/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9660,
+        "sha256": "ee7cff6a97ca91815c596ea974c62628e55a9929e79448fff2e14f5a25e10743"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_helga/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10632,
+        "sha256": "6e2dcec6c7e64dbfdde7a5a8e5208a1399b01b3040b34f9900d12f87ca1c46e3"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_helga/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9856,
+        "sha256": "5b2ddb557d10cf5db1275ae5d11397c83e9d79ffad0087dfda6ef39936fb5c4b"
+      }
+    },
+    "fria_hostelera": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_hostelera/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 7370,
+        "sha256": "c6f70b6f0102b1667aa65e8f795b99544a9d43d3dbe13834df4ef5910d9d5a29"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_hostelera/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 6744,
+        "sha256": "0566bc0f728237ff346890873257d108120d0429278dceb73130a7eaf7cd4bb7"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_hostelera/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8030,
+        "sha256": "57c2ac6cb6214275e1650700eb7c77c682f6b6649c4894ea37f9d9b15357fe42"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_hostelera/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 7252,
+        "sha256": "1ad10d130a2ac071e371414926f6695d94346171729a3db6643b42a584327347"
+      }
+    },
+    "fria_kael_forger": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_kael_forger/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9148,
+        "sha256": "7999f82a4bd78f4a14e7aa142e7aead547abae4c5f2be93526f2024db511a310"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_kael_forger/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8630,
+        "sha256": "2529f4635151a3ee44aa296ba56be2e0242981f0046324cfa1727e186aea3097"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_kael_forger/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9362,
+        "sha256": "fa472323c817910cae0fc18f4b85dbac3b0b955ee55e0533f18d90748617e3df"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_kael_forger/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9004,
+        "sha256": "2a3f9097e4e775bbfc5233d98df4b5c2e3c27d333e5dfc7756201dcc21c11536"
+      }
+    },
+    "fria_lyra_cartographer": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_cartographer/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9230,
+        "sha256": "1a70b97798070672d800375275a407aba788727ea94dd555e0090b84fa89a497"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_cartographer/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8342,
+        "sha256": "9c43da8ad66fedc30b936fcaff86eeaa901faee809601ac5fd9bced678efa591"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_cartographer/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9372,
+        "sha256": "7053090ba61f0c8138a89675d535213bc4165c46da69574d0ea569a5e3c6ebe1"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_cartographer/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8960,
+        "sha256": "d6bc74e59be36fae5d782cd33ffae8425a54838418767df444618778e67263d9"
+      }
+    },
+    "fria_lyra_researcher": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_researcher/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9920,
+        "sha256": "d417feae1febea7855ed671d2078fa71ba128a06ac96b02921c15ed861ca0f6c"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_researcher/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9310,
+        "sha256": "eb0f8c361c57989afdfbb6b15fc7e32eab5f00e78c1251a1314b690d5f918e7f"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_researcher/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10074,
+        "sha256": "f0c0829ef849a15e4dbca325fe83e475bc3a4502ac7b66f2a66b0130c131e673"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_lyra_researcher/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9798,
+        "sha256": "d126d09069ff09887f0a05c45fffd613fd99363d27835ed9d8eb1d0ad417cfee"
+      }
+    },
+    "fria_merchant_camp": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_camp/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9662,
+        "sha256": "0ea32f755a9053ca215a5c4fc6152567b7efa907d1523cab35bc531c4c94fce8"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_camp/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9394,
+        "sha256": "9b880ebfbfdb77d0085f98592f8c144477c9f975f551ae745b15780142eb1269"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_camp/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9444,
+        "sha256": "5893fbf2823f1700b8042fb98d90f5a9cf0a1c37b3fbac91d0c4b8774ead8ede"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_camp/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9368,
+        "sha256": "54d5ba98bbcca233099adaef9614b73f2bf019064a552541a2506bc59fcb0ef6"
+      }
+    },
+    "fria_merchant_glacial": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_glacial/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9650,
+        "sha256": "7a0222f7193538d9538e4e51a93985ddf5cb141e7d4e09f339611f94eb5f6628"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_glacial/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9604,
+        "sha256": "47a51fd12dd5d99b07c4eea6fa84e7c6bc1f5de9880675b93fd957cd9fa424da"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_glacial/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9712,
+        "sha256": "2e679540a94518c4219b2893e1e3575bb56d5dbc2b2045fc4dffc1b97bd5686f"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_glacial/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9280,
+        "sha256": "47e4095e76685867e19426740c1909739c9fe4c552f0b4457e0ff64eb292bcf0"
+      }
+    },
+    "fria_merchant_royal": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_royal/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8758,
+        "sha256": "dd3ee5df60d6079ad385996d1cea70b745bde320079bff11ad9c135a85a8fec4"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_royal/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 7792,
+        "sha256": "5ca954efd548b772c8672e2acd33db5c3aa7072955db67135748c2006d99c200"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_royal/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8866,
+        "sha256": "649dfe86d1cf61822ff8f2bf01c376a82ad1fb52a8f985b76af5ce4d8579ef30"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_merchant_royal/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8462,
+        "sha256": "31839efd663b02722877a40f27bbfeab8e2ddf2c2a0d028ef178d37d56fc2c05"
+      }
+    },
+    "fria_queen": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_queen/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8306,
+        "sha256": "53a97ff09e630d49efa42aa637eb225a1de1e93592c717ba7d41dfe0fcd3f963"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_queen/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8108,
+        "sha256": "07a252ce86de80f0483bb708ec434e3b015afa28124cf269316e292ba05c2a83"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_queen/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 7882,
+        "sha256": "9bbaf4bc0c9eaf6ae659553c5d46c4da416e43f0c3f5f190923f6369e83b79a3"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_queen/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 7912,
+        "sha256": "d88adb64bf56eef3d20f974027c90f84e2a29f5bf61936a986860661f59a0fae"
+      }
+    },
+    "fria_refuge_keeper": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_refuge_keeper/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10038,
+        "sha256": "f4494f36f7e301a1485331f4eb3f3d8e2a4bfa7f043fca79486e8a22e522fc3d"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_refuge_keeper/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 8670,
+        "sha256": "06c576dbe3545407614a880e978dcadfce12bae177c2dce27075d934cefa53a5"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_refuge_keeper/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9258,
+        "sha256": "5a2ede7ea76365b22b8132ae1c97541fb51e79c2be71213a0763ee11528039e5"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_refuge_keeper/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9620,
+        "sha256": "2460df4b3e988d2f653a2edcf6b8d87583ac773686bc1cd5786af60a94c698cf"
+      }
+    },
+    "fria_shaman": {
+      "down": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_shaman/idle_down.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 10114,
+        "sha256": "abaf486ce52f814f768c3c77ba5622752d183dd853d2cffa23908f80633f9a08"
+      },
+      "up": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_shaman/idle_up.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 9578,
+        "sha256": "43c4ab7a0d36ff324a68f52c9cde7ee174e70b8972f0d032d308de02b9dc4565"
+      },
+      "left": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_shaman/idle_left.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 11310,
+        "sha256": "dc0fc404cf20da3be9689ca1616985fca2572e33457a1142e1c07615a9180c41"
+      },
+      "right": {
+        "runtime": "public/assets/atlas/npcs/region_artica/maestro_v1/runtime/fria_shaman/idle_right.webp",
+        "width": 72,
+        "height": 96,
+        "bytes": 11018,
+        "sha256": "b0da2bc109a1ddd22aba26dcec729774543b932811b88215af7e307af1e541a2"
+      }
+    }
+  }
+}

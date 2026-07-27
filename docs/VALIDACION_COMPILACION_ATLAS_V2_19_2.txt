@@ -1,0 +1,24 @@
+Atlas Visual v2.19.2 — estado de compilación
+
+La instalación de dependencias no pudo completarse dentro del entorno de construcción.
+El registro interno de paquetes devolvió HTTP 503 para múltiples paquetes, incluido:
+
+- zwitch@2.0.4
+
+Por esa causa no fue posible ejecutar `npm run build` aquí.
+
+No se encontró un error de Atlas durante esta prueba. Antes del fallo externo pasaron:
+
+- npm run validate:v2-19-2;
+- 27 controles nuevos de orientación y anclaje;
+- 35 controles de estabilidad de combate;
+- 22 controles de combate dinámico;
+- audio, personajes, enemigos, regiones, portales y horizontal;
+- transpilación sintáctica de 235 archivos;
+- comprobación de 502 imports locales, cero faltantes.
+
+Comprobación final requerida en Termux:
+
+npm install
+npm run validate:v2-19-2
+npm run build

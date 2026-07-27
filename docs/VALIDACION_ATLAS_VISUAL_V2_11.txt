@@ -1,0 +1,26 @@
+ATLAS VISUAL v2.11.0 · REGIÓN VERDE MAESTRO
+Fecha de integración: 2026-07-22
+
+VALIDACIONES SUPERADAS
+- 49/49 checksums del paquete maestro.
+- 9/9 terrenos conectados.
+- 40/40 objetos maestros disponibles.
+- 9/9 escenas verdes completas y alcanzables.
+- 15/15 misiones principales accesibles en cada región.
+- Y-sort por pies activo para objetos y entidades.
+- A1 y A2 sin troncos anclados dentro de las zonas de agua declaradas.
+- C3 conecta ruin_arch_corrupted_01.webp antes del jefe.
+- Variante posterior al jefe de C3 conserva el campamento de aventureros.
+
+VALIDADORES EJECUTADOS
+- node scripts/validate-region-verde-maestro-v1.mjs
+- node scripts/validate-green-scenes.mjs
+- node scripts/validate-visual-v2-10-a2.mjs
+- node scripts/validate-a2-depth-v2-10-1.mjs
+- node scripts/validate-visual-v2-9.mjs
+
+COMPILACIÓN
+No se pudo ejecutar npm run build en el entorno de generación porque el
+registro interno de paquetes respondió 503 durante npm install. Sin Vite
+instalado, el comando terminó con "vite: not found". La compilación final debe
+ejecutarse en Termux o PC después de npm install.

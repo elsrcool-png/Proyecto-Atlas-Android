@@ -1,0 +1,43 @@
+{
+  "id": "aurel_ultimo_portador",
+  "name": "Aurel, Último Portador",
+  "zone": "region_artica",
+  "zone_label": "Región Ártica",
+  "kind": "boss",
+  "archetype": "boss_humanoid",
+  "master_canvas": [
+    1024,
+    1024
+  ],
+  "runtime_candidate_canvas": [
+    144,
+    160
+  ],
+  "anchor": "bottom_center",
+  "integration_status": "connected_in_atlas_v2_16",
+  "directions": {
+    "down": {
+      "source": "aurel_último_portador_de_hielo.png",
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime_candidate": "runtime_candidato/idle_down.webp"
+    },
+    "up": {
+      "source": "guardián_helado_con_corona_cristalina.png",
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime_candidate": "runtime_candidato/idle_up.webp"
+    },
+    "left": {
+      "source": "guardián_helado_con_halberd_cristalina.png",
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime_candidate": "runtime_candidato/idle_left.webp"
+    },
+    "right": {
+      "source": "aurel_el_último_portador.png",
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime_candidate": "runtime_candidato/idle_right.webp"
+    }
+  },
+  "code_aliases": [
+    "aurel_portador"
+  ]
+}

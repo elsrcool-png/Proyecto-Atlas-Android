@@ -1,0 +1,40 @@
+{
+  "id": "necromante",
+  "name": "Necromante",
+  "zone": "region_artica",
+  "zone_label": "Región Ártica",
+  "kind": "mob",
+  "archetype": "undead_caster",
+  "master_canvas": [
+    1024,
+    1024
+  ],
+  "runtime_candidate_canvas": [
+    88,
+    104
+  ],
+  "anchor": "bottom_center",
+  "integration_status": "connected_in_atlas_v2_16",
+  "directions": {
+    "down": {
+      "source": "hechicero_no_muerto_con_bastón.png",
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime_candidate": "runtime_candidato/idle_down.webp"
+    },
+    "up": {
+      "source": "necromante_oscuro_con_bastón_flamígero.png",
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime_candidate": "runtime_candidato/idle_up.webp"
+    },
+    "left": {
+      "source": "hechicero_esquelético_chibi_con_llama_verde.png",
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime_candidate": "runtime_candidato/idle_left.webp"
+    },
+    "right": {
+      "source": "esqueleto_hechicero_con_báculo_verde.png",
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime_candidate": "runtime_candidato/idle_right.webp"
+    }
+  }
+}

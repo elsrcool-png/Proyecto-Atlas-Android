@@ -1,0 +1,40 @@
+{
+  "id": "brujo_feral",
+  "name": "Brujo Feral",
+  "zone": "region_verde",
+  "zone_label": "Región Verde",
+  "kind": "mob",
+  "archetype": "humanoid_large_caster",
+  "master_canvas": [
+    1024,
+    1024
+  ],
+  "runtime_candidate_canvas": [
+    104,
+    120
+  ],
+  "anchor": "bottom_center",
+  "integration_status": "connected_in_atlas_v2_16",
+  "directions": {
+    "down": {
+      "source": "guerrero_tribal_con_tótem_y_corrupción.png",
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime_candidate": "runtime_candidato/idle_down.webp"
+    },
+    "up": {
+      "source": "chamán_tribal_bestial_con_bastón.png",
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime_candidate": "runtime_candidato/idle_up.webp"
+    },
+    "left": {
+      "source": "chamán_bestial_con_tótem_tribal.png",
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime_candidate": "runtime_candidato/idle_left.webp"
+    },
+    "right": {
+      "source": "bestia_tribal_con_bastón_y_adornos.png",
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime_candidate": "runtime_candidato/idle_right.webp"
+    }
+  }
+}

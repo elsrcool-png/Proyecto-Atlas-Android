@@ -1,0 +1,6 @@
+VALIDACIÓN DE COMPILACIÓN ATLAS v2.19.3
+- Intento: npm ci --ignore-scripts --no-audit --no-fund
+- Resultado: instalación de dependencias no concluyó dentro de 240 segundos en este entorno.
+- La compilación Vite no pudo iniciarse porque npm ci no terminó.
+- Las validaciones internas, sintácticas y de imports sí fueron completadas.
+- Repetir en Termux o Windows con: npm install && npm run validate:v2-19-3 && npm run build

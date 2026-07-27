@@ -1,0 +1,30 @@
+{
+  "id": "forjador_orin",
+  "name": "Forjador Orin",
+  "zone": "pueblo_robledal",
+  "zone_label": "Pueblo de Robledal",
+  "source_sheet": "sprite_sheet_de_forjador_orin.png",
+  "anchor": "bottom_center",
+  "directions": {
+    "down": {
+      "master": "masters_transparentes/idle_down.webp",
+      "runtime": "runtime/idle_down.webp",
+      "sha256_runtime": "8fc1b21e060b35016a4f14cb9f8dba76b5ffd27ef1444333b46230125711ce39"
+    },
+    "up": {
+      "master": "masters_transparentes/idle_up.webp",
+      "runtime": "runtime/idle_up.webp",
+      "sha256_runtime": "e9690c3f1cb72b56db9bc1569d2573ae855cb40a7aa1e4d4462124d37ed3c438"
+    },
+    "left": {
+      "master": "masters_transparentes/idle_left.webp",
+      "runtime": "runtime/idle_left.webp",
+      "sha256_runtime": "ffdf2cd5ea5d245d14709e91180071290211ecae0f4e848cbfb697ca4f52c8b6"
+    },
+    "right": {
+      "master": "masters_transparentes/idle_right.webp",
+      "runtime": "runtime/idle_right.webp",
+      "sha256_runtime": "4daaf0e7b091679c9d8daace5068dba4fd17c3f1839d649245bf118042b7e431"
+    }
+  }
+}

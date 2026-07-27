@@ -1,0 +1,13 @@
+ATLAS VISUAL v2.19.1
+VALIDACIÓN SINTÁCTICA Y DE IMPORTS
+Fecha: 2026-07-27
+
+Resultado:
+- 258 archivos JS, JSX y MJS analizados con TypeScript transpileModule.
+- 0 errores sintácticos.
+- 113 imports locales verificados.
+- 0 rutas locales faltantes.
+
+Comprobación semántica aislada de createAtlasCombatActions.js:
+- no se detectaron errores propios del módulo;
+- TypeScript informó únicamente errores JSDoc preexistentes en atlasEnemyAI/atlasEnemyBalance/atlasEnemyScaling.
