@@ -37,7 +37,10 @@ function webpSize(file) {
 }
 
 const pkg = JSON.parse(read("package.json"));
-expect(pkg.version === "2.19.7", "Versión Atlas v2.19.7", `actual=${pkg.version}`);
+{
+  const [major = 0, minor = 0, patch = 0] = String(pkg.version || "0.0.0").split(".").map(Number);
+  expect(major > 2 || (major === 2 && (minor > 19 || (minor === 19 && patch >= 7))), "Versión compatible con Atlas v2.19.7 o superior", `actual=${pkg.version}`);
+}
 expect(pkg.scripts?.["validate:v2-19-7"], "Script agregado a package.json");
 
 const npcModule = read("src/lib/atlasNpcAssetSprites.js");

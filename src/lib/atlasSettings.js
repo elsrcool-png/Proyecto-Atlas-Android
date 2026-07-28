@@ -1,4 +1,6 @@
 // PROYECTO ATLAS — Ajustes de interfaz móvil, orientación y accesibilidad.
+import { defaultControlProfiles, normalizeControlProfiles } from "@/lib/atlasControlLayout";
+
 const KEY = "atlas_settings";
 const DEFAULT = {
   // Atlas se diseña primero para horizontal. Si el navegador no permite
@@ -9,8 +11,11 @@ const DEFAULT = {
   controlSize: "normal",
   controls: "auto",
   hudDensity: "clean",
-  layoutVersion: 13,
+  layoutVersion: 20,
   debugTargets: false,
+  controlProfiles: defaultControlProfiles("right"),
+  hapticsEnabled: true,
+  hapticIntensity: 0.75,
 
   // Audio v1.0. Valores normalizados 0..1 para mezcla móvil.
   audioEnabled: true,
@@ -21,7 +26,7 @@ const DEFAULT = {
 };
 
 export function defaultSettings() {
-  return { ...DEFAULT };
+  return { ...DEFAULT, controlProfiles: defaultControlProfiles(DEFAULT.handedness) };
 }
 
 export function loadSettings() {
@@ -34,10 +39,11 @@ export function loadSettings() {
       ? { ...stored, orientation: "horizontal", hudDensity: "clean", layoutVersion: DEFAULT.layoutVersion }
       : stored;
     const next = { ...DEFAULT, ...migrated };
+    next.controlProfiles = normalizeControlProfiles(next.controlProfiles, next.handedness);
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
     return next;
   } catch {
-    return { ...DEFAULT };
+    return defaultSettings();
   }
 }
 

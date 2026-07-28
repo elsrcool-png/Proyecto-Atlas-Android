@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { CLASS_DMG_TYPE } from "@/lib/atlasSkillDesign";
 import { rollDie } from "@/lib/atlasEngine";
+import { primaryStatusForSkillName } from "@/lib/atlasSkillStatusHints";
 import {
   ATLAS_STATUSES,
   applyAtlasStatus,
@@ -158,15 +159,7 @@ export default function useAtlasCombatPassives({
     return { ...target, statuses: nextStatuses };
   };
 
-  const statusForSkillName = (name) => {
-    if (/Bola de Fuego|Forja Primigenia|Cataclismo Arcano/.test(name)) return "quemadura";
-    if (/Corte Múltiple|Estocada Sombría|Estocada Salvaje|Danza Final|Mil Cortes/.test(name)) return "sangrado";
-    if (/Tormenta Eléctrica|Furia de la Montaña|Aniquilación Mecánica/.test(name)) return "aturdido";
-    if (/Revienta Escudos|Gólem de Roca|Estandarte Imperial/.test(name)) return "vulnerable";
-    if (/Bomba de Humo|Tornado Cortante|Juicio de la Luna/.test(name)) return "debilitado";
-    if (/Castigo Nocturno|Clones de Sombra|Juramento Sombra/.test(name)) return "lento";
-    return "debilitado";
-  };
+  const statusForSkillName = (name) => primaryStatusForSkillName(name) || "debilitado";
 
   const roguePierce = (quality, isCrit) => {
     if (className !== "Pícaro" || !classPassiveActive) return 0;

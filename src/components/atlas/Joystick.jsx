@@ -3,7 +3,7 @@ import React, { useRef } from "react";
 export default function Joystick({ onMove, scale = 1 }) {
   const baseRef = useRef(null);
   const knobRef = useRef(null);
-  const active = useRef(false);
+  const activePointer = useRef(null);
   const R = 44 * scale;
   const size = 96 * scale;
   const knob = 40 * scale;
@@ -17,9 +17,24 @@ export default function Joystick({ onMove, scale = 1 }) {
     if (knobRef.current) knobRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
     onMove(dx / R, dy / R);
   };
-  const start = (e) => { active.current = true; e.currentTarget.setPointerCapture?.(e.pointerId); handle(e); };
-  const move = (e) => { if (active.current) { e.preventDefault(); handle(e); } };
-  const end = () => { active.current = false; if (knobRef.current) knobRef.current.style.transform = "translate(0,0)"; onMove(0, 0); };
+  const start = (e) => {
+    if (activePointer.current != null || (e.pointerType === "mouse" && e.button !== 0)) return;
+    e.preventDefault();
+    activePointer.current = e.pointerId;
+    try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch {}
+    handle(e);
+  };
+  const move = (e) => {
+    if (activePointer.current !== e.pointerId) return;
+    e.preventDefault();
+    handle(e);
+  };
+  const end = (e) => {
+    if (activePointer.current !== e.pointerId) return;
+    activePointer.current = null;
+    if (knobRef.current) knobRef.current.style.transform = "translate(0,0)";
+    onMove(0, 0);
+  };
 
   return (
     <div ref={baseRef}

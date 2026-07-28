@@ -11,6 +11,7 @@ import { REGION_CHEST_SEALS } from "@/lib/atlasChestSystem";
 import { SANCTUARIES, getSanctuaryForSector, validateSanctuaryZone } from "@/lib/atlasSanctuaries";
 import { validateAllStoryPoints } from "@/lib/atlasStoryPoints";
 import { validateWorldAccessibility } from "@/lib/atlasWorldAccessibility";
+import { enforceInteractionClearance } from "@/lib/atlasInteractionClearance";
 import { getVisualScene } from "@/lib/atlasVisualScenes";
 import { scaleMonsterStats } from "@/lib/atlasEnemyScaling";
 import { getGreenEnemyPool } from "@/lib/atlasGreenBestiary";
@@ -535,7 +536,12 @@ function buildSectorWorld(region, col, row) {
   const validatedWorld = validateAllStoryPoints(openedWorld);
   const transitions = getSectorTransitions(region.id, sectorId);
   const cleared = clearTransitionCorridors(validatedWorld, transitions);
-  return validateWorldAccessibility(cleared);
+  const accessible = validateWorldAccessibility(cleared);
+  const spaced = enforceInteractionClearance(accessible);
+  // La separación puede mover una pista a otra isla caminable. Una segunda
+  // pasada revalida el recorrido y la separación final evita reintroducir
+  // solapamientos al reubicar el objetivo.
+  return enforceInteractionClearance(validateWorldAccessibility(spaced));
 }
 
 export function buildCanonicalExploreMaps() {

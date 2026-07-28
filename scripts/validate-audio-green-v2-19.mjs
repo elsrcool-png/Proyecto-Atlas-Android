@@ -8,7 +8,10 @@ const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
 const exists = (p) => fs.existsSync(path.join(root, p));
 
 const pkg = JSON.parse(read("package.json"));
-if (!/^2\.19\./.test(pkg.version)) errors.push(`Versión incorrecta: ${pkg.version}`);
+{
+  const [major = 0, minor = 0] = String(pkg.version || "0.0.0").split(".").map(Number);
+  if (!(major > 2 || (major === 2 && minor >= 19))) errors.push(`Versión incompatible con audio v2.19: ${pkg.version}`);
+}
 if (!pkg.scripts?.["validate:audio-green"]) errors.push("Falta script validate:audio-green");
 
 const requiredCode = [

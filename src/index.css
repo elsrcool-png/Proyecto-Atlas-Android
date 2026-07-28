@@ -348,3 +348,33 @@
     overflow-y: auto !important;
   }
 }
+
+/* Atlas v2.20 — multitáctil, sin selección accidental dentro del juego. */
+.atlas-explore-root,
+.atlas-combat-view,
+.atlas-mobile-controls,
+.atlas-mobile-controls *,
+.atlas-touch-control,
+.atlas-touch-control * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.atlas-mobile-controls,
+.atlas-touch-control,
+.atlas-joystick-wrap {
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+.atlas-touch-control {
+  -webkit-user-drag: none;
+}
+/* El texto de diarios y diálogos conserva selección y desplazamiento normales. */
+.atlas-modal-panel,
+.atlas-modal-panel p,
+.atlas-modal-panel span,
+.atlas-mission-journal {
+  -webkit-user-select: text;
+  user-select: text;
+}

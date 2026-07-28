@@ -63,10 +63,10 @@ export function createAtlasCombatActions({
     if (sr.damage > 0 || !sr.canAct) [...new Set(sr.logs || [])].forEach(line => pushLog(line));
     if (nextHp <= 0) {
       stagePlayerDefeat(playerAfterTick, { totalDuration: 420 }, { toastMessage: "Has caído" });
-      return { canAct: false, died: true, damage: sr.damage, playerBeforeTick, playerAfterTick };
+      return { canAct: false, died: true, blockedBy: sr.blockedBy || null, damage: sr.damage, playerBeforeTick, playerAfterTick };
     }
 
-    return { canAct: sr.canAct, died: false, damage: sr.damage, playerBeforeTick, playerAfterTick };
+    return { canAct: sr.canAct, died: false, blockedBy: sr.blockedBy || null, damage: sr.damage, playerBeforeTick, playerAfterTick };
   };
   const triggerEnemyTurn = (updatedEnemy, playerSnapshot, delayMs = 400) => {
     if (!updatedEnemy || updatedEnemy.hp <= 0 || updatedEnemy.dying) return;
@@ -76,17 +76,28 @@ export function createAtlasCombatActions({
     }, delayMs);
   };
 
+  const resolveBlockedPlayerAction = (statusResult, attempted = "acción") => {
+    const actingPlayer = statusResult.playerAfterTick;
+    const frozen = statusResult.blockedBy === "freeze";
+    const type = frozen ? "PLAYER_FROZEN" : "PLAYER_PARALYZED";
+    commitCombatResult(
+      { type, enemyDamage: 0, playerDamage: 0, blockedBy: statusResult.blockedBy, attemptedAction: attempted, actionFailed: true, skipDice: true },
+      540,
+      { beforePlayer: statusResult.playerBeforeTick, afterPlayer: actingPlayer, beforeEnemy: enemy, afterEnemy: enemy, resolution: { rawDamage: 0, hpDamage: 0 } },
+    );
+    pushLog(`${frozen ? "Congelación" : "Parálisis"}: ${attempted} falla automáticamente. No gastas energía, consumibles ni durabilidad.`);
+    triggerEnemyTurn(enemy, actingPlayer, 620);
+    return actingPlayer;
+  };
+
   const handleAttack = () => {
     if (!enemy || diceAnim || combatAnimating) return;
-    damageWeapon(1);
     turnStart();
     const statusResult = tickPlayerStatusTurn();
     if (statusResult.died) return;
     const actingPlayer = statusResult.playerAfterTick;
-    if (!statusResult.canAct) {
-      triggerEnemyTurn(enemy, actingPlayer, 400);
-      return;
-    }
+    if (!statusResult.canAct) { resolveBlockedPlayerAction(statusResult, "el ataque básico"); return; }
+    damageWeapon(1);
     const dr = rollDiceGroup("basico");
     const roll = dr.total;
     showDice(dr, skills?.basic?.name || "Ataque", () => {
@@ -162,12 +173,12 @@ export function createAtlasCombatActions({
     if (!enemy || enemy.dying || diceAnim || combatAnimating) return;
     const wa = skills?.weapon; if (!wa) return;
     if ((player.mp || 0) < wa.cost) return;
-    damageWeapon(2);
     turnStart();
     const stChk = tickPlayerStatusTurn();
     if (stChk.died) return;
     const actingPlayer = stChk.playerAfterTick;
-    if (!stChk.canAct) { triggerEnemyTurn(enemy, actingPlayer); return; }
+    if (!stChk.canAct) { resolveBlockedPlayerAction(stChk, `la habilidad ${wa.name}`); return; }
+    damageWeapon(2);
     const dr = rollDiceGroup(wa.diceGroup || "versatil");
     const roll = dr.total;
     showDice(dr, `${wa.name}`, () => {
@@ -255,12 +266,12 @@ export function createAtlasCombatActions({
     const da = skills?.definitive; if (!da) return;
     if (player.level < da.unlock) return;
     if ((player.mp || 0) < da.cost) return;
-    damageWeapon(2);
     turnStart();
     const stChk = tickPlayerStatusTurn();
     if (stChk.died) return;
     const actingPlayer = stChk.playerAfterTick;
-    if (!stChk.canAct) { triggerEnemyTurn(enemy, actingPlayer); return; }
+    if (!stChk.canAct) { resolveBlockedPlayerAction(stChk, `la definitiva ${da.name}`); return; }
+    damageWeapon(2);
     const dr = rollDiceGroup("versatil");
     const roll = dr.total;
     showDice(dr, `${da.name}`, () => {
@@ -341,12 +352,12 @@ export function createAtlasCombatActions({
     if (player.level < skills[key].unlock) return;
     const cost = skills[key].cost;
     if ((player.mp || 0) < cost) return;
-    damageWeapon(1);
     turnStart();
     const stChk = tickPlayerStatusTurn();
     if (stChk.died) return;
     const actingPlayer = stChk.playerAfterTick;
-    if (!stChk.canAct) { triggerEnemyTurn(enemy, actingPlayer); return; }
+    if (!stChk.canAct) { resolveBlockedPlayerAction(stChk, `la habilidad ${skills[key].name}`); return; }
+    damageWeapon(1);
     const groupId = key === "classAbility" ? "tecnica" : key === "hybrid" ? "fuerza" : "basico";
     const dr = rollDiceGroup(groupId);
     const roll = dr.total;
@@ -434,7 +445,7 @@ export function createAtlasCombatActions({
     const stChk = tickPlayerStatusTurn();
     if (stChk.died) return;
     const actingPlayer = stChk.playerAfterTick;
-    if (!stChk.canAct) { triggerEnemyTurn(enemy, actingPlayer); return; }
+    if (!stChk.canAct) { resolveBlockedPlayerAction(stChk, "usar una poción"); return; }
     const healedHp = Math.min(actingPlayer.maxHp, actingPlayer.hp + 6);
     const healAmount = Math.max(0, healedHp - actingPlayer.hp);
     const updatedPlayer = { ...actingPlayer, hp: healedHp, potions: actingPlayer.potions - 1 };

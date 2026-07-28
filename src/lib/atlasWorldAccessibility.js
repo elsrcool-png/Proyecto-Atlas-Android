@@ -192,6 +192,23 @@ function rectOverlap(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+
+// Instantánea pública de recorrido para otros sistemas de colocación. Permite
+// comprobar muchos candidatos sin recalcular el BFS en cada punto.
+export function createWorldReachability(world) {
+  const set = computeReach(world);
+  return {
+    isReachable(pointOrX, maybeY) {
+      const x = typeof pointOrX === "object" ? pointOrX?.x : pointOrX;
+      const y = typeof pointOrX === "object" ? pointOrX?.y : maybeY;
+      return Number.isFinite(Number(x)) && Number.isFinite(Number(y))
+        && !blocked(world, Number(x), Number(y))
+        && isReached(set, Number(x), Number(y));
+    },
+    reachableCells: set.reach.reduce((total, value) => total + value, 0),
+  };
+}
+
 // ── API pública: validación global de un mundo de sector ──
 export function validateWorldAccessibility(world) {
   if (!world) return world;

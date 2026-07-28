@@ -11,6 +11,9 @@ import { ATLAS_STATUSES } from "@/lib/atlasStatusAtlas";
 import { resolveAbilityAnimation, weaponTypeFromPlayer } from "@/lib/atlasAbilityAnimations";
 import { buildCombatSequence } from "@/lib/atlasCombatDirector";
 import { resolveCombatScene } from "@/lib/atlasCombatScenes";
+import { atlasVibrate } from "@/lib/atlasHaptics";
+import { getSkillStatusHints } from "@/lib/atlasSkillStatusHints";
+import AtlasPressButton from "./AtlasPressButton";
 
 const CLASS_ELEMENT = { Guerrero: "fisico", Mago: "arcano", "Pícaro": "sombra" };
 const ENERGY_BAR_COLOR = { Guerrero: "bg-red-500", Mago: "bg-blue-500", "Pícaro": "bg-amber-500" };
@@ -41,6 +44,8 @@ function bannerInfo(t) {
   if (t === "OBJETO") return ["Poción", "bg-emerald-500 text-white"];
   if (t === "ENEMY_ATTACK") return ["¡Ataque enemigo!", "bg-red-600 text-white"];
   if (t === "ENEMY_ABILITY") return ["¡Habilidad enemiga!", "bg-fuchsia-600 text-white"];
+  if (t === "PLAYER_PARALYZED") return ["⚡ PARALIZADO · acción perdida", "bg-fuchsia-600 text-white"];
+  if (t === "PLAYER_FROZEN") return ["❄️ CONGELADO · acción perdida", "bg-cyan-600 text-white"];
   if (t === "¡Enemigo falla!") return ["¡Enemigo falla!", "bg-slate-600 text-white"];
   return [t, "bg-slate-600 text-white"];
 }
@@ -242,6 +247,13 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
         setDisplayPlayerHp(afterPlayerHp);
       }, 120);
       setAction("idle");
+    } else if (type === "PLAYER_PARALYZED" || type === "PLAYER_FROZEN") {
+      duration = 560;
+      setAction("idle");
+      const frozen = type === "PLAYER_FROZEN";
+      setVfx(actionVfx({ id: `${actionToken}:blocked`, type: frozen ? "ice" : "lightning", element: frozen ? "hielo" : "electrico", hitCount: 1, quality: "high" }, "enemy", "player"));
+      later(() => atlasVibrate("paralyzed", { force: true }), 90);
+      later(() => setVfx(null), 430);
     } else if (!isEnemyResult) {
       const skill = lastResult.skill ? (skills?.[lastResult.skill] || {}) : (skills?.basic || { name: "Espadazo" });
       const sequence = lastResult.animationSequence || buildCombatSequence({
@@ -275,6 +287,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
             setVfx(actionVfx({ id: `${actionToken}:counter`, type: "impact", element: lastResult.counterElement || "fisico", hitCount: 1, quality: "high" }, "enemy", "player"));
             addFloater("player", playerDamage, { crit: !!lastResult.crit });
             setDisplayPlayerHp(afterPlayerHp);
+            atlasVibrate(lastResult.crit ? "critical" : "hit", { force: true });
             setShake(true);
             later(() => setShake(false), 330);
           }, counterEvent?.at || 470);
@@ -311,6 +324,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
         hits.forEach(hit => {
           later(() => {
             addFloater("enemy", Number(hit.damage || 0), { crit: !!hit.crit, element: el });
+            if (Number(hit.damage || 0) > 0) atlasVibrate(hit.crit ? "critical" : (hit.final ? "heavy" : "hit"), { force: !!hit.crit });
             if (Number(hit.damage || 0) > 0) {
               setDisplayEnemyHp(current => Math.max(afterEnemyHp, current - Number(hit.damage || 0)));
             }
@@ -320,6 +334,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
             }
           }, hit.at);
         });
+        if (lastResult.statusId) later(() => atlasVibrate("status"), finalImpact + 70);
         later(() => setVfx(null), Math.min(duration - 80, finalImpact + Math.max(260, anim.duration || 360)));
       }
     } else {
@@ -331,6 +346,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
         setVfx(actionVfx({ id: `${actionToken}:enemy`, type: lastResult.vfxType || "impact", element: el, crit: !!lastResult.crit, hitCount: 1, quality: lastResult.crit ? "exceptional" : "normal" }, "enemy", "player"));
         later(() => {
           addFloater("player", playerDamage, { crit: !!lastResult.crit, element: el });
+          atlasVibrate(lastResult.crit ? "critical" : "heavy", { force: !!lastResult.crit });
           setDisplayPlayerHp(afterPlayerHp);
         }, 240);
         setShake(true);
@@ -478,10 +494,10 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
 
       <div className={`atlas-combat-actions relative z-10 bg-slate-950/85 border-t border-slate-800/80 backdrop-blur ${landscape ? "p-1.5" : "p-3"}`}>
         <div className={`grid gap-2 ${landscape ? "grid-cols-6" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
-          <button onClick={onAttack} disabled={controlsLocked || dying} className="flex items-center gap-1.5 rounded-lg bg-red-600/90 hover:bg-red-500 disabled:opacity-40 border border-red-400/30 px-2 py-1.5 transition text-left">
+          <AtlasPressButton onPress={onAttack} disabled={controlsLocked || dying} haptic="uiStrong" className="flex items-center gap-1.5 rounded-lg bg-red-600/90 hover:bg-red-500 disabled:opacity-40 border border-red-400/30 px-2 py-1.5 transition text-left">
             <Swords className="w-4 h-4 text-white shrink-0" />
             <div className="min-w-0 flex-1 leading-tight"><span className="block text-[10px] font-medium text-white truncate">{skills?.basic?.name || "Atacar"}</span><span className="block text-[9px] text-white/70 font-mono">{DICE_GROUPS.basico?.label || ""} · 0</span></div>
-          </button>
+          </AtlasPressButton>
           {SKILL_KEYS.map(k => {
             const sk = skills?.[k]; if (!sk) return null;
             const cost = sk.cost; const unlocked = player.level >= sk.unlock; const enoughMp = (player.mp || 0) >= cost;
@@ -490,25 +506,27 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
             const elVfx = ELEMENT_VFX[el] || ELEMENT_VFX.fisico;
             const dgKey = sk.diceGroup || SLOT_DICE[k];
             const dg = dgKey ? DICE_GROUPS[dgKey] : null;
+            const statusHints = getSkillStatusHints(sk);
             return (
-              <button key={k} onClick={() => onSkill(k)} disabled={!usable} className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 transition text-left ${usable ? "bg-fuchsia-600/80 hover:bg-fuchsia-500 border-fuchsia-400/40" : "bg-slate-900/70 border-slate-700/60 opacity-60 cursor-not-allowed"}`}>
+              <AtlasPressButton key={k} onPress={() => onSkill(k)} disabled={!usable} haptic="uiStrong" title={`${sk.name}: ${sk.desc || ""}`} className={`relative flex items-center gap-1.5 rounded-lg border px-2 py-1.5 transition text-left ${usable ? "bg-fuchsia-600/80 hover:bg-fuchsia-500 border-fuchsia-400/40" : "bg-slate-900/70 border-slate-700/60 opacity-60 cursor-not-allowed"}`}>
                 <GIcon name={elVfx.icon} size={15} style={{ color: elVfx.color }} className="shrink-0" />
                 {!unlocked && <Lock className="w-3 h-3 text-slate-400 shrink-0" />}
-                <div className="min-w-0 flex-1 leading-tight">
+                <div className="min-w-0 flex-1 leading-tight pr-6">
                   <span className="block text-[10px] font-medium text-white truncate">{sk.name}</span>
                   {unlocked ? (<span className="block text-[9px] font-mono"><span className="text-amber-300">{cost}{energy?.short || "MP"}</span>{dg && <span className="text-slate-400"> · {dg.label}</span>}{!enoughMp && <span className="text-red-400"> · sin energía</span>}</span>) : (<span className="block text-[9px] text-slate-500">Bloq. Nv {sk.unlock}</span>)}
                 </div>
-              </button>
+                {statusHints.length > 0 && <span className="absolute top-1 right-1 flex gap-0.5" aria-label={statusHints.map(h => h.name).join(", ")}>{statusHints.slice(0, 3).map(h => <span key={h.id} title={`${h.name}${h.conditional ? " · depende de la tirada" : ""}${h.random ? " · aleatorio" : ""}`} className="text-[12px] leading-none">{h.icon}{h.conditional && <sup className="text-[7px] text-amber-200">🎲</sup>}</span>)}</span>}
+              </AtlasPressButton>
             );
           })}
-          <button onClick={onItem} disabled={potions <= 0 || hpFull || controlsLocked || dying} className="flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-40 border border-emerald-400/30 px-2 py-1.5 transition text-left">
+          <AtlasPressButton onPress={onItem} disabled={potions <= 0 || hpFull || controlsLocked || dying} className="flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-40 border border-emerald-400/30 px-2 py-1.5 transition text-left">
             <FlaskConical className="w-4 h-4 text-white shrink-0" />
             <div className="min-w-0 flex-1 leading-tight"><span className="block text-[10px] font-medium text-white truncate">Poción</span><span className="block text-[9px] text-white/70 font-mono">{hpFull ? "Lleno" : `x${potions} usar`}</span></div>
-          </button>
+          </AtlasPressButton>
         </div>
-        <button onClick={onEscape} disabled={controlsLocked || dying || enemy.boss} className={`w-full flex items-center justify-center gap-2 rounded-lg bg-slate-800/70 hover:bg-slate-700 disabled:opacity-40 text-xs font-medium text-slate-200 transition ${landscape ? "mt-1 py-1" : "mt-2 py-2"}`}>
+        <AtlasPressButton onPress={onEscape} disabled={controlsLocked || dying || enemy.boss} className={`w-full flex items-center justify-center gap-2 rounded-lg bg-slate-800/70 hover:bg-slate-700 disabled:opacity-40 text-xs font-medium text-slate-200 transition ${landscape ? "mt-1 py-1" : "mt-2 py-2"}`}>
           <Rabbit className="w-3.5 h-3.5" /> {enemy.boss ? "No puedes huir de un jefe" : "Escapar"}
-        </button>
+        </AtlasPressButton>
       </div>
     </motion.div>
   );

@@ -344,7 +344,7 @@ export const GREEN_VISUAL_SCENES = {
       ...edgeTrees("c2_tree",[[2,90,115,.9],[3,270,105,.82],[1,560,105,.87],[4,875,125,.77],[5,90,610,.72],[2,280,660,.78],[3,560,655,.8],[1,880,600,.78]]),
       villageBuilding("c2_house_green","village_house_green.webp",285,285,.78), villageBuilding("c2_village_shop","village_shop.webp",555,285,.76), villageBuilding("c2_village_inn","village_inn.webp",820,505,.72),
       villageBuilding("c2_village_smithy","village_smithy.webp",420,520,.74), portal("c2_portal",200,555,.62), campfire("c2_fire",600,485,.50),
-      squareSprite("c2_notice","sign_notice_small.webp",165,535,108,{root:ROOT_V2,collision:{x:-27,y:-23,w:54,h:23},tags:["notice","clean-v29"]}),
+      squareSprite("c2_notice","sign_notice_small.webp",690,430,108,{root:ROOT_V2,collision:{x:-27,y:-23,w:54,h:23},tags:["notice","clean-v220","portal-clearance"]}),
       barrels("c2_barrels",610,565,.55), crates("c2_crates",900,445,.58), fence("c2_fence",825,395,.55),
       bush("c2_bush",1,500,185,.72), flowers("c2_flowers",410,250,.75),
     ],

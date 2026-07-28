@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { RotateCcw, Smartphone, Keyboard, Bug, Bell, Volume2, Music, Waves } from "lucide-react";
+import { RotateCcw, Smartphone, Keyboard, Bug, Bell, Volume2, Music, Waves, Move, Vibrate } from "lucide-react";
+import AtlasControlEditor from "./AtlasControlEditor";
+import { applyControlPreset } from "@/lib/atlasControlLayout";
 
 function Option({ label, value, current, onPick }) {
   return (
@@ -27,6 +29,7 @@ function VolumeSlider({ label, value, onChange, icon: Icon }) {
 
 export default function SettingsModal({ settings, onChange, onClose, onReset, onRequestOrientation }) {
   const [orientationNote, setOrientationNote] = useState(null);
+  const [showControlEditor, setShowControlEditor] = useState(false);
   const set = (k, v) => onChange({ ...settings, [k]: v });
   const setOrientation = async (value) => {
     const next = { ...settings, orientation: value };
@@ -56,12 +59,13 @@ export default function SettingsModal({ settings, onChange, onClose, onReset, on
           </div>
           <div>
             <p className="text-sm text-slate-300 mb-2">Mano dominante</p>
-            <div className="flex gap-2"><Option label="Diestro" value="right" current={settings.handedness} onPick={v => set("handedness", v)} /><Option label="Zurdo" value="left" current={settings.handedness} onPick={v => set("handedness", v)} /></div>
+            <div className="flex gap-2"><Option label="Diestro" value="right" current={settings.handedness} onPick={v => onChange(applyControlPreset(settings, v))} /><Option label="Zurdo" value="left" current={settings.handedness} onPick={v => onChange(applyControlPreset(settings, v))} /></div>
           </div>
           <div>
             <p className="text-sm text-slate-300 mb-2">Tamaño de controles</p>
             <div className="grid grid-cols-3 gap-2"><Option label="Pequeño" value="small" current={settings.controlSize} onPick={v => set("controlSize", v)} /><Option label="Normal" value="normal" current={settings.controlSize} onPick={v => set("controlSize", v)} /><Option label="Grande" value="large" current={settings.controlSize} onPick={v => set("controlSize", v)} /></div>
           </div>
+          <button type="button" onClick={() => setShowControlEditor(true)} className="w-full rounded-xl border border-cyan-700/70 bg-cyan-950/45 hover:bg-cyan-900/50 py-2.5 text-sm text-cyan-100 flex items-center justify-center gap-2"><Move className="w-4 h-4" /> Mover, escalar y ajustar opacidad</button>
         </div>
 
         <div className="flex items-center gap-2 text-violet-400 mt-4 mb-3"><Bell className="w-4 h-4" /><h3 className="text-xs uppercase tracking-widest">Avisos en pantalla</h3></div>
@@ -85,6 +89,14 @@ export default function SettingsModal({ settings, onChange, onClose, onReset, on
           <p className="text-[10px] leading-snug text-cyan-200/70">Audio prototipo v1.0 disponible en Región Verde: exploración, campamentos, corrupción, combate, Guardián e introducciones de enemigos.</p>
         </div>
 
+
+        <div className="flex items-center gap-2 text-fuchsia-300 mt-4 mb-3"><Vibrate className="w-4 h-4" /><h3 className="text-xs uppercase tracking-widest">Vibración</h3></div>
+        <div className="space-y-3">
+          <div><p className="text-sm text-slate-300 mb-2">Respuesta háptica</p><div className="flex gap-2"><Option label="Activada" value={true} current={settings.hapticsEnabled !== false} onPick={v => set("hapticsEnabled", v)} /><Option label="Desactivada" value={false} current={settings.hapticsEnabled !== false} onPick={v => set("hapticsEnabled", v)} /></div></div>
+          <VolumeSlider label="Intensidad háptica" value={settings.hapticIntensity ?? 0.75} onChange={v => set("hapticIntensity", Math.max(0.35, v))} icon={Vibrate} />
+          <p className="text-[10px] text-slate-500">La vibración depende del soporte del dispositivo y del navegador.</p>
+        </div>
+
         <div className="flex items-center gap-2 text-emerald-400 mt-4 mb-3"><Keyboard className="w-4 h-4" /><h3 className="text-xs uppercase tracking-widest">Controles</h3></div>
         <div>
           <p className="text-sm text-slate-300 mb-2">Modo de control</p>
@@ -100,6 +112,7 @@ export default function SettingsModal({ settings, onChange, onClose, onReset, on
         {onReset && (<button onClick={onReset} className="mt-4 w-full rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 py-2.5 text-sm font-medium text-slate-100 flex items-center justify-center gap-2 transition"><RotateCcw className="w-4 h-4" /> Restaurar configuración predeterminada</button>)}
         <p className="text-[11px] text-slate-500 mt-3">Las opciones se guardan automáticamente.</p>
       </div>
+      {showControlEditor && <AtlasControlEditor settings={settings} onChange={onChange} onClose={() => setShowControlEditor(false)} />}
     </div>
   );
 }

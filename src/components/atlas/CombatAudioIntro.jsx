@@ -27,12 +27,6 @@ export default function CombatAudioIntro({ intro }) {
             </div>
             <h2 className={`font-heading tracking-wide ${intro.boss ? "text-3xl text-emerald-100" : "text-2xl text-white"}`}>{intro.name}</h2>
             {intro.title && <p className="mt-2 text-xs text-slate-300">{intro.title}</p>}
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: Math.max(0.7, (intro.durationMs || 1200) / 1000), ease: "linear" }}
-              className={`mt-3 h-0.5 origin-left ${intro.boss ? "bg-emerald-400" : intro.elite ? "bg-amber-400" : "bg-red-400"}`}
-            />
           </motion.div>
         </motion.div>
       )}

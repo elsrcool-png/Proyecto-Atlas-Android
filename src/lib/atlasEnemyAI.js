@@ -370,34 +370,28 @@ export const STATUS_INFO = {
 };
 
 export function tickPlayerStatuses(statuses) {
-  if (!statuses) return { damage: 0, canAct: true, logs: [], expired: [] };
+  if (!statuses) return { damage: 0, canAct: true, blockedBy: null, logs: [], expired: [], nextStatuses: {} };
   let damage = 0;
   const logs = [];
   const expired = [];
   const next = {};
+  // El bloqueo se evalúa ANTES de reducir duración. Una parálisis de 1 turno
+  // debe consumir exactamente una acción, no desaparecer antes de aplicarse.
+  const blockedBy = statuses.freeze ? "freeze" : statuses.stun ? "stun" : null;
 
   for (const [type, s] of Object.entries(statuses)) {
     const info = STATUS_INFO[type];
     if (type === "burn" || type === "poison") {
       damage += s.amount || 1;
-      logs.push(`${info.name}: -${s.amount || 1} HP`);
+      logs.push(`${info?.name || type}: -${s.amount || 1} HP`);
     }
-    const newDur = s.duration - 1;
-    if (newDur > 0) {
-      next[type] = { ...s, duration: newDur };
-    } else {
-      expired.push(type);
-    }
+    const newDur = Math.max(0, Number(s.duration || 0) - 1);
+    if (newDur > 0) next[type] = { ...s, duration: newDur };
+    else expired.push(type);
   }
 
-  const canAct = !next.freeze && !next.stun;
-  if (!canAct) {
-    const blocker = next.freeze ? "freeze" : "stun";
-    logs.push(`${STATUS_INFO[blocker].name}: no puedes actuar este turno.`);
-    delete next[blocker];
-  }
-
-  return { damage, canAct, logs, expired, nextStatuses: next };
+  if (blockedBy) logs.push(`${STATUS_INFO[blockedBy].name}: tu acción falla automáticamente.`);
+  return { damage, canAct: !blockedBy, blockedBy, logs, expired, nextStatuses: next };
 }
 
 export function statusDefMod(statuses) {

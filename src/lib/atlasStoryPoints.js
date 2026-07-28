@@ -517,7 +517,9 @@ export function resolveValidStoryPoint(world, point) {
   const relocated = spiralToAccessibleCell(world, point);
   if (relocated) return { ...point, x: relocated.x, y: relocated.y };
 
-  console.warn(`[Atlas] Story point ${point.id} accessibility issues:`, primaryCheck.issues);
+  // La pasada global BFS de atlasWorldAccessibility se ejecuta después de
+  // construir colisiones y corredores definitivos. Aquí se conserva el ancla
+  // sin emitir un falso positivo durante la fase intermedia.
   return point;
 }
 

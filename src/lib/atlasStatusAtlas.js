@@ -30,6 +30,8 @@ export const ATLAS_STATUSES = {
   lento:         { id: "lento",         name: "Lento",         icon: "🐌", category: "control",    desc: "Reduce movilidad o prioridad.", stacks: false },
   inmovilizado:  { id: "inmovilizado",  name: "Inmovilizado",  icon: "🪤", category: "control",    desc: "Impide desplazamiento.", stacks: false },
   aturdido:      { id: "aturdido",      name: "Aturdido",      icon: "😵", category: "control",    desc: "Pierde una acción.", stacks: false },
+  paralisis:      { id: "paralisis",      name: "Parálisis",      icon: "⚡", category: "control",    desc: "Pierde una acción por descarga eléctrica.", stacks: false },
+  congelacion:    { id: "congelacion",    name: "Congelación",    icon: "❄️", category: "control",    desc: "Pierde una acción por congelación.", stacks: false },
   veneno:        { id: "veneno",        name: "Veneno",        icon: "☠️", category: "especial",   desc: "Daño progresivo acumulable.", stacks: true },
   maldito:       { id: "maldito",       name: "Maldito",       icon: "🌙", category: "especial",   desc: "Reduce eficacia de habilidades.", stacks: false },
   revelado:      { id: "revelado",      name: "Revelado",      icon: "👁️", category: "especial",   desc: "Elimina ocultación.", stacks: false },
@@ -101,7 +103,7 @@ export function tickAtlasStatuses(statuses) {
     if (type === "inspirado") energyRegenBonus += 1;
     if (type === "agotado") energyRegenBonus -= 1;
     if (type === "bloqueado") energyBlocked = true;
-    if (type === "aturdido" || type === "inmovilizado") skipAction = true;
+    if (type === "aturdido" || type === "paralisis" || type === "congelacion") skipAction = true;
 
     const newDur = s.duration - 1;
     if (newDur > 0) {
@@ -113,7 +115,8 @@ export function tickAtlasStatuses(statuses) {
 
   if (skipAction) {
     delete next.aturdido;
-    delete next.inmovilizado;
+    delete next.paralisis;
+    delete next.congelacion;
     logs.push("No puedes actuar este turno.");
   }
 

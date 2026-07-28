@@ -73,7 +73,7 @@ export default function StoryPointMarker({ sp, near, isTarget, debug }) {
   const highlightRadius = sp.highlightRadius || 75;
 
   return (
-    <div className="absolute flex flex-col items-center pointer-events-none" style={{ left: sp.x - 20, top: sp.y - 30, zIndex: getWorldDepth(sp.y, isTarget ? 8 : 1) }}>
+    <div className="absolute flex flex-col items-center pointer-events-none" style={{ left: sp.x - 20, top: sp.y - 30, zIndex: isTarget ? 9999 : getWorldDepth(sp.y, 1) }}>
       {/* Decal de suelo */}
       <GroundDecal type={sp.visualType || sp.icon} x={20} y={30} isTarget={isTarget} />
 

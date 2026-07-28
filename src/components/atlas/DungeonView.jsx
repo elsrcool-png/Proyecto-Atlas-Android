@@ -11,11 +11,14 @@ import EntitySprite from "./EntitySprite";
 import Joystick from "./Joystick";
 import DungeonVfx from "./DungeonVfx";
 import CombatView from "./CombatView";
+import AtlasPressButton from "./AtlasPressButton";
+import OrientationToggleButton from "./OrientationToggleButton";
+import { getSkillStatusHints } from "@/lib/atlasSkillStatusHints";
 
 const T = DUNGEON_TILE;
 const FACING_LABEL = { up: "↑", down: "↓", left: "←", right: "→", up_left: "↖", up_right: "↗", down_left: "↙", down_right: "↘" };
 
-export default function DungeonView({ dungeon, player, region, regionIndex, companion, onExit, onDescend, onOpenChest, onStoryPoint, onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear, enemy, lastResult, onAttack, onSkill, onItem, onEscape, onEnemyDead, worldSkills, worldSkillCosts, playerStatuses, combatBusy, onStartBossCombat, onActivateFinalSanctuary, bossDefeated }) {
+export default function DungeonView({ dungeon, player, region, regionIndex, companion, onExit, onDescend, onOpenChest, onStoryPoint, onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear, enemy, lastResult, onAttack, onSkill, onItem, onEscape, onEnemyDead, worldSkills, worldSkillCosts, playerStatuses, combatBusy, onStartBossCombat, onActivateFinalSanctuary, bossDefeated, settings, onUpdateSettings, onRequestOrientation }) {
   const [pos, setPos] = useState(dungeon?.spawn || { x: 1, y: 1 });
   const [facing, setFacing] = useState("down");
   const [opened, setOpened] = useState(new Set());
@@ -432,10 +435,11 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
               <div className="flex items-center justify-between text-[9px] text-sky-300 mb-0.5"><span>EN</span><span>{player.mp || 0}/{player.maxMp || 0}</span></div>
               <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden"><div className="h-full bg-sky-400 transition-all" style={{ width: `${mpPct}%` }} /></div>
             </div>
-            <button onClick={() => setShowDebug((v) => !v)} className="rounded-lg bg-slate-900/80 border border-slate-700 px-2 py-1.5 text-[10px] text-slate-300 hover:bg-slate-800">DBG</button>
-            <button onClick={onExit} className="flex items-center gap-1.5 rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800">
+            {settings && <OrientationToggleButton settings={settings} onChange={onUpdateSettings} onRequestOrientation={onRequestOrientation} className="rounded-lg bg-slate-900/80 border border-slate-700 p-2 text-slate-200 hover:bg-slate-800" />}
+            <AtlasPressButton onPress={() => setShowDebug((v) => !v)} className="rounded-lg bg-slate-900/80 border border-slate-700 px-2 py-1.5 text-[10px] text-slate-300 hover:bg-slate-800">DBG</AtlasPressButton>
+            <AtlasPressButton onPress={onExit} className="flex items-center gap-1.5 rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800">
               <LogOut className="w-3.5 h-3.5" /> Salir
-            </button>
+            </AtlasPressButton>
           </div>
         </div>
 
@@ -506,12 +510,12 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
           <Joystick onMove={onJoyMove} />
         </div>
         <div className="absolute bottom-6 z-20 right-6 flex items-end gap-3">
-          <button onClick={() => { const i = DIR8_KEYS.indexOf(facing); setFacing(DIR8_KEYS[(i + 1) % DIR8_KEYS.length]); }} className="rounded-full bg-slate-700/85 border-2 border-slate-400 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center" style={{ width: 50, height: 50 }} title="Girar">
+          <AtlasPressButton onPress={() => { const i = DIR8_KEYS.indexOf(facing); setFacing(DIR8_KEYS[(i + 1) % DIR8_KEYS.length]); }} className="rounded-full bg-slate-700/85 border-2 border-slate-400 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center" style={{ width: 50, height: 50 }} title="Girar">
             <RotateCw className="w-5 h-5" />
-          </button>
-          <button onClick={onA} className={`rounded-full border-2 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center ${combat.tactical ? "bg-rose-600/85 border-rose-300" : "bg-emerald-600/85 border-emerald-300"}`} style={{ width: 64, height: 64, fontSize: 18 }}>
+          </AtlasPressButton>
+          <AtlasPressButton onPress={onA} haptic="uiStrong" className={`rounded-full border-2 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center ${combat.tactical ? "bg-rose-600/85 border-rose-300" : "bg-emerald-600/85 border-emerald-300"}`} style={{ width: 64, height: 64, fontSize: 18 }}>
             {combat.tactical ? "⚔" : "A"}
-          </button>
+          </AtlasPressButton>
         </div>
 
         {combat.tactical && (() => {
@@ -524,12 +528,14 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             const noEnergy = sk.energyCost > 0 && (player.mp || 0) < sk.energyCost;
             const disabled = !canAct || cd > 0 || noEnergy;
             const ts = typeStyle(sk.type);
+            const hints = getSkillStatusHints(sk);
             return (
-              <button onClick={() => combat.useSkill(sk, pos, facing, player)} disabled={disabled} className="flex flex-col items-center justify-center rounded-lg border w-[66px] h-[50px] leading-none transition active:scale-95"
-                style={{ background: ts.bg, borderColor: ts.bd, color: "#f1f5f9", opacity: disabled ? 0.4 : 1 }}>
+              <AtlasPressButton onPress={() => combat.useSkill(sk, pos, facing, player)} disabled={disabled} haptic="uiStrong" className="relative flex flex-col items-center justify-center rounded-lg border w-[66px] h-[50px] leading-none transition active:scale-95"
+                style={{ background: ts.bg, borderColor: ts.bd, color: "#f1f5f9", opacity: disabled ? 0.4 : 1 }} title={`${sk.name}${hints.length ? ` · ${hints.map(h => h.name).join(", ")}` : ""}`}>
                 <span className="font-bold text-[10px] truncate max-w-[60px]">{sk.name}</span>
                 <span className="text-[8px] text-slate-300 mt-0.5">{sk.range > 1 ? `Alc${sk.range} ` : ""}{sk.energyCost ? `EN ${sk.energyCost}` : "gratis"}{cd > 0 ? ` CD${cd}` : ""}</span>
-              </button>
+                {hints.length > 0 && <span className="absolute top-0.5 right-0.5 flex gap-0.5">{hints.slice(0, 2).map(h => <span key={h.id} className="text-[10px]">{h.icon}{h.conditional && <sup className="text-[6px]">🎲</sup>}</span>)}</span>}
+              </AtlasPressButton>
             );
           };
           return (
@@ -537,14 +543,14 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
               {showMore && (
                 <div className="flex flex-col gap-1.5 mb-1 p-1.5 rounded-lg bg-slate-950/85 border border-slate-700">
                   {extra.map((sk) => <SkillBtn key={sk.id} sk={sk} />)}
-                  <button onClick={() => combat.useItem(pos)} disabled={!canAct} className="flex items-center justify-center gap-1 rounded-lg bg-violet-700/80 border border-violet-400 px-2 py-1 text-[10px] text-white disabled:opacity-40"><FlaskRound className="w-3 h-3" /> Objeto</button>
-                  <button onClick={() => combat.wait(pos)} disabled={!canAct} className="flex items-center justify-center gap-1 rounded-lg bg-slate-700/80 border border-slate-400 px-2 py-1 text-[10px] text-white disabled:opacity-40"><Hourglass className="w-3 h-3" /> Esperar</button>
+                  <AtlasPressButton onPress={() => combat.useItem(pos)} disabled={!canAct} className="flex items-center justify-center gap-1 rounded-lg bg-violet-700/80 border border-violet-400 px-2 py-1 text-[10px] text-white disabled:opacity-40"><FlaskRound className="w-3 h-3" /> Objeto</AtlasPressButton>
+                  <AtlasPressButton onPress={() => combat.wait(pos)} disabled={!canAct} className="flex items-center justify-center gap-1 rounded-lg bg-slate-700/80 border border-slate-400 px-2 py-1 text-[10px] text-white disabled:opacity-40"><Hourglass className="w-3 h-3" /> Esperar</AtlasPressButton>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-1.5">
                 {visible.map((sk) => <SkillBtn key={sk.id} sk={sk} />)}
               </div>
-              <button onClick={() => setShowMore((v) => !v)} className="self-end rounded-md bg-slate-800/85 border border-slate-500 px-2 py-0.5 text-[10px] text-slate-200">{showMore ? "✕" : "Más"}</button>
+              <AtlasPressButton onPress={() => setShowMore((v) => !v)} className="self-end rounded-md bg-slate-800/85 border border-slate-500 px-2 py-0.5 text-[10px] text-slate-200">{showMore ? "✕" : "Más"}</AtlasPressButton>
             </div>
           );
         })()}

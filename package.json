@@ -1,7 +1,7 @@
 {
   "name": "base44-app",
   "private": true,
-  "version": "2.19.7",
+  "version": "2.20.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -37,7 +37,9 @@
     "validate:v2-19-6": "npm run validate:kael-mission && npm run validate:v2-19-5",
     "validate:arctic-npc-complete": "node scripts/validate-arctic-npc-complete-v2-19-7.mjs",
     "validate:v2-19-7": "npm run validate:syntax-imports && npm run validate:arctic-npc-complete && npm run validate:v2-19-6",
-    "validate:syntax-imports": "node scripts/validate-syntax-imports-v2-19-7.mjs"
+    "validate:syntax-imports": "node scripts/validate-syntax-imports-v2-19-7.mjs",
+    "validate:v2-20-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-20.mjs",
+    "validate:v2-20": "npm run validate:syntax-imports && npm run validate:v2-20-core && npm run validate:v2-19-7"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.39",

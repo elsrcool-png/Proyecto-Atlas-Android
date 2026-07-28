@@ -35,7 +35,9 @@ import { pickLoreLine } from "@/lib/atlasLore";
 import { threatNpcWarning } from "@/lib/atlasThreatExpansion";
 import useDayNight from "@/hooks/useDayNight";
 import useAtlasAudio from "@/hooks/useAtlasAudio";
+import useAtlasHaptics from "@/hooks/useAtlasHaptics";
 import CombatAudioIntro from "@/components/atlas/CombatAudioIntro";
+import OrientationToggleButton from "@/components/atlas/OrientationToggleButton";
 import DayNightOverlay from "@/components/atlas/DayNightOverlay";
 import { listSlots, loadSlot, deleteSlot, migrateLegacySave, setActiveSaveSlot } from "@/lib/atlasSave";
 import SaveSlotsModal from "@/components/atlas/SaveSlotsModal";
@@ -71,6 +73,7 @@ export default function Game() {
     settings,
     skills: audioSession.skills,
   });
+  useAtlasHaptics({ settings, lastResult: audioSession.lastResult, playerStatuses: audioSession.playerStatuses, enemy: audioSession.enemy });
 
   const { phase: dayPhase, advance: advanceTime, dayCount } = useDayNight();
   const prevDayRef = useRef(dayCount);
@@ -203,7 +206,7 @@ export default function Game() {
     onSkill: s.onSkill, onItem: s.onItem, skills: s.skills, skillCosts: s.skillCosts,
     onRestAt: s.onRestAt, onOpenSettlementNpc: s.onOpenSettlementNpc, onOpenFlavor: s.onOpenFlavor,
     onOpenEquipment: () => s.setShowEquipment(true),
-    settings, onOpenSettings: () => setShowSettings(true),
+    settings, onOpenSettings: () => setShowSettings(true), onRequestOrientation: requestOrientation,
     onUseConsumable: s.useConsumable,
     onEquipWeapon: s.equipWeapon, onEquipArmor: s.equipArmor, onEquipAccessory: s.equipAccessory,
     onSellWeapon: s.sellWeapon, onSellArmor: s.sellArmor, onSellAccessory: s.sellAccessory, onSellMaterial: s.sellMaterial,
@@ -229,6 +232,7 @@ export default function Game() {
     <>
       <div className="fixed inset-0 pointer-events-none z-[15] atlas-scanlines" aria-hidden />
       <CombatAudioIntro intro={audio.combatIntro} />
+      {s.enemy && <OrientationToggleButton settings={settings} onChange={updateSettings} onRequestOrientation={requestOrientation} className="fixed top-2 right-2 z-[59] rounded-lg bg-slate-950/88 border border-slate-600 p-2 text-white shadow-lg" />}
       {s.showIntro && <IntroNarrative onDone={s.dismissIntro} />}
       {mode === "board" ? (
         <div className="min-h-screen text-slate-100 px-4 py-6 relative">
@@ -317,7 +321,7 @@ export default function Game() {
           </div>
         </div>
       ) : s.inDungeon ? (
-        <DungeonView dungeon={s.currentDungeon} player={s.player} region={s.region} regionIndex={s.regionIndex} companion={s.player?.companion || null} onExit={s.exitDungeon} onDescend={s.descendDungeon} onOpenChest={s.openChest} onStoryPoint={s.onStoryPoint} onPlayerDamage={s.onDungeonPlayerDamage} onSpendEnergy={s.onDungeonSpendEnergy} onEnemyKilled={s.onDungeonEnemyKilled} onUseConsumable={s.useConsumable} onCompanionUpdate={s.onCompanionUpdate} onWeaponWear={s.damageWeapon} enemy={s.enemy} lastResult={s.lastResult} onAttack={s.handleAttack} onSkill={s.onSkill} onItem={s.onItem} onEscape={s.handleEscape} onEnemyDead={s.onEnemyDead} worldSkills={s.skills} worldSkillCosts={s.skillCosts} playerStatuses={s.playerStatuses} combatBusy={s.combatBusy || audio.combatIntroActive} onStartBossCombat={s.startDungeonBossCombat} onActivateFinalSanctuary={() => { audio.playPortal(); s.activateDungeonFinalSanctuary(); }} bossDefeated={s.dungeonBossDefeated} />
+        <DungeonView dungeon={s.currentDungeon} player={s.player} region={s.region} regionIndex={s.regionIndex} companion={s.player?.companion || null} onExit={s.exitDungeon} onDescend={s.descendDungeon} onOpenChest={s.openChest} onStoryPoint={s.onStoryPoint} onPlayerDamage={s.onDungeonPlayerDamage} onSpendEnergy={s.onDungeonSpendEnergy} onEnemyKilled={s.onDungeonEnemyKilled} onUseConsumable={s.useConsumable} onCompanionUpdate={s.onCompanionUpdate} onWeaponWear={s.damageWeapon} enemy={s.enemy} lastResult={s.lastResult} onAttack={s.handleAttack} onSkill={s.onSkill} onItem={s.onItem} onEscape={s.handleEscape} onEnemyDead={s.onEnemyDead} worldSkills={s.skills} worldSkillCosts={s.skillCosts} playerStatuses={s.playerStatuses} combatBusy={s.combatBusy || audio.combatIntroActive} onStartBossCombat={s.startDungeonBossCombat} onActivateFinalSanctuary={() => { audio.playPortal(); s.activateDungeonFinalSanctuary(); }} bossDefeated={s.dungeonBossDefeated} settings={settings} onUpdateSettings={updateSettings} onRequestOrientation={requestOrientation} />
       ) : (
         <ExploreMode game={exploreGame} />
       )}

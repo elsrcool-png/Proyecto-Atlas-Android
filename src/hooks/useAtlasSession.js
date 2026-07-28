@@ -1940,7 +1940,18 @@ export default function useAtlasSession() {
     turnStart();
     const stChk = tickPlayerStatusTurn();
     if (stChk.died) return;
-    if (!stChk.canAct) { triggerEnemyTurn(enemy, { ...player, hp: player.hp - stChk.damage }); return; }
+    if (!stChk.canAct) {
+      const afterPlayer = stChk.playerAfterTick || { ...playerRef.current };
+      const frozen = stChk.blockedBy === "freeze";
+      commitCombatResult(
+        { type: frozen ? "PLAYER_FROZEN" : "PLAYER_PARALYZED", enemyDamage: 0, playerDamage: 0, blockedBy: stChk.blockedBy, attemptedAction: "escapar", actionFailed: true, skipDice: true },
+        540,
+        { beforePlayer: stChk.playerBeforeTick || player, afterPlayer, beforeEnemy: enemy, afterEnemy: enemy, resolution: { rawDamage: 0, hpDamage: 0 } },
+      );
+      pushLog(`${frozen ? "Congelación" : "Parálisis"}: el intento de escape falla automáticamente.`);
+      triggerEnemyTurn(enemy, afterPlayer, 620);
+      return;
+    }
     const roll = rollDie(20);
     showDice(singleDie(20, roll), "Escape", () => {
       const res = resolveEscape({ ...player, defense: playerDefVsType(player, "fisico") }, { ...enemy, defense: enemy.physicalDefense ?? enemy.defense }, roll);

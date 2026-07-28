@@ -1,8 +1,40 @@
+
+# Dependencias y compilación
 node_modules/
 dist/
+
+# Android temporal
 android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+
+# Firma privada
+*.jks
+*.keystore
+*.p12
+*.pem
+
+# Paquetes finales
+*.apk
+*.aab
+
+# Dependencias
+node_modules/
+dist/
+
+# Android temporal
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# Firma privada
+*.p12
+*.jks
+*.keystore
+*.pem
+
+# Aplicaciones compiladas
 *.apk
 *.aab

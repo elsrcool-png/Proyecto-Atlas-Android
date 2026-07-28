@@ -256,24 +256,13 @@ export function validateSanctuaryZone(world, sanctuary) {
     });
   }
 
-  // Limpiar NPCs dentro del radio seguro
-  if (world.npcs) {
-    world.npcs = world.npcs.filter(n => Math.hypot(n.x - sanctuary.x, n.y - sanctuary.y) >= r);
-  }
-
-  // Limpiar cofres dentro del radio seguro
-  if (world.chests) {
-    world.chests = world.chests.filter(c => Math.hypot(c.x - sanctuary.x, c.y - sanctuary.y) >= r);
-  }
+  // NPC, cofres y objetivos narrativos NO se eliminan. La pasada global de
+  // accesibilidad y separación los reubica fuera del portal. Borrarlos podía
+  // dejar una misión aceptada sin su objetivo físico.
 
   // Limpiar enemigos dentro del radio seguro
   if (world.enemies) {
     world.enemies = world.enemies.filter(e => Math.hypot(e.x - sanctuary.x, e.y - sanctuary.y) >= r);
-  }
-
-  // Limpiar storyPoints dentro del radio seguro
-  if (world.storyPoints) {
-    world.storyPoints = world.storyPoints.filter(sp => Math.hypot(sp.x - sanctuary.x, sp.y - sanctuary.y) >= r);
   }
 
   // Limpiar decoración sólida dentro del radio seguro

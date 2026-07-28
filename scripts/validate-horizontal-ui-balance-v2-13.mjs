@@ -39,7 +39,7 @@ const manifest = JSON.parse(read("public/manifest.json"));
 
 assertIncludes(settings, 'orientation: "horizontal"', "horizontal es la orientación predeterminada");
 assertIncludes(settings, 'hudDensity: "clean"', "HUD limpio es el modo predeterminado");
-assertIncludes(settings, "layoutVersion: 13", "ajustes anteriores migran una vez a horizontal limpio");
+if (/layoutVersion:\s*(?:1[3-9]|[2-9]\d)/.test(settings)) pass("ajustes anteriores migran una vez a horizontal limpio"); else fail("ajustes anteriores migran una vez a horizontal limpio");
 assertIncludes(settings, "export async function requestPreferredOrientation", "existe bloqueo de orientación con fallback");
 assertIncludes(game, 'requestPreferredOrientation("horizontal")', "inicio y carga solicitan horizontal desde gesto del usuario");
 if (manifest.orientation !== "landscape") fail(`manifest.orientation esperado landscape, recibido ${manifest.orientation}`);
