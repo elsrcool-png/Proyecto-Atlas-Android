@@ -1,4 +1,4 @@
-PROYECTO ATLAS VISUAL v2.19.4
-Arena del Guardián Verde y Validación de Audio Portátil
-Base: v2.19.3 NPC Región Verde y Fondos Maestros de Combate
-Fecha: 2026-07-27
+PROYECTO ATLAS VISUAL v2.21.0
+Equipamiento Regional Progresivo, Cascos y Accesorio II
+Base: v2.20 Controles, Estados y Accesibilidad
+Fecha: 2026-07-28

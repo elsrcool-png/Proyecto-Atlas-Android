@@ -1,6 +1,9 @@
 // PROYECTO ATLAS — Sistema de Loot y Equipamiento V1
 import { randInt } from "@/lib/atlasWorld";
 import { getSettlementStock, isStockUnlocked } from "@/lib/atlasEconomyV3";
+import { HELMETS, applyWeaponCatalog, applyArmorCatalog } from "@/lib/atlasRegionalEquipment";
+
+export { HELMETS };
 
 export const RARITIES = {
   "Común": { name: "Común", color: "#9ca3af", sell: 8, sellable: true },
@@ -47,6 +50,7 @@ export const WEAPONS = {
   staff_hazel: { name: "Bastón de Avellano", rarity: "Poco común", offType: "arcane", stats: { attack: 1, maxMp: 2 }, region: "verde", price: 38, desc: "Madera flexible elegida por los estudiosos de Robledal." },
   bow_hawthorn: { name: "Arco de Espino", rarity: "Poco común", offType: "precision", stats: { attack: 2, hit: 0.05 }, region: "verde", price: 40, desc: "Arco ligero para patrullar caminos estrechos." },
 };
+applyWeaponCatalog(WEAPONS);
 
 export const ARMORS = {
   armor_adventurer: { name: "Ropa de Aventurero", rarity: "Común", stats: { maxHp: 5, physDef: 1 }, passive: null, price: 12, desc: "Tela recia." },
@@ -71,6 +75,7 @@ export const ARMORS = {
   robe_herbalist: { name: "Túnica de la Herbolaria", rarity: "Poco común", stats: { magDef: 2, maxMp: 4 }, region: "verde", price: 38, desc: "Tela impregnada con resinas protectoras de Robledal." },
   vest_ranger: { name: "Coraza del Vigilante", rarity: "Poco común", stats: { physDef: 2, magDef: 1, maxHp: 3 }, region: "verde", price: 42, desc: "Equipo flexible de los Vigilantes del Sendero." },
 };
+applyArmorCatalog(ARMORS);
 
 export const MATERIALS = {
   cuero: { name: "Cuero", rarity: "Común", price: 3 },
@@ -132,13 +137,16 @@ export function consumableName(id, cls) {
 
 export function rollLootD10() { return randInt(1, 10); }
 
-function pickEquip(rarity, ACCESSORIES, regionId) {
-  const weaps = Object.keys(WEAPONS).filter(id => WEAPONS[id].rarity === rarity).map(id => ({ id, kind: "weapon" }));
-  const arms = Object.keys(ARMORS).filter(id => ARMORS[id].rarity === rarity && !ARMORS[id].starter).map(id => ({ id, kind: "armor" }));
-  const accs = Object.keys(ACCESSORIES).filter(id => ACCESSORIES[id].rarity === rarity).map(id => ({ id, kind: "accessory" }));
-  const all = [...weaps, ...arms, ...accs];
+function pickEquip(rarity, ACCESSORIES, regionId, player = null) {
+  const weaps = Object.keys(WEAPONS).filter(id => WEAPONS[id].rarity === rarity && WEAPONS[id].source !== "shop").map(id => ({ id, kind: "weapon" }));
+  const arms = Object.keys(ARMORS).filter(id => ARMORS[id].rarity === rarity && !ARMORS[id].starter && ARMORS[id].source !== "shop").map(id => ({ id, kind: "armor" }));
+  const helmets = player?.equipmentUnlocks?.helmet
+    ? Object.keys(HELMETS).filter(id => HELMETS[id].rarity === rarity && HELMETS[id].source !== "shop").map(id => ({ id, kind: "helmet" }))
+    : [];
+  const accs = Object.keys(ACCESSORIES).filter(id => ACCESSORIES[id].rarity === rarity && ACCESSORIES[id].source !== "shop").map(id => ({ id, kind: "accessory" }));
+  const all = [...weaps, ...arms, ...helmets, ...accs];
   if (!all.length) return null;
-  const refOf = e => e.kind === "weapon" ? WEAPONS[e.id] : e.kind === "armor" ? ARMORS[e.id] : ACCESSORIES[e.id];
+  const refOf = e => e.kind === "weapon" ? WEAPONS[e.id] : e.kind === "armor" ? ARMORS[e.id] : e.kind === "helmet" ? HELMETS[e.id] : ACCESSORIES[e.id];
   const local = all.filter(e => { const r = refOf(e).region; return !r || r === regionId; });
   const pool = local.length ? local : all;
   const fresh = pool.filter(e => !RECENT.equip.includes(e.kind + ":" + e.id));
@@ -152,6 +160,7 @@ function pickEquip(rarity, ACCESSORIES, regionId) {
 function equipName(kind, id, ACCESSORIES) {
   if (kind === "weapon") return WEAPONS[id].name;
   if (kind === "armor") return ARMORS[id].name;
+  if (kind === "helmet") return HELMETS[id].name;
   return ACCESSORIES[id].name;
 }
 
@@ -165,8 +174,8 @@ export function resolveLoot(roll, player, ACCESSORIES, regionIndex) {
     case 5: { const id = COMMON_MATERIALS[randInt(0, COMMON_MATERIALS.length - 1)]; return { type: "material", id, name: MATERIALS[id].name, rarity: "Común", amount: 1, text: "Obtienes un material común." }; }
     case 6: { const id = lootConsumablePool(player.class)[randInt(0, 4)]; return { type: "consumable", id, name: consumableName(id, player.class), text: "Obtienes un consumible." }; }
     case 7: { const id = RARE_MATERIALS[randInt(0, RARE_MATERIALS.length - 1)]; return { type: "material", id, name: MATERIALS[id].name, rarity: "Raro", amount: 1, text: "Obtienes un material raro." }; }
-    case 8: { const pk = pickEquip("Común", ACCESSORIES, regionId); if (!pk) return { type: "gold", amount: 10, text: "Obtienes oro." }; return { type: "equipment", kind: pk.kind, id: pk.id, name: equipName(pk.kind, pk.id, ACCESSORIES), rarity: "Común", text: "Obtienes un equipo común." }; }
-    case 9: { const pk = pickEquip("Raro", ACCESSORIES, regionId); if (!pk) return { type: "gold", amount: 15, text: "Obtienes oro." }; return { type: "equipment", kind: pk.kind, id: pk.id, name: equipName(pk.kind, pk.id, ACCESSORIES), rarity: "Raro", text: "Obtienes un equipo raro." }; }
+    case 8: { const pk = pickEquip("Común", ACCESSORIES, regionId, player); if (!pk) return { type: "gold", amount: 10, text: "Obtienes oro." }; return { type: "equipment", kind: pk.kind, id: pk.id, name: equipName(pk.kind, pk.id, ACCESSORIES), rarity: "Común", text: "Obtienes un equipo común." }; }
+    case 9: { const pk = pickEquip("Raro", ACCESSORIES, regionId, player); if (!pk) return { type: "gold", amount: 15, text: "Obtienes oro." }; return { type: "equipment", kind: pk.kind, id: pk.id, name: equipName(pk.kind, pk.id, ACCESSORIES), rarity: "Raro", text: "Obtienes un equipo raro." }; }
     case 10: return { type: "destiny", text: "¡El Destino de Atlas se activa!" };
     default: return { type: "none", text: "No se obtiene recompensa." };
   }
@@ -205,11 +214,16 @@ export function shopEquipmentForTier(tier, ACCESSORIES, regionId = "verde", worl
       name: ref.name,
       rarity: ref.rarity,
       price: ref.price || sellValueOf(ref.rarity) * 3,
+      requiredLevel: ref.requiredLevel || 1,
+      recommendedClass: ref.recommendedClass || null,
+      region: ref.region || regionId,
+      settlement: ref.settlement || tier,
       desc: ref.desc,
     });
   };
   for (const id of stock.weapons || []) add("weapon", id, WEAPONS[id]);
   for (const id of stock.armors || []) add("armor", id, ARMORS[id]);
+  for (const id of stock.helmets || []) add("helmet", id, HELMETS[id]);
   for (const id of stock.accessories || []) add("accessory", id, ACCESSORIES[id]);
   return list;
 }

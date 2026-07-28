@@ -34,8 +34,24 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      - name: Validar Atlas v2.20
-        run: npm run validate:v2-20
+      - name: Validar versión
+        shell: bash
+        run: |
+          VERSION_NAME=$(
+            sed -nE 's/.*versionName[[:space:]=]+"([^"]+)".*/\1/p' \
+              android/app/build.gradle |
+            head -n 1
+          )
+
+          SCRIPT="validate:v${VERSION_NAME//./-}"
+
+          if node -e 'const p=require("./package.json"); process.exit((p.scripts||{})[process.argv[1]] ? 0 : 1)' "$SCRIPT"; then
+            npm run "$SCRIPT"
+          elif node -e 'const p=require("./package.json"); process.exit((p.scripts||{}).validate ? 0 : 1)'; then
+            npm run validate
+          else
+            echo "No hay validación específica; se continúa."
+          fi
 
       - name: Compilar Atlas
         run: npm run build
@@ -48,10 +64,8 @@ jobs:
           ATLAS_KEYSTORE_BASE64: ${{ secrets.ATLAS_KEYSTORE_BASE64 }}
         run: |
           test -n "$ATLAS_KEYSTORE_BASE64"
-
           printf '%s' "$ATLAS_KEYSTORE_BASE64" |
             base64 --decode > android/app/atlas-release.p12
-
           test -s android/app/atlas-release.p12
 
       - name: Comprobar firma maestra
@@ -65,7 +79,6 @@ jobs:
             -storepass "$ATLAS_STORE_PASSWORD" \
             -alias "$ATLAS_KEY_ALIAS" \
             >/dev/null
-
           echo "Firma maestra válida"
 
       - name: Construir APK release firmado
@@ -79,11 +92,20 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
-      - name: Verificar APK
+      - name: Verificar y nombrar APK
+        shell: bash
         run: |
           APK="android/app/build/outputs/apk/release/app-release.apk"
-
           test -f "$APK"
+
+          VERSION_NAME=$(
+            sed -nE 's/.*versionName[[:space:]=]+"([^"]+)".*/\1/p' \
+              android/app/build.gradle |
+            head -n 1
+          )
+
+          OUT="Atlas-v${VERSION_NAME}-release.apk"
+          SIG="Atlas-v${VERSION_NAME}-signature.txt"
 
           APKSIGNER=$(
             find "$ANDROID_HOME/build-tools" \
@@ -99,21 +121,18 @@ jobs:
             --verbose \
             --print-certs \
             "$APK" |
-            tee Atlas-v2.20-signature.txt
+            tee "$SIG"
 
-          cp "$APK" Atlas-v2.20-release.apk
-
-          sha256sum \
-            Atlas-v2.20-release.apk \
-            > Atlas-v2.20-release.apk.sha256
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > "${OUT}.sha256"
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: Atlas-v2.20-release
+          name: Atlas-release
           path: |
-            Atlas-v2.20-release.apk
-            Atlas-v2.20-release.apk.sha256
-            Atlas-v2.20-signature.txt
+            Atlas-v*-release.apk
+            Atlas-v*-release.apk.sha256
+            Atlas-v*-signature.txt
           if-no-files-found: error
           retention-days: 30

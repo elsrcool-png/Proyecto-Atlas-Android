@@ -13,14 +13,14 @@ import { defaultSettings } from "@/lib/atlasSettings";
 
 const CARDS = [
   { id: "items", label: "Objetos", desc: "Materiales y recursos", Icon: Backpack, color: "text-amber-300", ring: "hover:border-amber-500/60" },
-  { id: "equipment", label: "Equipamiento", desc: "Arma, armadura y accesorio", Icon: Sword, color: "text-sky-300", ring: "hover:border-sky-500/60" },
+  { id: "equipment", label: "Equipamiento", desc: "Arma, armadura, casco y accesorios", Icon: Sword, color: "text-sky-300", ring: "hover:border-sky-500/60" },
   { id: "consumables", label: "Consumibles", desc: "Pociones y objetos de uso", Icon: FlaskConical, color: "text-rose-300", ring: "hover:border-rose-500/60" },
   { id: "missions", label: "Misiones", desc: "Encargos activos y progreso", Icon: ScrollText, color: "text-violet-300", ring: "hover:border-violet-500/60" },
   { id: "sheet", label: "Hoja de personaje", desc: "Atributos, habilidades y pasivas", Icon: User, color: "text-emerald-300", ring: "hover:border-emerald-500/60" },
   { id: "settings", label: "Configuración", desc: "Pantalla y controles", Icon: SettingsIcon, color: "text-slate-300", ring: "hover:border-slate-500/60" },
 ];
 
-export default function PlayerHub({ player, region, missions, missionDefs, settings, onUpdateSettings, onUseConsumable, onEquipWeapon, onEquipArmor, onEquipAccessory, onSellWeapon, onSellArmor, onSellAccessory, onSellMaterial, onEquipClassWeapon, onSellClassWeapon, onClose }) {
+export default function PlayerHub({ player, region, missions, missionDefs, settings, onUpdateSettings, onUseConsumable, onEquipWeapon, onEquipArmor, onEquipHelmet, onEquipAccessory, onSellWeapon, onSellArmor, onSellHelmet, onSellAccessory, onSellMaterial, onEquipClassWeapon, onSellClassWeapon, onClose }) {
   const [view, setView] = useState("home");
   const energy = ENERGY[player.class];
   const xpNext = xpToNext(player.level);
@@ -28,7 +28,7 @@ export default function PlayerHub({ player, region, missions, missionDefs, setti
 
   const sectionProps = {
     items: { player, onSellMaterial },
-    equipment: { player, onEquipWeapon, onEquipArmor, onEquipAccessory, onSellWeapon, onSellArmor, onSellAccessory, onEquipClassWeapon, onSellClassWeapon },
+    equipment: { player, onEquipWeapon, onEquipArmor, onEquipHelmet, onEquipAccessory, onSellWeapon, onSellArmor, onSellHelmet, onSellAccessory, onEquipClassWeapon, onSellClassWeapon },
     consumables: { player, onUseConsumable },
     missions: { missions, missionDefs, region },
     sheet: { player },

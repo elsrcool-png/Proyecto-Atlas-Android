@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { REGIONS, MONSTERS } from "@/lib/atlasData";
-import { recomputePlayer, ACCESSORIES, STARTER_ACCESSORIES, BOSS_DROPS, RARITY_VALUE, RARITY_SELLABLE, CLASS_OFF_TYPE } from "@/lib/atlasSkills";
+import { recomputePlayer, ACCESSORIES, STARTER_ACCESSORIES, BOSS_DROPS, CLASS_OFF_TYPE } from "@/lib/atlasSkills";
 import { makeWeaponInstance, normalizeWeaponInventory, resolveWeaponDefId } from "@/lib/atlasWeaponInstances";
 import { ENERGY, getSkillSet } from "@/lib/atlasSkillDesign";
 import { getWeaponAbility, getLootWeaponAbility, CLASS_WEAPONS, WEAPON_MAX_UPGRADE, getGreenRelicWeaponId } from "@/lib/atlasWeapons";
@@ -13,6 +13,7 @@ import { buildCanonicalExploreMaps } from "@/lib/atlasCanonicalWorlds";
 import { generateMissions, SECTOR_NEED } from "@/lib/atlasMissions";
 import { REST_COST, randomFlavorLine } from "@/lib/atlasSettlementNpcs";
 import { RARITIES, WEAPONS, ARMORS, MATERIALS, COMMON_MATERIALS, RARE_MATERIALS, rollLootD10, resolveLoot, rollDestiny, rollRegionMaterial } from "@/lib/atlasLoot";
+import { equipmentUnlocksFromBosses } from "@/lib/atlasRegionalEquipment";
 import { resolveGlobalLoot } from "@/lib/atlasLootEngine";
 import { SHRINE_TYPES, rollShrineType, revealThreshold, pickNotify, shrineLore } from "@/lib/atlasShrines";
 import {
@@ -45,6 +46,7 @@ import useAtlasRegionTravel from "@/hooks/useAtlasRegionTravel";
 import useAtlasCombatRuntime from "@/hooks/useAtlasCombatRuntime";
 import useAtlasCombatPassives from "@/hooks/useAtlasCombatPassives";
 import createAtlasCombatActions from "@/lib/createAtlasCombatActions";
+import createAtlasEquipmentActions from "@/lib/createAtlasEquipmentActions";
 
 const NPC_KEYS = ["campamento", "pueblo", "ciudad"];
 const SECTOR_OF_BLOCK = ["campamento", "pueblo", "ciudad"];
@@ -564,7 +566,7 @@ export default function useAtlasSession() {
     const en = ENERGY[character.class];
     const starterWeaponId = { Guerrero: "starter_espada_recluta", Mago: "starter_baston_aprendiz", "Pícaro": "starter_dagas_bronce" }[character.class];
     const starterArmorId = { Guerrero: "starter_armor_cuero", Mago: "starter_tunica_aprendiz", "Pícaro": "starter_ropaje_ligero" }[character.class];
-    const base = { ...character, level: 1, statPoints: 0, baseAttack: character.attack, baseDefense: character.physicalDefense ?? character.defense, baseMagicalDefense: character.magicalDefense ?? character.defense, baseMaxHp: character.hp, hp: character.hp, accessory: null, accessoryInventory: [...STARTER_ACCESSORIES], weapon: null, armor: starterArmorId, armorInventory: [starterArmorId], weaponInventory: [], classWeapon: starterWeaponId, classWeaponInventory: [starterWeaponId], weaponUpgrades: {}, materials: {}, baseMaxMp: maxMp, xp: 0, gold: 0, maxMp, mp: maxMp, energyType: en?.id, energyName: en?.name, potions: 3, consumables: {}, questItems: {}, relics: {}, equipmentCondition: 100, weaponDurability: 100, weaponDurabilityMax: 100 };
+    const base = { ...character, level: 1, statPoints: 0, baseAttack: character.attack, baseDefense: character.physicalDefense ?? character.defense, baseMagicalDefense: character.magicalDefense ?? character.defense, baseMaxHp: character.hp, hp: character.hp, accessory: null, accessory2: null, accessoryInventory: [...STARTER_ACCESSORIES], helmet: null, helmetInventory: [], equipmentUnlocks: { helmet: false, accessory2: false }, weapon: null, armor: starterArmorId, armorInventory: [starterArmorId], weaponInventory: [], classWeapon: starterWeaponId, classWeaponInventory: [starterWeaponId], weaponUpgrades: {}, materials: {}, baseMaxMp: maxMp, xp: 0, gold: 0, maxMp, mp: maxMp, energyType: en?.id, energyName: en?.name, potions: 3, consumables: {}, questItems: {}, relics: {}, equipmentCondition: 100, weaponDurability: 100, weaponDurabilityMax: 100 };
     setPlayer(recomputePlayer(base));
     setRegionIndex(0);
     setBlockIndex(startCoords.col);
@@ -810,7 +812,28 @@ export default function useAtlasSession() {
       const inst = normInv.find(w => w.defId === equipped);
       equipped = inst ? inst.uid : null;
     }
-    setPlayer(recomputePlayer({ ...save.player, weaponInventory: normInv, weapon: equipped, questItems: save.player.questItems || {}, relics: save.player.relics || {}, equipmentCondition: save.player.equipmentCondition ?? 100, weaponDurability: save.player.weaponDurability ?? save.player.equipmentCondition ?? 100, weaponDurabilityMax: save.player.weaponDurabilityMax ?? 100 }));
+    const bossUnlocks = equipmentUnlocksFromBosses(save.defeatedBosses || []);
+    const equipmentUnlocks = {
+      helmet: !!(save.player.equipmentUnlocks?.helmet || bossUnlocks.helmet),
+      accessory2: !!(save.player.equipmentUnlocks?.accessory2 || bossUnlocks.accessory2),
+    };
+    const migratedPlayer = {
+      ...save.player,
+      weaponInventory: normInv,
+      weapon: equipped,
+      helmetInventory: save.player.helmetInventory || [],
+      helmet: equipmentUnlocks.helmet ? (save.player.helmet || null) : null,
+      accessory2: equipmentUnlocks.accessory2 ? (save.player.accessory2 || null) : null,
+      accessoryInventory: save.player.accessoryInventory || [],
+      equipmentUnlocks,
+      questItems: save.player.questItems || {},
+      relics: save.player.relics || {},
+      equipmentCondition: save.player.equipmentCondition ?? 100,
+      weaponDurability: save.player.weaponDurability ?? save.player.equipmentCondition ?? 100,
+      weaponDurabilityMax: save.player.weaponDurabilityMax ?? 100,
+    };
+    if (migratedPlayer.accessory2 && migratedPlayer.accessory2 === migratedPlayer.accessory) migratedPlayer.accessory2 = null;
+    setPlayer(recomputePlayer(migratedPlayer));
     setRegionIndex(save.regionIndex ?? 0);
     setBlockIndex(save.blockIndex ?? 0);
     setSectorRow(save.sectorRow ?? getStartingCoords(REGIONS[save.regionIndex ?? 0].id).row);
@@ -1416,7 +1439,8 @@ export default function useAtlasSession() {
   const addEquipment = (res) => {
     if (res.kind === "accessory") setPlayer(prev => recomputePlayer({ ...prev, accessoryInventory: [...new Set([...(prev.accessoryInventory || []), res.id])] }));
     else if (res.kind === "weapon") setPlayer(prev => ({ ...prev, weaponInventory: [...(prev.weaponInventory || []), makeWeaponInstance(res.id)] }));
-    else if (res.kind === "armor") setPlayer(prev => ({ ...prev, armorInventory: [...(prev.armorInventory || []), res.id] }));
+    else if (res.kind === "armor") setPlayer(prev => recomputePlayer({ ...prev, armorInventory: [...new Set([...(prev.armorInventory || []), res.id])] }));
+    else if (res.kind === "helmet") setPlayer(prev => recomputePlayer({ ...prev, helmetInventory: [...new Set([...(prev.helmetInventory || []), res.id])] }));
     toast(`¡${res.name} obtenido!`, "item");
   };
   const applyLoot = (res) => {
@@ -1477,8 +1501,11 @@ export default function useAtlasSession() {
       regionId: region.id,
       regionIndex,
       blockIndex,
+      settlementStage: ["camp", "town", "city"][Math.max(0, Math.min(2, blockIndex || 0))],
       enemyType: defeatedEnemy?.type,
       isBoss: !!defeatedEnemy?.boss,
+      isElite: !!defeatedEnemy?.elite,
+      equipmentUnlocks: p.equipmentUnlocks || {},
       threat: threatStateRef.current,
       difficultyMul: region.difficultyMul,
       playerClass: p.class,
@@ -1792,15 +1819,19 @@ export default function useAtlasSession() {
   };
 
   const buyEquipment = (entry) => {
-    const p = playerRef.current; if (!p) return;
+    const p = playerRef.current; if (!p || !entry) return;
+    if ((p.level || 1) < (entry.requiredLevel || 1)) { toast(`Requiere nivel ${entry.requiredLevel}`, "info"); return; }
+    if (entry.kind === "weapon" && WEAPONS[entry.id]?.offType !== CLASS_OFF_TYPE[p.class]) { toast("Esta arma pertenece a otra clase", "info"); return; }
+    if (entry.kind === "helmet" && !p.equipmentUnlocks?.helmet) { toast("El espacio de Casco aún está bloqueado", "info"); return; }
     const cost = Math.round((entry.price || 0) * priceMult(p));
     if ((p.gold || 0) < cost) { toast("No tienes oro suficiente", "info"); return; }
     setPlayer(prev => {
       const np = { ...prev, gold: (prev.gold || 0) - cost };
       if (entry.kind === "weapon") np.weaponInventory = [...(prev.weaponInventory || []), makeWeaponInstance(entry.id)];
-      else if (entry.kind === "armor") np.armorInventory = [...(prev.armorInventory || []), entry.id];
+      else if (entry.kind === "armor") np.armorInventory = [...new Set([...(prev.armorInventory || []), entry.id])];
+      else if (entry.kind === "helmet") np.helmetInventory = [...new Set([...(prev.helmetInventory || []), entry.id])];
       else np.accessoryInventory = [...new Set([...(prev.accessoryInventory || []), entry.id])];
-      return np;
+      return recomputePlayer(np);
     });
     toast(`Comprado: ${entry.name} (-${cost} oro)`, "gold");
   };
@@ -1898,9 +1929,15 @@ export default function useAtlasSession() {
       const next = new Set(defeatedBosses); next.add(info.enemyId); setDefeatedBosses(next);
       const drop = BOSS_DROPS[regionIndex];
       const p = playerRef.current;
-      const bossRewardPlayer = region.id === "verde"
-        ? p
-        : recomputePlayer({ ...p, accessoryInventory: [...new Set([...(p.accessoryInventory || []), drop])] });
+      const equipmentUnlocks = {
+        ...(p.equipmentUnlocks || {}),
+        helmet: !!(p.equipmentUnlocks?.helmet || region.id === "verde"),
+        accessory2: !!(p.equipmentUnlocks?.accessory2 || region.id === "fria"),
+      };
+      const rewardInventory = region.id === "verde" || !drop
+        ? (p.accessoryInventory || [])
+        : [...new Set([...(p.accessoryInventory || []), drop])];
+      const bossRewardPlayer = recomputePlayer({ ...p, equipmentUnlocks, accessoryInventory: rewardInventory });
       const r = bossAutoLevel(bossRewardPlayer, regionIndex);
       setPlayer(recomputePlayer(r.player));
       if (r.player.level > p.level) toast(`¡Subes a nivel ${r.player.level}!`, "levelup");
@@ -1912,7 +1949,14 @@ export default function useAtlasSession() {
       });
       pushLog(region.id === "verde" ? "La corrupción se separa del Guardián. Su espíritu aún espera ser liberado." : "¡Jefe regional liberado! La región cambia y la siguiente etapa se prepara.");
       toast(`¡${deadEnemy?.name || "Jefe"} derrotado!`, "boss");
-      if (region.id !== "verde") toast(`¡${ACCESSORIES[drop].name} obtenido!`, "item");
+      if (region.id === "verde") {
+        toast("Nuevo espacio de equipo: Casco", "levelup");
+        pushLog("✦ Se desbloquea Casco. Aparecerá en tiendas y botín desde Región Ártica.");
+      } else if (region.id === "fria") {
+        toast("Nuevo espacio de equipo: Accesorio II", "levelup");
+        pushLog("✦ Se desbloquea Accesorio II. Puedes combinar dos accesorios diferentes.");
+      }
+      if (region.id !== "verde" && drop && ACCESSORIES[drop]) toast(`¡${ACCESSORIES[drop].name} obtenido!`, "item");
     } else {
       progressTracker("kill", null, 1, null, deadEnemy?.missionTag || deadEnemy?.id);
       gainXp(deadEnemy?.xpReward || KILL_XP[regionIndex]);
@@ -2064,32 +2108,13 @@ export default function useAtlasSession() {
     setShowLevelUp(false);
   };
 
-  const equipAccessory = (id) => {
-    const wasEquipped = playerRef.current?.accessory === id;
-    setPlayer(p => recomputePlayer({ ...p, accessory: p.accessory === id ? null : id }));
-    toast(wasEquipped ? "Accesorio desequipado" : `Equipado: ${ACCESSORIES[id].name}`, "equip");
-  };
-
-  const sellAccessory = (id) => {
-    const a = ACCESSORIES[id]; if (!a) return;
-    if (!RARITY_SELLABLE[a.rarity]) { toast("Los objetos legendarios no se pueden vender", "info"); return; }
-    const val = RARITY_VALUE[a.rarity] || 10;
-    setPlayer(p => {
-      if (p.accessory === id) p = { ...p, accessory: null };
-      const inv = (p.accessoryInventory || []).filter(x => x !== id);
-      return recomputePlayer({ ...p, accessoryInventory: inv, gold: (p.gold || 0) + val });
-    });
-    toast(`Vendido: +${val} oro`, "gold");
-  };
-
-  const discardAccessory = (id) => {
-    setPlayer(p => {
-      if (p.accessory === id) p = { ...p, accessory: null };
-      const inv = (p.accessoryInventory || []).filter(x => x !== id);
-      return recomputePlayer({ ...p, accessoryInventory: inv });
-    });
-    toast("Objeto descartado", "info");
-  };
+  const {
+    equipAccessory,
+    equipHelmet,
+    sellHelmet,
+    sellAccessory,
+    discardAccessory,
+  } = createAtlasEquipmentActions({ playerRef, setPlayer, toast });
 
   const openChest = (chestInput) => {
     const chest = typeof chestInput === "object"
@@ -2291,7 +2316,7 @@ export default function useAtlasSession() {
     region, map, node, terrain, npcKey, allMissionsDone, bossAlive,
     ended, canRoll, showReachable, bossHere, nodeLabel, bossIntro, dismissBossIntro, startBossWithIntro,
     start, reset, resume, startCombat, handleTravelRoll, handleNodeClick, rest, handleAttack, onEnemyDead,
-    handleEscape, claimMission, allocateStat, equipAccessory, sellAccessory, discardAccessory,
+    handleEscape, claimMission, allocateStat, equipAccessory, equipHelmet, sellHelmet, sellAccessory, discardAccessory,
     activateMission, setMissionActive, setPriorityMission, talkToNpc, onTalkNpc, onStoryPoint, missionDefs, regionProgress, bossUnlocked, bossDefeated,
     activeStoryPointIds, getMissionLockReason, canTravelNextRegion,
     openChest, markEnemyDefeated, onChestDrop, onHeal, closeChestReward, gainXp, onReachObjective, travelNextRegion, onTravelNextBlock, onTravelSector,

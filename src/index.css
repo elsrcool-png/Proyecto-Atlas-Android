@@ -1,4 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+@import "./styles/atlas-ui-v3-tokens.css";
+@import "./styles/atlas-ui-v3-components.css";
+@import "./styles/atlas-ui-v3-responsive.css";
+@import "./styles/atlas-ui-v3-compat.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -349,7 +353,7 @@
   }
 }
 
-/* Atlas v2.20 — multitáctil, sin selección accidental dentro del juego. */
+/* Atlas v2.21 — multitáctil, sin selección accidental dentro del juego. */
 .atlas-explore-root,
 .atlas-combat-view,
 .atlas-mobile-controls,

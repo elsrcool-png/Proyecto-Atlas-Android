@@ -1,0 +1,154 @@
+{
+  "schema": "atlas.phase5.initial_loadouts.v1",
+  "source_gameplay_version": "2.21.0",
+  "reference_only": true,
+  "rules": {
+    "starter_accessory_inventory": [
+      "anillo_fuerza"
+    ],
+    "starter_accessory_equipped": null,
+    "starter_helmet": null,
+    "accessory2_unlocked": false,
+    "gameplay_item_ids_are_source_of_truth": true,
+    "legacy_full_sprites_are_visual_reference_only": true
+  },
+  "heroes": {
+    "humano_guerrero": {
+      "race": "humano",
+      "class": "Guerrero",
+      "body": "humano_neutral_v1",
+      "appearance": "appearance_humano_brown_tousled_v1",
+      "armor": "starter_armor_cuero",
+      "armor_fit": "starter_armor_cuero.humano",
+      "weapon": "starter_espada_recluta",
+      "archetype_secondary": "starter_warrior_shield_humano",
+      "reference_notes": [
+        "Cabello castaño corto y despeinado.",
+        "Cuero marrón, tejido verde y piezas metálicas plateadas.",
+        "Escudo redondo verde con motivo dorado."
+      ]
+    },
+    "humano_mago": {
+      "race": "humano",
+      "class": "Mago",
+      "body": "humano_neutral_v1",
+      "appearance": "appearance_humano_brown_tousled_v1",
+      "armor": "starter_tunica_aprendiz",
+      "armor_fit": "starter_tunica_aprendiz.humano",
+      "weapon": "starter_baston_aprendiz",
+      "archetype_secondary": "starter_mage_focus_book_humano",
+      "reference_notes": [
+        "Túnica azul profunda con bordes dorados.",
+        "Capa posterior azul y capas de cuero.",
+        "Bastón con cristal azul; libro rúnico en mano secundaria."
+      ]
+    },
+    "humano_picaro": {
+      "race": "humano",
+      "class": "Pícaro",
+      "body": "humano_neutral_v1",
+      "appearance": "appearance_humano_brown_tousled_v1",
+      "armor": "starter_ropaje_ligero",
+      "armor_fit": "starter_ropaje_ligero.humano",
+      "weapon": "starter_dagas_bronce",
+      "archetype_secondary": null,
+      "reference_notes": [
+        "Cuello o capucha verde oscura.",
+        "Cuero marrón de capas ligeras.",
+        "Dagas cortas dobles."
+      ]
+    },
+    "elfo_guerrero": {
+      "race": "elfo",
+      "class": "Guerrero",
+      "body": "elfo_neutral_v1",
+      "appearance": "appearance_elfo_blonde_v1",
+      "armor": "starter_armor_cuero",
+      "armor_fit": "starter_armor_cuero.elfo",
+      "weapon": "starter_espada_recluta",
+      "archetype_secondary": "starter_warrior_shield_elfo",
+      "reference_notes": [
+        "Cabello rubio y orejas raciales visibles.",
+        "Armadura clara con tela verde.",
+        "Escudo verde con motivo élfico."
+      ]
+    },
+    "elfo_mago": {
+      "race": "elfo",
+      "class": "Mago",
+      "body": "elfo_neutral_v1",
+      "appearance": "appearance_elfo_blonde_v1",
+      "armor": "starter_tunica_aprendiz",
+      "armor_fit": "starter_tunica_aprendiz.elfo",
+      "weapon": "starter_baston_aprendiz",
+      "archetype_secondary": "starter_mage_focus_book_elfo",
+      "reference_notes": [
+        "Túnica verde y dorada.",
+        "Capa larga con motivos naturales.",
+        "Bastón de cristal verde y libro rúnico."
+      ]
+    },
+    "elfo_picaro": {
+      "race": "elfo",
+      "class": "Pícaro",
+      "body": "elfo_neutral_v1",
+      "appearance": "appearance_elfo_blonde_v1",
+      "armor": "starter_ropaje_ligero",
+      "armor_fit": "starter_ropaje_ligero.elfo",
+      "weapon": "starter_dagas_bronce",
+      "archetype_secondary": null,
+      "reference_notes": [
+        "Ropaje forestal oscuro.",
+        "Capa corta y cuello verde.",
+        "Dagas dobles finas."
+      ]
+    },
+    "enano_guerrero": {
+      "race": "enano",
+      "class": "Guerrero",
+      "body": "enano_neutral_v1",
+      "appearance": "appearance_enano_copper_beard_v1",
+      "armor": "starter_armor_cuero",
+      "armor_fit": "starter_armor_cuero.enano",
+      "weapon": "starter_espada_recluta",
+      "archetype_secondary": "starter_warrior_shield_enano",
+      "legacy_visual_weapon": "axe",
+      "requires_visual_correction": true,
+      "reference_notes": [
+        "El sprite aprobado muestra hacha, pero la lógica 2.21 equipa Espada de Recluta.",
+        "El hacha actual se conserva como referencia para hacha_guerrero.",
+        "Armadura compacta, barba cobriza y escudo rúnico."
+      ]
+    },
+    "enano_mago": {
+      "race": "enano",
+      "class": "Mago",
+      "body": "enano_neutral_v1",
+      "appearance": "appearance_enano_copper_beard_v1",
+      "armor": "starter_tunica_aprendiz",
+      "armor_fit": "starter_tunica_aprendiz.enano",
+      "weapon": "starter_baston_aprendiz",
+      "archetype_secondary": "starter_mage_focus_book_enano",
+      "reference_notes": [
+        "Túnica verde, marfil y bronce.",
+        "Barba frontal y posterior independientes.",
+        "Bastón robusto y libro rúnico."
+      ]
+    },
+    "enano_picaro": {
+      "race": "enano",
+      "class": "Pícaro",
+      "body": "enano_neutral_v1",
+      "appearance": "appearance_enano_copper_beard_v1",
+      "armor": "starter_ropaje_ligero",
+      "armor_fit": "starter_ropaje_ligero.enano",
+      "weapon": "starter_dagas_bronce",
+      "archetype_secondary": null,
+      "reference_notes": [
+        "Cuero oscuro y capa corta verde.",
+        "Barba modular sin fusionar con el torso.",
+        "Dagas dobles adaptadas a brazos cortos."
+      ]
+    }
+  }
+}

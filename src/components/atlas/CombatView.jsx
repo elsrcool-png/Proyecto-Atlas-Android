@@ -72,6 +72,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
   const [shake, setShake] = useState(false);
   const [vfx, setVfx] = useState(null);
   const [attackPose, setAttackPose] = useState("slash");
+  const [heroAnimation, setHeroAnimation] = useState({ source: "phase6", id: "combat_ready_base", token: 0, sequence: null, qualityId: "medio", landed: true, kind: "basic" });
   const [sequenceBusy, setSequenceBusy] = useState(false);
   const [displayPlayerHp, setDisplayPlayerHp] = useState(() => Math.max(0, Number(player?.hp || 0)));
   const [displayEnemyHp, setDisplayEnemyHp] = useState(() => Math.max(0, Number(enemy?.hp || 0)));
@@ -272,6 +273,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
         kind: lastResult.skill || "basic",
       });
       const anim = sequence.animation || resolveAbilityAnimation(skill, { class: player.class, weaponType: weaponTypeFromPlayer(player), element: lastResult.element || element });
+      setHeroAnimation({ source: "phase7", weaponId: player.weapon ? undefined : player.classWeapon, sequence, qualityId: lastResult.qualityId || (isMiss ? "fallo_critico" : /CRÍTICA|CRÍTICO/.test(type) ? "critico" : "medio"), landed: rawEnemyDamage > 0, kind: lastResult.skill || "basic", token: actionToken });
       const pose = poseForAnimation(anim, player);
       const el = lastResult.element || anim.element || element;
       duration = Math.max(620, Number(sequence.totalDuration || anim.duration + 180));
@@ -357,7 +359,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
     const bText = type === "ENEMY_ATTACK" ? (playerDamage > 0 ? "¡Ataque enemigo!" : "¡Enemigo falla!")
       : type === "ENEMY_ABILITY" ? (lastResult.enemySkill || "Habilidad enemiga") : type;
     setBanner({ text: bText, id: actionToken });
-    later(() => setAction("idle"), duration);
+    later(() => { setAction("idle"); setHeroAnimation(current => ({ source: "phase6", id: "combat_ready_base", token: current.token + 1, sequence: null, qualityId: "medio", landed: true, kind: "basic" })); }, duration);
     later(() => setVfx(null), duration);
     later(() => setFloaters(current => current.filter(item => item.actionToken !== actionToken)), duration + 480);
     later(() => setBanner(null), Math.min(1200, duration));
@@ -414,7 +416,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
         <motion.div animate={shake ? { x: [0, -5, 5, -4, 0], y: [0, 2, -2, 0] } : { x: 0, y: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0">
           <div className={`atlas-combat-stats relative z-10 grid grid-cols-2 ${landscape ? "p-2 gap-3" : "p-4 gap-6"}`}>
             <div className="order-2 text-right">
-              <div className="flex items-center gap-2 mb-1.5 justify-end"><EntitySprite type="player" cls={player.class} race={player.race} dir={PLAYER_COMBAT_DIRECTION} size={20} combatMode /><span className="text-xs font-medium text-white truncate">{player.race} {player.class}</span></div>
+              <div className="flex items-center gap-2 mb-1.5 justify-end"><EntitySprite type="player" player={player} cls={player.class} race={player.race} dir={PLAYER_COMBAT_DIRECTION} size={20} combatMode surface="combat" animation={{ source: "phase6", id: "combat_ready_base" }} /><span className="text-xs font-medium text-white truncate">{player.race} {player.class}</span></div>
               <div className="text-[11px] text-white/85 mb-0.5">❤️ <span className="font-mono text-white">{displayPlayerHp}/{player.maxHp}</span></div>
               <Bar value={displayPlayerHp} max={player.maxHp} color="bg-emerald-500" />
               <div className="mt-1 text-[11px] text-white/85 mb-0.5">{resourceIcon} {energy?.name || "Energía"} <span className="font-mono text-white">{player.mp || 0}/{player.maxMp || 0}</span></div>
@@ -453,7 +455,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
                 transition={playerStepping ? { duration: 0.42, repeat: Infinity, ease: "linear" } : { duration: 0.2 }}
               />
               <motion.div animate={dying ? {} : playerBodyMotion} transition={playerStepping ? { duration: 0.42, repeat: Infinity, ease: "linear" } : { repeat: Infinity, duration: 2.8, ease: "easeInOut" }} className="relative flex flex-col items-center" style={{ transformOrigin: "bottom center" }}>
-                <EntitySprite type="player" cls={player.class} race={player.race} dir={PLAYER_COMBAT_DIRECTION} size={actorSize} combatMode pose={playerPose} hurt={action === "enemyAtk"} className="drop-shadow-[0_5px_10px_rgba(0,0,0,0.68)]" />
+                <EntitySprite type="player" player={player} cls={player.class} race={player.race} dir={PLAYER_COMBAT_DIRECTION} size={actorSize} combatMode surface="combat" pose={playerPose} hurt={action === "enemyAtk"} animation={heroAnimation} animationSequence={heroAnimation.sequence} animationQuality={heroAnimation.qualityId} animationLanded={heroAnimation.landed} animationKind={heroAnimation.kind} animationKey={heroAnimation.token} className="drop-shadow-[0_5px_10px_rgba(0,0,0,0.68)]" />
               </motion.div>
             </motion.div>
             <motion.div ref={enemyActorRef} animate={enemyMotion} transition={{ duration: dying ? 0.7 : 0.66, ease: "easeInOut" }} className="order-1 relative atlas-combat-grounded-actor" style={{ transformOrigin: "bottom center" }}>

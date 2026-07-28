@@ -1,0 +1,38 @@
+{
+  "schema": "atlas.phase5.archetype_props.v1",
+  "purpose": "Preservar la identidad de los sprites actuales sin crear nuevos objetos de inventario.",
+  "rules": {
+    "warrior_shield": {
+      "ids": [
+        "starter_warrior_shield_humano",
+        "starter_warrior_shield_elfo",
+        "starter_warrior_shield_enano"
+      ],
+      "asset_count": 12,
+      "visibility": {
+        "one_hand_sword": true,
+        "one_hand_axe": true,
+        "two_hand_heavy": false,
+        "spear": false,
+        "escudo_portatil_equipped": "replace_with_accessory_visual"
+      },
+      "gameplay_item": false
+    },
+    "mage_focus_book": {
+      "ids": [
+        "starter_mage_focus_book_humano",
+        "starter_mage_focus_book_elfo",
+        "starter_mage_focus_book_enano"
+      ],
+      "asset_count": 12,
+      "visibility": {
+        "staff": true,
+        "wand": true,
+        "grimoire": false,
+        "two_hand_cast": false
+      },
+      "gameplay_item": false
+    }
+  },
+  "total_asset_count": 24
+}

@@ -1,0 +1,81 @@
+/*
+ * Proyecto Atlas UI v3 — tokens visuales
+ * Base compatible: Proyecto Atlas Visual v2.20
+ * Este archivo no modifica lógica ni datos del juego.
+ */
+
+.atlas-ui-v3 {
+  --atlas-ui-bg-0: #07111b;
+  --atlas-ui-bg-1: #0b1724;
+  --atlas-ui-bg-2: #102033;
+  --atlas-ui-panel: rgba(11, 23, 36, 0.96);
+  --atlas-ui-panel-soft: rgba(15, 29, 45, 0.88);
+  --atlas-ui-panel-glass: rgba(7, 17, 27, 0.82);
+  --atlas-ui-border: #8f6a2b;
+  --atlas-ui-border-soft: rgba(191, 142, 57, 0.48);
+  --atlas-ui-gold: #d4af37;
+  --atlas-ui-gold-bright: #f0c65a;
+  --atlas-ui-teal: #1b85c9;
+  --atlas-ui-teal-bright: #38bdf8;
+  --atlas-ui-text: #eee7d7;
+  --atlas-ui-text-soft: #b9c2ce;
+  --atlas-ui-text-dim: #7f8b99;
+  --atlas-ui-success: #2ea24c;
+  --atlas-ui-info: #2e7dff;
+  --atlas-ui-warning: #f0b429;
+  --atlas-ui-danger: #d14040;
+  --atlas-ui-disabled: #475466;
+  --atlas-ui-hp: #c63b32;
+  --atlas-ui-energy: #2d79c7;
+  --atlas-ui-shadow: rgba(0, 0, 0, 0.56);
+  --atlas-ui-focus: rgba(56, 189, 248, 0.82);
+
+  --atlas-ui-region-green: #4e9a55;
+  --atlas-ui-region-arctic: #58b7d8;
+  --atlas-ui-region-desert: #d89a43;
+
+  --atlas-ui-radius-xs: 5px;
+  --atlas-ui-radius-sm: 8px;
+  --atlas-ui-radius-md: 12px;
+  --atlas-ui-radius-lg: 16px;
+  --atlas-ui-radius-round: 999px;
+
+  --atlas-ui-space-1: 4px;
+  --atlas-ui-space-2: 8px;
+  --atlas-ui-space-3: 12px;
+  --atlas-ui-space-4: 16px;
+  --atlas-ui-space-5: 24px;
+  --atlas-ui-space-6: 32px;
+
+  --atlas-ui-title-font: var(--font-display, ui-monospace, monospace);
+  --atlas-ui-heading-font: var(--font-heading, ui-monospace, monospace);
+  --atlas-ui-body-font: var(--font-body, ui-sans-serif, system-ui, sans-serif);
+
+  --atlas-ui-control-min: 44px;
+  --atlas-ui-safe-top: max(6px, env(safe-area-inset-top));
+  --atlas-ui-safe-right: max(6px, env(safe-area-inset-right));
+  --atlas-ui-safe-bottom: max(6px, env(safe-area-inset-bottom));
+  --atlas-ui-safe-left: max(6px, env(safe-area-inset-left));
+
+  color: var(--atlas-ui-text);
+  font-family: var(--atlas-ui-body-font);
+}
+
+.atlas-ui-v3[data-region="verde"],
+.atlas-ui-v3.atlas-region-verde {
+  --atlas-ui-region-accent: var(--atlas-ui-region-green);
+}
+
+.atlas-ui-v3[data-region="fria"],
+.atlas-ui-v3.atlas-region-fria {
+  --atlas-ui-region-accent: var(--atlas-ui-region-arctic);
+}
+
+.atlas-ui-v3[data-region="desierto"],
+.atlas-ui-v3.atlas-region-desierto {
+  --atlas-ui-region-accent: var(--atlas-ui-region-desert);
+}
+
+.atlas-ui-v3:not([data-region]) {
+  --atlas-ui-region-accent: var(--atlas-ui-teal);
+}

@@ -1,0 +1,71 @@
+{
+  "schema": "atlas.modular_runtime_asset_gate.v221.v3",
+  "source_game_version": "2.21.0",
+  "activation_default": false,
+  "definition_gates": {
+    "rigs": {
+      "status": "pass",
+      "count": 3
+    },
+    "required_socket_names": {
+      "status": "pass",
+      "gap_count": 0,
+      "final_crop_trim_pending": true
+    },
+    "universal_clips": {
+      "status": "pass",
+      "count": 16
+    },
+    "weapon_families": {
+      "status": "pass",
+      "count": 13
+    },
+    "weapon_clips": {
+      "status": "pass",
+      "count": 65
+    },
+    "weapon_assignments": {
+      "status": "pass",
+      "count": 56
+    },
+    "equipment_catalog": {
+      "status": "pass",
+      "count": 164
+    }
+  },
+  "art_gates": {
+    "base_core_webp": {
+      "required": 200,
+      "available": 0,
+      "status": "pending_art"
+    },
+    "base_animation_support_webp": {
+      "required": 168,
+      "available": 0,
+      "status": "pending_art"
+    },
+    "starter_equipment_and_appearance_webp": {
+      "required": 720,
+      "available": 0,
+      "status": "pending_art"
+    },
+    "sit_rest_webp": {
+      "required": 72,
+      "available": 0,
+      "status": "pending_art",
+      "safe_fallback": "idle_world"
+    },
+    "phase7_pose_webp": {
+      "required": 528,
+      "available": 0,
+      "status": "pending_art",
+      "safe_fallback": "generic_bone_motion"
+    },
+    "future_equipment_base_assets": {
+      "required": 9448,
+      "available": 0,
+      "status": "production_catalogued"
+    }
+  },
+  "runtime_policy": "legacy_maestro_v1_until_required_art_is_present_and_validated"
+}

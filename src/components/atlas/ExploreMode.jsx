@@ -1,15 +1,14 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Map, User, Pause, Play, Settings, Compass, ScrollText, LayoutGrid, Navigation, ChevronDown, Star, Footprints } from "lucide-react";
-import Joystick from "./Joystick";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Navigation, Star } from "lucide-react";
 import useKeyboardControls from "@/hooks/useKeyboardControls";
-import CombatView from "./CombatView";
+import CombatView from "./ui-v3/CombatViewAdapterV3";
 import TileGround from "./TileGround";
 import TerrainHeightLayer from "./TerrainHeightLayer";
 import WorldSprite from "./WorldSprite";
 import { GIcon } from "@/lib/atlasIcons";
 import EntitySprite from "./EntitySprite";
 import ShrineMarker from "./ShrineMarker";
-import PlayerHub from "./PlayerHub";
+import PlayerHub from "./ui-v3/PlayerHubV3";
 import GroundTufts from "./GroundTufts";
 import BiomeAmbience from "./BiomeAmbience";
 import FoliageDot from "./FoliageDot";
@@ -31,9 +30,9 @@ import NpcInteractionMenu from "./NpcInteractionMenu";
 import { getNpcAvailableActions } from "@/lib/atlasNpcActions";
 import { rollExplorationEvent, randomEventLine } from "@/lib/atlasExplorationEvents";
 import { drawPlayerSprite, PixelSprite, getChestPixel, CHEST_PALETTE } from "@/lib/atlasPixel";
+import { drawPlayerFrameWithModularFallback } from "@/lib/atlasHeroCanvasBridge";
 import { GROUND, clamp, hitSolid } from "@/lib/atlasWorld";
 import { getWorldDepth, setWorldDepth } from "@/lib/atlasDepth";
-import ThreatIndicator from "./ThreatIndicator";
 import { tierOf, worldBehavior } from "@/lib/atlasThreat";
 import { getCurrentObjective } from "@/lib/atlasMissionEngine";
 import { coordsFromSectorId, getRegionLayout } from "@/lib/atlasRegionSectors";
@@ -48,9 +47,9 @@ import { shouldClearSectorEnemies } from "@/lib/atlasWorldProgression";
 import { createVillagerMotion, npcIdleAnimationStyle } from "@/lib/atlasNpcMotion";
 import RecruitDialog from "./RecruitDialog";
 import DungeonEntryDialog from "./DungeonEntryDialog";
-import AtlasPressButton from "./AtlasPressButton";
-import OrientationToggleButton from "./OrientationToggleButton";
-import { controlStyle, normalizeControlProfiles } from "@/lib/atlasControlLayout";
+import { normalizeControlProfiles } from "@/lib/atlasControlLayout";
+import ExploreHudV3, { ExploreSeparatedControlsV3 } from "./ui-v3/ExploreHudV3";
+import PauseMenuV3 from "./ui-v3/PauseMenuV3";
 
 export default function ExploreMode({ game }) {
   const { player, region, regionIndex, bossDefeated, bossUnlocked } = game;
@@ -407,7 +406,7 @@ export default function ExploreMode({ game }) {
           frameRef.current = 0;
         }
         if (playerCanvasRef.current && (drawnRef.current.dir !== facingRef.current || drawnRef.current.frame !== frameRef.current)) {
-          drawPlayerSprite(playerCanvasRef.current, player.class, facingRef.current, frameRef.current, 3, player.race);
+          drawPlayerFrameWithModularFallback({ surface: "world", legacyDraw: () => drawPlayerSprite(playerCanvasRef.current, player.class, facingRef.current, frameRef.current, 3, player.race) });
           playerCanvasRef.current.dataset.atlasFacing = facingRef.current;
           playerCanvasRef.current.dataset.atlasMoving = moving ? "true" : "false";
           drawnRef.current = { dir: facingRef.current, frame: frameRef.current };
@@ -677,7 +676,7 @@ export default function ExploreMode({ game }) {
   }
 
   return (
-    <div className={`atlas-explore-root min-h-screen relative flex flex-col ${horizontal ? "atlas-explore-horizontal" : "atlas-explore-vertical"} ${wantsHorizontal ? "atlas-prefers-horizontal" : ""} ${leftHanded ? "atlas-left-handed" : "atlas-right-handed"}`} style={{ background: "#0a0a0a" }}>
+    <div className={`atlas-ui-v3 atlas-explore-root min-h-screen relative flex flex-col ${horizontal ? "atlas-explore-horizontal" : "atlas-explore-vertical"} ${wantsHorizontal ? "atlas-prefers-horizontal" : ""} ${leftHanded ? "atlas-left-handed" : "atlas-right-handed"}`} style={{ background: "#0a0a0a" }}>
       <div ref={vpRef} className={`atlas-explore-viewport relative w-full overflow-hidden ${visualScene ? "atlas-green-stable-viewport" : ""}`} style={{ height: separated ? "calc(100dvh - 92px)" : "100dvh" }}>
         <div ref={worldRef} className="absolute top-0 left-0" style={{ width: world.W, height: world.H, transformOrigin: "0 0" }}>
           {(!hudClean || settings.debugTargets) && (world.spawnZones || []).map((z, i) => (<div key={i} className="absolute pointer-events-none flex items-center justify-center" style={{ left: z.x - 40, top: z.y - 40, width: 80, height: 80 }}><div className="absolute rounded-full border-2 border-emerald-300/50 animate-pulse" style={{ width: 72, height: 72 }} /><div className="absolute rounded-full border border-emerald-300/30" style={{ width: 48, height: 48 }} /><div className="absolute text-emerald-200/70 text-[9px] font-heading whitespace-nowrap">Invocación</div></div>))}
@@ -732,65 +731,73 @@ export default function ExploreMode({ game }) {
         <div className="absolute inset-0 pointer-events-none z-10" style={{ background: "radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.45))" }} />
         <DayNightOverlay phase={game.dayPhase} />
         <BiomeAmbience biome={world.biome} />
-        {/* Brújula de objetivo: centro superior, compacta, sobre la barra */}
-        <div ref={navWrapRef} className="atlas-objective-compass absolute top-1.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none max-w-[240px]" style={{ display: "none" }}>
-          <div className="rounded-full bg-slate-950/88 border border-amber-500/55 backdrop-blur px-2.5 py-1 flex items-center gap-2 shadow-lg">
-            <div className="relative shrink-0 w-6 h-6 rounded-full border border-amber-400/70 bg-slate-900 flex items-center justify-center">
-              <Navigation ref={navIconRef} className="w-3.5 h-3.5 text-amber-300 transition-transform duration-100" />
-            </div>
-            <p ref={navLabelRef} className="text-[11px] text-slate-100 font-medium truncate flex-1 min-w-0"></p>
-            <span ref={navDistRef} className="text-[10px] text-amber-300 whitespace-nowrap"></span>
-          </div>
-        </div>
-        {/* HUD superior compacto: zona fija a la izquierda, acciones a la derecha */}
-        <div className="atlas-top-hud absolute top-9 left-0 right-0 z-20 pointer-events-none flex items-start justify-between p-2 gap-2">
-          <div className="flex items-start gap-1.5 pointer-events-auto">
-            <div className="atlas-zone-card rounded-xl bg-slate-950/82 border border-slate-700/90 px-2.5 py-1.5 shadow-lg backdrop-blur-sm max-w-[205px]">
-              <div className="text-[9px] uppercase tracking-[0.18em] text-slate-500 leading-none">Zona</div>
-              <div className="text-[12px] font-semibold text-slate-100 truncate mt-0.5">{game.sectorName}</div>
-              <div className="text-[10px] text-slate-400 truncate">
-                <span style={{ color: region.theme.accent }}>{region.name}</span> · Nv {player.level}
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <ThreatIndicator threat={game.threat} />
-              <button onClick={() => setShowHudDetails(v => !v)} className="self-start flex items-center justify-center rounded-lg bg-slate-950/78 border border-slate-700 w-7 h-7 text-slate-200 hover:bg-slate-800" title="Detalles">
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showHudDetails ? "rotate-180" : ""}`} />
-              </button>
-            </div>
-          </div>
-          <div className="atlas-top-actions flex items-center gap-1 pointer-events-auto">
-            <OrientationToggleButton settings={settings} onChange={game.onUpdateSettings} onRequestOrientation={game.onRequestOrientation} className="flex items-center justify-center rounded-lg bg-slate-950/78 border border-slate-700 w-8 h-8 text-slate-200 hover:bg-slate-800" />
-            <AtlasPressButton onPress={() => setPaused(true)} className="flex items-center justify-center rounded-lg bg-slate-950/78 border border-slate-700 w-8 h-8 text-slate-200 hover:bg-slate-800" title="Pausa"><Pause className="w-3.5 h-3.5" /></AtlasPressButton>
-            <button onClick={() => setShowExploreMap(true)} className="flex items-center justify-center rounded-lg bg-slate-950/78 border border-slate-700 w-8 h-8 text-slate-200 hover:bg-slate-800" title="Mapa"><Compass className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setShowSectorMap(true)} className="flex items-center justify-center rounded-lg bg-slate-950/78 border border-slate-700 w-8 h-8 text-slate-200 hover:bg-slate-800" title="Sectores"><LayoutGrid className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setShowJournal(true)} className="flex items-center justify-center rounded-lg bg-slate-950/78 border border-slate-700 w-8 h-8 text-slate-200 hover:bg-slate-800" title="Diario"><ScrollText className="w-3.5 h-3.5" /></button>
-            <button onClick={() => game.onSwitchMode("board")} className="flex items-center justify-center rounded-lg bg-slate-950/78 border border-slate-700 w-8 h-8 text-slate-200 hover:bg-slate-800" title="Tablero"><Map className="w-3.5 h-3.5" /></button>
-          </div>
-        </div>
-        {showHudDetails && (
-          <div className="atlas-hud-details absolute top-[108px] left-2 z-30 pointer-events-auto rounded-lg bg-slate-950/92 border border-slate-700 px-2.5 py-1.5 text-[10px] text-slate-300 leading-tight atlas-toast-in">
-            <div>{player.race} {player.class}</div>
-            <div>HP {player.hp}/{player.maxHp} · Energía {player.mp}/{player.maxMp}</div>
-            {settings.debugTargets && visualScene && <div className="text-cyan-300 mt-0.5">Visual {visualScene.version} · {visualScene.regionId}</div>}
-          </div>
+        {!inCombat && !paused && (
+          <ExploreHudV3
+            navWrapRef={navWrapRef}
+            navIconRef={navIconRef}
+            navLabelRef={navLabelRef}
+            navDistRef={navDistRef}
+            sectorName={game.sectorName}
+            region={region}
+            player={player}
+            threat={game.threat}
+            settings={settings}
+            onUpdateSettings={game.onUpdateSettings}
+            onRequestOrientation={game.onRequestOrientation}
+            showHudDetails={showHudDetails}
+            onToggleHudDetails={() => setShowHudDetails(v => !v)}
+            onPause={() => setPaused(true)}
+            onOpenExploreMap={() => setShowExploreMap(true)}
+            onOpenSectorMap={() => setShowSectorMap(true)}
+            onOpenJournal={() => setShowJournal(true)}
+            onSwitchBoard={() => game.onSwitchMode("board")}
+            proxHint={proxHint}
+            separated={separated}
+            renderSeparatedControls={false}
+            activeControlProfile={activeControlProfile}
+            controlScale={cScale}
+            joystickKey={joystickKey}
+            onMove={(x, y) => { dir.current.x = x; dir.current.y = y; }}
+            runToggle={runToggle}
+            onToggleRun={toggleRun}
+            onOpenHub={onB}
+            onAction={onA}
+            actionReady={actionReady}
+            leftHanded={leftHanded}
+          />
         )}
-        {proxHint && (<div className="atlas-proximity-hint absolute left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[62%] max-w-[300px]" style={{ bottom: separated ? 12 : 112 }}><div className="rounded-xl bg-slate-950/85 border border-slate-500/60 backdrop-blur px-3.5 py-2 flex items-center justify-center gap-2 shadow-lg atlas-toast-in"><GIcon name="info" size={13} /><span className="text-xs text-slate-100 font-medium text-center leading-tight">{proxHint} — pulsa A</span></div></div>)}
         {flavorMsg && (<div className="atlas-flavor-message absolute top-28 left-1/2 -translate-x-1/2 z-20 pointer-events-none max-w-[88%] w-[340px]"><div className="rounded-xl bg-slate-950/90 border border-amber-600/60 backdrop-blur px-3.5 py-2.5 shadow-lg atlas-toast-in"><p className="text-xs text-amber-100 italic text-center leading-snug">{flavorMsg}</p></div></div>)}
-        {!inCombat && !paused && !separated && (
-          <div className="atlas-mobile-controls absolute inset-0 z-20 pointer-events-none">
-            <div className="atlas-joystick-wrap pointer-events-auto" style={controlStyle(activeControlProfile.joystick, cScale)}><Joystick key={joystickKey} scale={Number(activeControlProfile.joystick.scale || 1) * cScale} onMove={(x, y) => { dir.current.x = x; dir.current.y = y; }} /></div>
-            <div className="pointer-events-auto" style={controlStyle(activeControlProfile.run, cScale)}><AtlasPressButton onPress={toggleRun} className={`rounded-full border-2 text-white shadow-lg active:scale-95 flex items-center justify-center ${runToggle ? "bg-amber-500/95 border-amber-200" : "bg-slate-800/85 border-slate-500"}`} style={{ width: 48 * Number(activeControlProfile.run.scale || 1) * cScale, height: 48 * Number(activeControlProfile.run.scale || 1) * cScale }} title={runToggle ? "Desactivar correr" : "Activar correr"}><Footprints className="w-5 h-5" /></AtlasPressButton></div>
-            <div className="pointer-events-auto" style={controlStyle(activeControlProfile.b, cScale)}><AtlasPressButton onPress={onB} className="rounded-full bg-blue-600/80 border-2 border-blue-300 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center" style={{ width: 56 * Number(activeControlProfile.b.scale || 1) * cScale, height: 56 * Number(activeControlProfile.b.scale || 1) * cScale, fontSize: 14 * Number(activeControlProfile.b.scale || 1) * cScale }}>B</AtlasPressButton></div>
-            <div className="pointer-events-auto" style={controlStyle(activeControlProfile.a, cScale)}><AtlasPressButton onPress={onA} aria-label={actionReady ? `${proxHint}. Pulsar A` : "Acción no disponible"} className={`rounded-full border-2 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center transition ${actionButtonClass}`} style={{ width: 64 * Number(activeControlProfile.a.scale || 1) * cScale, height: 64 * Number(activeControlProfile.a.scale || 1) * cScale, fontSize: 18 * Number(activeControlProfile.a.scale || 1) * cScale }}>A</AtlasPressButton></div>
-          </div>
+        {paused && !inCombat && (
+          <PauseMenuV3
+            settings={settings}
+            onUpdateSettings={game.onUpdateSettings}
+            onRequestOrientation={game.onRequestOrientation}
+            onResume={() => setPaused(false)}
+            onOpenExploreMap={() => { setPaused(false); setShowExploreMap(true); }}
+            onSwitchBoard={() => game.onSwitchMode("board")}
+            onOpenSheet={game.onOpenSheet}
+            onOpenSettings={game.onOpenSettings}
+            onAbandon={game.onReset}
+          />
         )}
-        {paused && !inCombat && (<div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/80 backdrop-blur"><div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 w-72 text-center"><h2 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2"><Pause className="w-5 h-5" /> Pausa</h2><div className="space-y-2"><button onClick={() => setPaused(false)} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 py-2.5 text-sm font-medium flex items-center justify-center gap-2"><Play className="w-4 h-4" /> Continuar</button><button onClick={() => { setPaused(false); setShowExploreMap(true); }} className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 py-2.5 text-sm font-medium flex items-center justify-center gap-2"><Compass className="w-4 h-4" /> Mapa de exploración</button><button onClick={() => game.onSwitchMode("board")} className="w-full rounded-xl bg-sky-700 hover:bg-sky-600 py-2.5 text-sm font-medium flex items-center justify-center gap-2"><Map className="w-4 h-4" /> Modo Tablero</button><button onClick={game.onOpenSheet} className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 py-2.5 text-sm font-medium flex items-center justify-center gap-2"><User className="w-4 h-4" /> Hoja de personaje</button><OrientationToggleButton settings={settings} onChange={game.onUpdateSettings} onRequestOrientation={game.onRequestOrientation} label className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 py-2.5 text-sm font-medium flex items-center justify-center gap-2" /><button onClick={game.onOpenSettings} className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 py-2.5 text-sm font-medium flex items-center justify-center gap-2"><Settings className="w-4 h-4" /> Ajustes</button><button onClick={game.onReset} className="w-full rounded-xl bg-red-700 hover:bg-red-600 py-2.5 text-sm font-medium">Abandonar partida</button></div></div></div>)}
         {strangerDialog && !inCombat && (<div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4"><div className="rounded-2xl bg-slate-900 border border-fuchsia-800 p-6 max-w-sm w-full text-center"><div className="flex justify-center mb-3"><GIcon name="user" size={40} style={{ color: "#e9d5ff" }} /></div><p className="text-sm text-fuchsia-100 italic mb-4">«He estado siguiéndote. Atlas conoce tu nombre. Ven conmigo.»</p><div className="flex gap-2"><button onClick={() => { game.onStrangerMeet?.(); strangerUsed.current = true; setStrangerDialog(false); setNearStranger(false); }} className="flex-1 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 py-2.5 text-sm font-medium text-white">Aceptar</button><button onClick={() => setStrangerDialog(false)} className="flex-1 rounded-xl bg-slate-700 hover:bg-slate-600 py-2.5 text-sm text-slate-200">Ignorar</button></div></div></div>)}
         {inCombat && (<div className="atlas-combat-overlay absolute inset-0 z-40 flex flex-col bg-slate-950/80 backdrop-blur-sm p-2 sm:p-4"><div className="w-full max-w-3xl mx-auto flex-1 min-h-0"><CombatView player={player} enemy={game.enemy} region={region} lastResult={game.lastResult} onAttack={game.onAttack} onSkill={game.onSkill} onItem={game.onItem} onEscape={game.onEscape} onEnemyDead={game.onEnemyDead} busy={game.busy} skills={game.skills} skillCosts={game.skillCosts} playerStatuses={game.playerStatuses} /></div></div>)}
       </div>
-      {separated && !inCombat && !paused && (<div className="shrink-0 w-full bg-slate-950/90 border-t border-slate-700 flex items-center justify-between px-4 sm:px-6" style={{ height: 92 }}><div className={leftHanded ? "order-2" : "order-1"}><Joystick key={joystickKey} scale={cScale} onMove={(x, y) => { dir.current.x = x; dir.current.y = y; }} /></div><div className={`flex items-center gap-2 ${leftHanded ? "order-1" : "order-2"}`}><AtlasPressButton onPress={toggleRun} className={`rounded-full border-2 text-white shadow-lg active:scale-95 flex items-center justify-center ${runToggle ? "bg-amber-500/95 border-amber-200" : "bg-slate-800/90 border-slate-500"}`} style={{ width: 48 * cScale, height: 48 * cScale }} title={runToggle ? "Desactivar correr" : "Activar correr"}><Footprints className="w-5 h-5" /></AtlasPressButton><AtlasPressButton onPress={onB} className="rounded-full bg-blue-600/90 border-2 border-blue-300 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center" style={{ width: 56 * cScale, height: 56 * cScale, fontSize: 14 * cScale }}>B</AtlasPressButton><AtlasPressButton onPress={onA} aria-label={actionReady ? `${proxHint}. Pulsar A` : "Acción no disponible"} className={`rounded-full border-2 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center transition ${actionButtonClass}`} style={{ width: 64 * cScale, height: 64 * cScale, fontSize: 18 * cScale }}>A</AtlasPressButton></div></div>)}
-      {showHub && (<PlayerHub player={player} region={region} missions={game.missions} missionDefs={game.missionDefs} settings={game.settings} onUpdateSettings={game.onUpdateSettings} onUseConsumable={game.onUseConsumable} onEquipWeapon={game.onEquipWeapon} onEquipArmor={game.onEquipArmor} onEquipAccessory={game.onEquipAccessory} onSellWeapon={game.onSellWeapon} onSellArmor={game.onSellArmor} onSellAccessory={game.onSellAccessory} onSellMaterial={game.onSellMaterial} onEquipClassWeapon={game.onEquipClassWeapon} onSellClassWeapon={game.onSellClassWeapon} onClose={() => setShowHub(false)} />)}
+      {separated && !inCombat && !paused && (
+        <ExploreSeparatedControlsV3
+          leftHanded={leftHanded}
+          joystickKey={joystickKey}
+          controlScale={cScale}
+          onMove={(x, y) => { dir.current.x = x; dir.current.y = y; }}
+          runToggle={runToggle}
+          onToggleRun={toggleRun}
+          onOpenHub={onB}
+          onAction={onA}
+          actionReady={actionReady}
+          proxHint={proxHint}
+        />
+      )}
+      {showHub && (<PlayerHub player={player} region={region} missions={game.missions} missionDefs={game.missionDefs} settings={game.settings} onUpdateSettings={game.onUpdateSettings} onUseConsumable={game.onUseConsumable} onEquipWeapon={game.onEquipWeapon} onEquipArmor={game.onEquipArmor} onEquipHelmet={game.onEquipHelmet} onEquipAccessory={game.onEquipAccessory} onSellWeapon={game.onSellWeapon} onSellArmor={game.onSellArmor} onSellHelmet={game.onSellHelmet} onSellAccessory={game.onSellAccessory} onSellMaterial={game.onSellMaterial} onEquipClassWeapon={game.onEquipClassWeapon} onSellClassWeapon={game.onSellClassWeapon} onClose={() => setShowHub(false)} />)}
       {showExploreMap && (<ExplorationMap discovered={game.discoveredBlocks || new Set()} currentRegion={game.regionIndex} currentBlock={game.blockIndex} defeatedBosses={game.defeatedBosses} game={game} exploreBlocks={game.exploreBlocks} playerPos={pos.current} playerDir={facingRef.current} lastShrine={game.lastShrine} onClose={() => setShowExploreMap(false)} />)}
       {showSectorMap && (<SectorMapModal region={region} regionIndex={regionIndex} col={game.blockIndex} row={game.sectorRow} visitedSectors={game.visitedSectors} unlockedSectors={game.unlockedSectors} bossDefeated={bossDefeated} onClose={() => setShowSectorMap(false)} />)}
       {showJournal && (<MissionJournal missions={game.missions} missionDefs={game.missionDefs} region={region} priorityMissionId={game.priorityMissionId} onSetActive={game.setMissionActive} onSetPriority={game.setPriorityMission} onClose={() => setShowJournal(false)} />)}

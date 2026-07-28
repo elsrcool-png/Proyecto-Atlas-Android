@@ -1,0 +1,1192 @@
+{
+  "schema": "atlas.hero_rig.v1",
+  "id": "humano",
+  "race": "Humano",
+  "status": "canonical_engineering_coordinates",
+  "canvas": {
+    "width": 288,
+    "height": 384,
+    "anchor": {
+      "x": 144,
+      "y": 376
+    },
+    "runtime_scale": 0.25
+  },
+  "body_height_px": 312,
+  "motion_scale": 1.0,
+  "equipment_fit_profile": "medium_standard",
+  "directions": {
+    "down": {
+      "bones": {
+        "root": {
+          "parent": null,
+          "x": 144,
+          "y": 376
+        },
+        "pelvis": {
+          "parent": "root",
+          "x": 144,
+          "y": 271
+        },
+        "torso": {
+          "parent": "pelvis",
+          "x": 144,
+          "y": 211
+        },
+        "neck": {
+          "parent": "torso",
+          "x": 144,
+          "y": 169
+        },
+        "head": {
+          "parent": "neck",
+          "x": 144,
+          "y": 111
+        },
+        "shoulder_near": {
+          "parent": "torso",
+          "x": 188,
+          "y": 182
+        },
+        "upper_arm_near": {
+          "parent": "shoulder_near",
+          "x": 188,
+          "y": 182
+        },
+        "elbow_near": {
+          "parent": "upper_arm_near",
+          "x": 201,
+          "y": 220
+        },
+        "forearm_near": {
+          "parent": "elbow_near",
+          "x": 201,
+          "y": 220
+        },
+        "wrist_near": {
+          "parent": "forearm_near",
+          "x": 206,
+          "y": 257
+        },
+        "hand_near": {
+          "parent": "wrist_near",
+          "x": 209,
+          "y": 269
+        },
+        "shoulder_far": {
+          "parent": "torso",
+          "x": 100,
+          "y": 180
+        },
+        "upper_arm_far": {
+          "parent": "shoulder_far",
+          "x": 100,
+          "y": 180
+        },
+        "elbow_far": {
+          "parent": "upper_arm_far",
+          "x": 90,
+          "y": 218
+        },
+        "forearm_far": {
+          "parent": "elbow_far",
+          "x": 90,
+          "y": 218
+        },
+        "wrist_far": {
+          "parent": "forearm_far",
+          "x": 85,
+          "y": 255
+        },
+        "hand_far": {
+          "parent": "wrist_far",
+          "x": 83,
+          "y": 267
+        },
+        "hip_near": {
+          "parent": "pelvis",
+          "x": 165,
+          "y": 280
+        },
+        "thigh_near": {
+          "parent": "hip_near",
+          "x": 165,
+          "y": 280
+        },
+        "knee_near": {
+          "parent": "thigh_near",
+          "x": 161,
+          "y": 329
+        },
+        "shin_near": {
+          "parent": "knee_near",
+          "x": 161,
+          "y": 329
+        },
+        "ankle_near": {
+          "parent": "shin_near",
+          "x": 159,
+          "y": 360
+        },
+        "foot_near": {
+          "parent": "ankle_near",
+          "x": 159,
+          "y": 371
+        },
+        "hip_far": {
+          "parent": "pelvis",
+          "x": 123,
+          "y": 279
+        },
+        "thigh_far": {
+          "parent": "hip_far",
+          "x": 123,
+          "y": 279
+        },
+        "knee_far": {
+          "parent": "thigh_far",
+          "x": 127,
+          "y": 328
+        },
+        "shin_far": {
+          "parent": "knee_far",
+          "x": 127,
+          "y": 328
+        },
+        "ankle_far": {
+          "parent": "shin_far",
+          "x": 129,
+          "y": 359
+        },
+        "foot_far": {
+          "parent": "ankle_far",
+          "x": 129,
+          "y": 370
+        }
+      },
+      "sockets": {
+        "anchor": {
+          "x": 144,
+          "y": 376
+        },
+        "head_socket": {
+          "x": 144,
+          "y": 111
+        },
+        "helmet_socket": {
+          "x": 144,
+          "y": 92
+        },
+        "hair_socket": {
+          "x": 144,
+          "y": 87
+        },
+        "face_socket": {
+          "x": 144,
+          "y": 105
+        },
+        "neck_socket": {
+          "x": 144,
+          "y": 169
+        },
+        "chest_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "back_socket": {
+          "x": 144,
+          "y": 207
+        },
+        "cape_socket": {
+          "x": 144,
+          "y": 172
+        },
+        "waist_socket": {
+          "x": 144,
+          "y": 248
+        },
+        "pelvis_socket": {
+          "x": 144,
+          "y": 271
+        },
+        "hand_near_socket": {
+          "parent": "wrist_near",
+          "x": 209,
+          "y": 269
+        },
+        "hand_far_socket": {
+          "parent": "wrist_far",
+          "x": 83,
+          "y": 267
+        },
+        "right_hand_socket": {
+          "x": 83,
+          "y": 267
+        },
+        "left_hand_socket": {
+          "x": 209,
+          "y": 269
+        },
+        "weapon_main_socket": {
+          "x": 83,
+          "y": 267
+        },
+        "weapon_offhand_socket": {
+          "x": 209,
+          "y": 269
+        },
+        "shield_socket": {
+          "x": 209,
+          "y": 266
+        },
+        "effect_hand_main_socket": {
+          "x": 83,
+          "y": 262
+        },
+        "effect_hand_off_socket": {
+          "x": 209,
+          "y": 264
+        },
+        "effect_body_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "effect_ground_socket": {
+          "x": 144,
+          "y": 376
+        },
+        "hair_front_socket": {
+          "x": 144,
+          "y": 92,
+          "calibration": "engineering"
+        },
+        "hair_back_socket": {
+          "x": 144,
+          "y": 82,
+          "calibration": "engineering"
+        },
+        "book_socket": {
+          "x": 209,
+          "y": 266,
+          "calibration": "engineering"
+        },
+        "orb_socket": {
+          "x": 83,
+          "y": 259,
+          "calibration": "engineering"
+        },
+        "effect_head_socket": {
+          "x": 144,
+          "y": 93,
+          "calibration": "engineering"
+        },
+        "effect_weapon_socket": {
+          "x": 83,
+          "y": 255,
+          "calibration": "engineering"
+        },
+        "belt_left_socket": {
+          "x": 126,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "belt_right_socket": {
+          "x": 162,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "scabbard_socket": {
+          "x": 122,
+          "y": 241,
+          "calibration": "engineering"
+        }
+      },
+      "anatomical_mapping": {
+        "right": "far",
+        "left": "near"
+      }
+    },
+    "up": {
+      "bones": {
+        "root": {
+          "parent": null,
+          "x": 144,
+          "y": 376
+        },
+        "pelvis": {
+          "parent": "root",
+          "x": 144,
+          "y": 271
+        },
+        "torso": {
+          "parent": "pelvis",
+          "x": 144,
+          "y": 211
+        },
+        "neck": {
+          "parent": "torso",
+          "x": 144,
+          "y": 169
+        },
+        "head": {
+          "parent": "neck",
+          "x": 144,
+          "y": 111
+        },
+        "shoulder_near": {
+          "parent": "torso",
+          "x": 100,
+          "y": 182
+        },
+        "upper_arm_near": {
+          "parent": "shoulder_near",
+          "x": 100,
+          "y": 182
+        },
+        "elbow_near": {
+          "parent": "upper_arm_near",
+          "x": 87,
+          "y": 220
+        },
+        "forearm_near": {
+          "parent": "elbow_near",
+          "x": 87,
+          "y": 220
+        },
+        "wrist_near": {
+          "parent": "forearm_near",
+          "x": 82,
+          "y": 257
+        },
+        "hand_near": {
+          "parent": "wrist_near",
+          "x": 79,
+          "y": 269
+        },
+        "shoulder_far": {
+          "parent": "torso",
+          "x": 188,
+          "y": 180
+        },
+        "upper_arm_far": {
+          "parent": "shoulder_far",
+          "x": 188,
+          "y": 180
+        },
+        "elbow_far": {
+          "parent": "upper_arm_far",
+          "x": 198,
+          "y": 218
+        },
+        "forearm_far": {
+          "parent": "elbow_far",
+          "x": 198,
+          "y": 218
+        },
+        "wrist_far": {
+          "parent": "forearm_far",
+          "x": 203,
+          "y": 255
+        },
+        "hand_far": {
+          "parent": "wrist_far",
+          "x": 205,
+          "y": 267
+        },
+        "hip_near": {
+          "parent": "pelvis",
+          "x": 123,
+          "y": 280
+        },
+        "thigh_near": {
+          "parent": "hip_near",
+          "x": 123,
+          "y": 280
+        },
+        "knee_near": {
+          "parent": "thigh_near",
+          "x": 127,
+          "y": 329
+        },
+        "shin_near": {
+          "parent": "knee_near",
+          "x": 127,
+          "y": 329
+        },
+        "ankle_near": {
+          "parent": "shin_near",
+          "x": 129,
+          "y": 360
+        },
+        "foot_near": {
+          "parent": "ankle_near",
+          "x": 129,
+          "y": 371
+        },
+        "hip_far": {
+          "parent": "pelvis",
+          "x": 165,
+          "y": 279
+        },
+        "thigh_far": {
+          "parent": "hip_far",
+          "x": 165,
+          "y": 279
+        },
+        "knee_far": {
+          "parent": "thigh_far",
+          "x": 161,
+          "y": 328
+        },
+        "shin_far": {
+          "parent": "knee_far",
+          "x": 161,
+          "y": 328
+        },
+        "ankle_far": {
+          "parent": "shin_far",
+          "x": 159,
+          "y": 359
+        },
+        "foot_far": {
+          "parent": "ankle_far",
+          "x": 159,
+          "y": 370
+        }
+      },
+      "sockets": {
+        "anchor": {
+          "x": 144,
+          "y": 376
+        },
+        "head_socket": {
+          "x": 144,
+          "y": 111
+        },
+        "helmet_socket": {
+          "x": 144,
+          "y": 92
+        },
+        "hair_socket": {
+          "x": 144,
+          "y": 87
+        },
+        "face_socket": {
+          "x": 144,
+          "y": 105
+        },
+        "neck_socket": {
+          "x": 144,
+          "y": 169
+        },
+        "chest_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "back_socket": {
+          "x": 144,
+          "y": 207
+        },
+        "cape_socket": {
+          "x": 144,
+          "y": 172
+        },
+        "waist_socket": {
+          "x": 144,
+          "y": 248
+        },
+        "pelvis_socket": {
+          "x": 144,
+          "y": 271
+        },
+        "hand_near_socket": {
+          "parent": "wrist_near",
+          "x": 79,
+          "y": 269
+        },
+        "hand_far_socket": {
+          "parent": "wrist_far",
+          "x": 205,
+          "y": 267
+        },
+        "right_hand_socket": {
+          "x": 79,
+          "y": 269
+        },
+        "left_hand_socket": {
+          "x": 205,
+          "y": 267
+        },
+        "weapon_main_socket": {
+          "x": 79,
+          "y": 269
+        },
+        "weapon_offhand_socket": {
+          "x": 205,
+          "y": 267
+        },
+        "shield_socket": {
+          "x": 205,
+          "y": 264
+        },
+        "effect_hand_main_socket": {
+          "x": 79,
+          "y": 264
+        },
+        "effect_hand_off_socket": {
+          "x": 205,
+          "y": 262
+        },
+        "effect_body_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "effect_ground_socket": {
+          "x": 144,
+          "y": 376
+        },
+        "hair_front_socket": {
+          "x": 144,
+          "y": 92,
+          "calibration": "engineering"
+        },
+        "hair_back_socket": {
+          "x": 144,
+          "y": 82,
+          "calibration": "engineering"
+        },
+        "book_socket": {
+          "x": 205,
+          "y": 264,
+          "calibration": "engineering"
+        },
+        "orb_socket": {
+          "x": 79,
+          "y": 261,
+          "calibration": "engineering"
+        },
+        "effect_head_socket": {
+          "x": 144,
+          "y": 93,
+          "calibration": "engineering"
+        },
+        "effect_weapon_socket": {
+          "x": 79,
+          "y": 257,
+          "calibration": "engineering"
+        },
+        "belt_left_socket": {
+          "x": 126,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "belt_right_socket": {
+          "x": 162,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "scabbard_socket": {
+          "x": 166,
+          "y": 241,
+          "calibration": "engineering"
+        }
+      },
+      "anatomical_mapping": {
+        "right": "near",
+        "left": "far"
+      }
+    },
+    "left": {
+      "bones": {
+        "root": {
+          "parent": null,
+          "x": 144,
+          "y": 376
+        },
+        "pelvis": {
+          "parent": "root",
+          "x": 144,
+          "y": 271
+        },
+        "torso": {
+          "parent": "pelvis",
+          "x": 144,
+          "y": 211
+        },
+        "neck": {
+          "parent": "torso",
+          "x": 144,
+          "y": 169
+        },
+        "head": {
+          "parent": "neck",
+          "x": 144,
+          "y": 111
+        },
+        "shoulder_near": {
+          "parent": "torso",
+          "x": 134,
+          "y": 182
+        },
+        "upper_arm_near": {
+          "parent": "shoulder_near",
+          "x": 134,
+          "y": 182
+        },
+        "elbow_near": {
+          "parent": "upper_arm_near",
+          "x": 124,
+          "y": 220
+        },
+        "forearm_near": {
+          "parent": "elbow_near",
+          "x": 124,
+          "y": 220
+        },
+        "wrist_near": {
+          "parent": "forearm_near",
+          "x": 122,
+          "y": 257
+        },
+        "hand_near": {
+          "parent": "wrist_near",
+          "x": 120,
+          "y": 269
+        },
+        "shoulder_far": {
+          "parent": "torso",
+          "x": 151,
+          "y": 179
+        },
+        "upper_arm_far": {
+          "parent": "shoulder_far",
+          "x": 151,
+          "y": 179
+        },
+        "elbow_far": {
+          "parent": "upper_arm_far",
+          "x": 153,
+          "y": 218
+        },
+        "forearm_far": {
+          "parent": "elbow_far",
+          "x": 153,
+          "y": 218
+        },
+        "wrist_far": {
+          "parent": "forearm_far",
+          "x": 155,
+          "y": 255
+        },
+        "hand_far": {
+          "parent": "wrist_far",
+          "x": 156,
+          "y": 267
+        },
+        "hip_near": {
+          "parent": "pelvis",
+          "x": 138,
+          "y": 280
+        },
+        "thigh_near": {
+          "parent": "hip_near",
+          "x": 138,
+          "y": 280
+        },
+        "knee_near": {
+          "parent": "thigh_near",
+          "x": 138,
+          "y": 329
+        },
+        "shin_near": {
+          "parent": "knee_near",
+          "x": 138,
+          "y": 329
+        },
+        "ankle_near": {
+          "parent": "shin_near",
+          "x": 141,
+          "y": 360
+        },
+        "foot_near": {
+          "parent": "ankle_near",
+          "x": 141,
+          "y": 371
+        },
+        "hip_far": {
+          "parent": "pelvis",
+          "x": 149,
+          "y": 279
+        },
+        "thigh_far": {
+          "parent": "hip_far",
+          "x": 149,
+          "y": 279
+        },
+        "knee_far": {
+          "parent": "thigh_far",
+          "x": 148,
+          "y": 328
+        },
+        "shin_far": {
+          "parent": "knee_far",
+          "x": 148,
+          "y": 328
+        },
+        "ankle_far": {
+          "parent": "shin_far",
+          "x": 147,
+          "y": 359
+        },
+        "foot_far": {
+          "parent": "ankle_far",
+          "x": 147,
+          "y": 370
+        }
+      },
+      "sockets": {
+        "anchor": {
+          "x": 144,
+          "y": 376
+        },
+        "head_socket": {
+          "x": 144,
+          "y": 111
+        },
+        "helmet_socket": {
+          "x": 144,
+          "y": 92
+        },
+        "hair_socket": {
+          "x": 144,
+          "y": 87
+        },
+        "face_socket": {
+          "x": 144,
+          "y": 105
+        },
+        "neck_socket": {
+          "x": 144,
+          "y": 169
+        },
+        "chest_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "back_socket": {
+          "x": 144,
+          "y": 207
+        },
+        "cape_socket": {
+          "x": 144,
+          "y": 172
+        },
+        "waist_socket": {
+          "x": 144,
+          "y": 248
+        },
+        "pelvis_socket": {
+          "x": 144,
+          "y": 271
+        },
+        "hand_near_socket": {
+          "parent": "wrist_near",
+          "x": 120,
+          "y": 269
+        },
+        "hand_far_socket": {
+          "parent": "wrist_far",
+          "x": 156,
+          "y": 267
+        },
+        "right_hand_socket": {
+          "x": 156,
+          "y": 267
+        },
+        "left_hand_socket": {
+          "x": 120,
+          "y": 269
+        },
+        "weapon_main_socket": {
+          "x": 156,
+          "y": 267
+        },
+        "weapon_offhand_socket": {
+          "x": 120,
+          "y": 269
+        },
+        "shield_socket": {
+          "x": 120,
+          "y": 266
+        },
+        "effect_hand_main_socket": {
+          "x": 156,
+          "y": 262
+        },
+        "effect_hand_off_socket": {
+          "x": 120,
+          "y": 264
+        },
+        "effect_body_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "effect_ground_socket": {
+          "x": 144,
+          "y": 376
+        },
+        "hair_front_socket": {
+          "x": 139,
+          "y": 88,
+          "calibration": "engineering"
+        },
+        "hair_back_socket": {
+          "x": 149,
+          "y": 84,
+          "calibration": "engineering"
+        },
+        "book_socket": {
+          "x": 120,
+          "y": 266,
+          "calibration": "engineering"
+        },
+        "orb_socket": {
+          "x": 156,
+          "y": 259,
+          "calibration": "engineering"
+        },
+        "effect_head_socket": {
+          "x": 144,
+          "y": 93,
+          "calibration": "engineering"
+        },
+        "effect_weapon_socket": {
+          "x": 156,
+          "y": 255,
+          "calibration": "engineering"
+        },
+        "belt_left_socket": {
+          "x": 126,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "belt_right_socket": {
+          "x": 162,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "scabbard_socket": {
+          "x": 166,
+          "y": 241,
+          "calibration": "engineering"
+        }
+      },
+      "anatomical_mapping": {
+        "right": "far",
+        "left": "near"
+      }
+    },
+    "right": {
+      "bones": {
+        "root": {
+          "parent": null,
+          "x": 144,
+          "y": 376
+        },
+        "pelvis": {
+          "parent": "root",
+          "x": 144,
+          "y": 271
+        },
+        "torso": {
+          "parent": "pelvis",
+          "x": 144,
+          "y": 211
+        },
+        "neck": {
+          "parent": "torso",
+          "x": 144,
+          "y": 169
+        },
+        "head": {
+          "parent": "neck",
+          "x": 144,
+          "y": 111
+        },
+        "shoulder_near": {
+          "parent": "torso",
+          "x": 154,
+          "y": 182
+        },
+        "upper_arm_near": {
+          "parent": "shoulder_near",
+          "x": 154,
+          "y": 182
+        },
+        "elbow_near": {
+          "parent": "upper_arm_near",
+          "x": 164,
+          "y": 220
+        },
+        "forearm_near": {
+          "parent": "elbow_near",
+          "x": 164,
+          "y": 220
+        },
+        "wrist_near": {
+          "parent": "forearm_near",
+          "x": 166,
+          "y": 257
+        },
+        "hand_near": {
+          "parent": "wrist_near",
+          "x": 168,
+          "y": 269
+        },
+        "shoulder_far": {
+          "parent": "torso",
+          "x": 137,
+          "y": 179
+        },
+        "upper_arm_far": {
+          "parent": "shoulder_far",
+          "x": 137,
+          "y": 179
+        },
+        "elbow_far": {
+          "parent": "upper_arm_far",
+          "x": 135,
+          "y": 218
+        },
+        "forearm_far": {
+          "parent": "elbow_far",
+          "x": 135,
+          "y": 218
+        },
+        "wrist_far": {
+          "parent": "forearm_far",
+          "x": 133,
+          "y": 255
+        },
+        "hand_far": {
+          "parent": "wrist_far",
+          "x": 132,
+          "y": 267
+        },
+        "hip_near": {
+          "parent": "pelvis",
+          "x": 150,
+          "y": 280
+        },
+        "thigh_near": {
+          "parent": "hip_near",
+          "x": 150,
+          "y": 280
+        },
+        "knee_near": {
+          "parent": "thigh_near",
+          "x": 150,
+          "y": 329
+        },
+        "shin_near": {
+          "parent": "knee_near",
+          "x": 150,
+          "y": 329
+        },
+        "ankle_near": {
+          "parent": "shin_near",
+          "x": 147,
+          "y": 360
+        },
+        "foot_near": {
+          "parent": "ankle_near",
+          "x": 147,
+          "y": 371
+        },
+        "hip_far": {
+          "parent": "pelvis",
+          "x": 139,
+          "y": 279
+        },
+        "thigh_far": {
+          "parent": "hip_far",
+          "x": 139,
+          "y": 279
+        },
+        "knee_far": {
+          "parent": "thigh_far",
+          "x": 140,
+          "y": 328
+        },
+        "shin_far": {
+          "parent": "knee_far",
+          "x": 140,
+          "y": 328
+        },
+        "ankle_far": {
+          "parent": "shin_far",
+          "x": 141,
+          "y": 359
+        },
+        "foot_far": {
+          "parent": "ankle_far",
+          "x": 141,
+          "y": 370
+        }
+      },
+      "sockets": {
+        "anchor": {
+          "x": 144,
+          "y": 376
+        },
+        "head_socket": {
+          "x": 144,
+          "y": 111
+        },
+        "helmet_socket": {
+          "x": 144,
+          "y": 92
+        },
+        "hair_socket": {
+          "x": 144,
+          "y": 87
+        },
+        "face_socket": {
+          "x": 144,
+          "y": 105
+        },
+        "neck_socket": {
+          "x": 144,
+          "y": 169
+        },
+        "chest_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "back_socket": {
+          "x": 144,
+          "y": 207
+        },
+        "cape_socket": {
+          "x": 144,
+          "y": 172
+        },
+        "waist_socket": {
+          "x": 144,
+          "y": 248
+        },
+        "pelvis_socket": {
+          "x": 144,
+          "y": 271
+        },
+        "hand_near_socket": {
+          "parent": "wrist_near",
+          "x": 168,
+          "y": 269
+        },
+        "hand_far_socket": {
+          "parent": "wrist_far",
+          "x": 132,
+          "y": 267
+        },
+        "right_hand_socket": {
+          "x": 168,
+          "y": 269
+        },
+        "left_hand_socket": {
+          "x": 132,
+          "y": 267
+        },
+        "weapon_main_socket": {
+          "x": 168,
+          "y": 269
+        },
+        "weapon_offhand_socket": {
+          "x": 132,
+          "y": 267
+        },
+        "shield_socket": {
+          "x": 132,
+          "y": 264
+        },
+        "effect_hand_main_socket": {
+          "x": 168,
+          "y": 264
+        },
+        "effect_hand_off_socket": {
+          "x": 132,
+          "y": 262
+        },
+        "effect_body_socket": {
+          "x": 144,
+          "y": 211
+        },
+        "effect_ground_socket": {
+          "x": 144,
+          "y": 376
+        },
+        "hair_front_socket": {
+          "x": 149,
+          "y": 88,
+          "calibration": "engineering"
+        },
+        "hair_back_socket": {
+          "x": 139,
+          "y": 84,
+          "calibration": "engineering"
+        },
+        "book_socket": {
+          "x": 132,
+          "y": 264,
+          "calibration": "engineering"
+        },
+        "orb_socket": {
+          "x": 168,
+          "y": 261,
+          "calibration": "engineering"
+        },
+        "effect_head_socket": {
+          "x": 144,
+          "y": 93,
+          "calibration": "engineering"
+        },
+        "effect_weapon_socket": {
+          "x": 168,
+          "y": 257,
+          "calibration": "engineering"
+        },
+        "belt_left_socket": {
+          "x": 126,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "belt_right_socket": {
+          "x": 162,
+          "y": 250,
+          "calibration": "engineering"
+        },
+        "scabbard_socket": {
+          "x": 122,
+          "y": 241,
+          "calibration": "engineering"
+        }
+      },
+      "anatomical_mapping": {
+        "right": "near",
+        "left": "far"
+      }
+    }
+  },
+  "calibration_rule": "Final art must be authored to these frozen bounds. If an artist moves a joint by more than tolerance, correct the art rather than silently changing the rig.",
+  "tolerances": {
+    "baseline_px": 0,
+    "head_top_px": 2,
+    "major_joint_y_px": 2,
+    "socket_px": 3
+  },
+  "socket_status": {
+    "required_names_complete": true,
+    "coordinate_level": "engineering_rig_space",
+    "final_art_crop_trim_pending": true
+  }
+}

@@ -1,0 +1,69 @@
+/* Proyecto Atlas UI v3 — adaptación móvil, horizontal y accesibilidad */
+
+@media (orientation: landscape) and (max-height: 640px) {
+  .atlas-ui-v3 .atlas-ui-modal-backdrop {
+    align-items: flex-start;
+  }
+
+  .atlas-ui-v3 .atlas-ui-modal {
+    width: min(98vw, 1040px);
+    max-height: calc(100dvh - var(--atlas-ui-safe-top) - var(--atlas-ui-safe-bottom));
+    border-radius: 10px;
+  }
+
+  .atlas-ui-v3 .atlas-ui-button {
+    min-height: 38px;
+    padding: 7px 11px;
+    font-size: 0.78rem;
+  }
+
+  .atlas-ui-v3 .atlas-ui-icon-button {
+    --atlas-ui-control-min: 38px;
+  }
+
+  .atlas-ui-v3 .atlas-ui-action-button {
+    width: 58px;
+    height: 58px;
+  }
+
+  .atlas-ui-v3 .atlas-ui-action-button--run,
+  .atlas-ui-v3 .atlas-ui-action-button--rotate {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (max-width: 720px) {
+  .atlas-ui-v3 .atlas-ui-panel-header {
+    padding: 9px 11px;
+  }
+
+  .atlas-ui-v3 .atlas-ui-tabs {
+    gap: 4px;
+  }
+
+  .atlas-ui-v3 .atlas-ui-tab {
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-ui-v3 *,
+  .atlas-ui-v3 *::before,
+  .atlas-ui-v3 *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .atlas-ui-v3 {
+    --atlas-ui-border-soft: rgba(240, 198, 90, 0.82);
+    --atlas-ui-text-soft: #d7dce2;
+    --atlas-ui-text-dim: #b0bac5;
+  }
+}

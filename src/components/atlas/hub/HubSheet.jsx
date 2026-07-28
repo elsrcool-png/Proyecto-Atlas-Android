@@ -20,7 +20,7 @@ export default function HubSheet({ player }) {
   const weaponDice = weaponAbility ? DICE_GROUPS[weaponAbility.diceGroup]?.label : null;
   return (
     <div className="p-4 space-y-4 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/40 p-3"><ChibiSprite race={player.race} cls={player.class} size={56} /><div><h2 className="text-base font-semibold text-slate-100">{player.race} {player.class}</h2><p className="text-xs text-slate-400 flex items-center gap-1"><GIcon name={player.raceIcon} size={12} /> Nivel {player.level} · {energy.name}</p></div></div>
+      <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/40 p-3"><ChibiSprite player={player} race={player.race} cls={player.class} size={56} surface="playerHub" /><div><h2 className="text-base font-semibold text-slate-100">{player.race} {player.class}</h2><p className="text-xs text-slate-400 flex items-center gap-1"><GIcon name={player.raceIcon} size={12} /> Nivel {player.level} · {energy.name}</p></div></div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <Stat label={offStat.name} base={player.baseAttack ?? player.attack} bonus={bonus.atk} icon={offStat.icon} />
         <Stat label="Vida" base={player.baseMaxHp ?? player.maxHp} bonus={bonus.maxHp} icon="heart" />

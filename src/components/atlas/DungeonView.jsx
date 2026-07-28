@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { LogOut, Swords, FlaskRound, Hourglass, Key, RotateCw } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Swords, FlaskRound, Hourglass } from "lucide-react";
 import { getEntities, DUNGEON_TILE } from "@/lib/atlasDungeons";
 import {
   getUnlockedDungeonSkills, DIR8, DIR8_KEYS, facingFromVector,
   lineOfSight, isWalkableDiag,
 } from "@/lib/atlasDungeonSkills";
 import { drawPlayerSprite } from "@/lib/atlasPixel";
+import { drawPlayerFrameWithModularFallback } from "@/lib/atlasHeroCanvasBridge";
 import useDungeonCombat from "@/hooks/useDungeonCombat";
 import EntitySprite from "./EntitySprite";
-import Joystick from "./Joystick";
 import DungeonVfx from "./DungeonVfx";
-import CombatView from "./CombatView";
+import CombatView from "./ui-v3/CombatViewAdapterV3";
 import AtlasPressButton from "./AtlasPressButton";
-import OrientationToggleButton from "./OrientationToggleButton";
+import DungeonHudV3 from "./ui-v3/DungeonHudV3";
 import { getSkillStatusHints } from "@/lib/atlasSkillStatusHints";
 
 const T = DUNGEON_TILE;
@@ -126,7 +126,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   }, []);
 
   useEffect(() => {
-    if (canvasRef.current && player) drawPlayerSprite(canvasRef.current, player.class, facingToCardinal(facing), 0, 3, player.race);
+    if (canvasRef.current && player) drawPlayerFrameWithModularFallback({ surface: "dungeon", legacyDraw: () => drawPlayerSprite(canvasRef.current, player.class, facingToCardinal(facing), 0, 3, player.race) });
   }, [facing, player, pos]);
 
   useEffect(() => {
@@ -298,8 +298,6 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   if (!dungeon || !player) return null;
 
   const ent = entitiesRef.current;
-  const hpPct = Math.max(0, (player.hp / player.maxHp) * 100);
-  const mpPct = Math.max(0, ((player.mp || 0) / Math.max(1, player.maxMp || 1)) * 100);
   // Vista ampliada: aleja la cámara en móvil para mostrar más terreno.
   const zoom = vp.w < 640 ? 0.82 : vp.w < 1000 ? 0.92 : 1;
   const camX = vp.w / 2 - zoom * (pos.x * T + T / 2);
@@ -316,7 +314,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   const canAct = combat.tactical && combat.turn === "player" && !combat.busy;
 
   return (
-    <div className="min-h-screen relative flex flex-col" style={{ background: "#1a1206" }}>
+    <div className="atlas-ui-v3 min-h-screen relative flex flex-col" data-region={region?.id} style={{ background: "#1a1206" }}>
       <div ref={vpRef} className="relative w-full overflow-hidden" style={{ height: "100dvh" }}>
         <div className="absolute top-0 left-0" style={{ width: gridW, height: gridH, transform: `translate(${camX}px, ${camY}px) scale(${zoom})`, transformOrigin: "0 0" }}>
           {liveTiles.map((row, y) => Array.from(row).map((ch, x) => {
@@ -416,32 +414,21 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
           </div>
         )}
 
-        {/* HUD superior */}
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-2">
-          <div className="rounded-lg bg-slate-950/80 border border-amber-700/60 px-3 py-1.5 text-xs text-amber-100">
-            <span className="font-display text-[10px]" style={{ color: "#fbbf24" }}>{dungeon.name}</span>
-            {dungeon.floorCount > 1 && <span className="text-amber-300"> · Piso {dungeon.floor}/{dungeon.floorCount}{dungeon.isBossFloor ? " ★" : ""}</span>}
-            <span className="text-slate-400"> · Nv {player.level} · {player.race} {player.class}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {combat.keys > 0 && (
-              <div className="flex items-center gap-1 rounded-lg bg-amber-950/80 border border-amber-500 px-2 py-1 text-[11px] text-amber-200">
-                <Key className="w-3 h-3" /> {combat.keys}
-              </div>
-            )}
-            <div className="rounded-lg bg-slate-950/80 border border-slate-700 px-2 py-1 w-36">
-              <div className="flex items-center justify-between text-[9px] text-slate-300 mb-0.5"><span>HP</span><span>{player.hp}/{player.maxHp}</span></div>
-              <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden mb-1"><div className="h-full bg-emerald-400 transition-all" style={{ width: `${hpPct}%` }} /></div>
-              <div className="flex items-center justify-between text-[9px] text-sky-300 mb-0.5"><span>EN</span><span>{player.mp || 0}/{player.maxMp || 0}</span></div>
-              <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden"><div className="h-full bg-sky-400 transition-all" style={{ width: `${mpPct}%` }} /></div>
-            </div>
-            {settings && <OrientationToggleButton settings={settings} onChange={onUpdateSettings} onRequestOrientation={onRequestOrientation} className="rounded-lg bg-slate-900/80 border border-slate-700 p-2 text-slate-200 hover:bg-slate-800" />}
-            <AtlasPressButton onPress={() => setShowDebug((v) => !v)} className="rounded-lg bg-slate-900/80 border border-slate-700 px-2 py-1.5 text-[10px] text-slate-300 hover:bg-slate-800">DBG</AtlasPressButton>
-            <AtlasPressButton onPress={onExit} className="flex items-center gap-1.5 rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800">
-              <LogOut className="w-3.5 h-3.5" /> Salir
-            </AtlasPressButton>
-          </div>
-        </div>
+        <DungeonHudV3
+          dungeon={dungeon}
+          player={player}
+          keys={combat.keys}
+          settings={settings}
+          onUpdateSettings={onUpdateSettings}
+          onRequestOrientation={onRequestOrientation}
+          showDebug={showDebug}
+          onToggleDebug={() => setShowDebug(v => !v)}
+          onExit={onExit}
+          onMove={onJoyMove}
+          onRotate={() => { const i = DIR8_KEYS.indexOf(facing); setFacing(DIR8_KEYS[(i + 1) % DIR8_KEYS.length]); }}
+          onAction={onA}
+          tactical={combat.tactical}
+        />
 
         {combat.tactical && (
           <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-rose-950/85 border border-rose-600 flex items-center gap-2">
@@ -504,19 +491,6 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             </div>
           </div>
         )}
-
-        {/* Controles: joystick del modo libre + botones A / Girar */}
-        <div className="absolute bottom-6 z-20 left-6">
-          <Joystick onMove={onJoyMove} />
-        </div>
-        <div className="absolute bottom-6 z-20 right-6 flex items-end gap-3">
-          <AtlasPressButton onPress={() => { const i = DIR8_KEYS.indexOf(facing); setFacing(DIR8_KEYS[(i + 1) % DIR8_KEYS.length]); }} className="rounded-full bg-slate-700/85 border-2 border-slate-400 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center" style={{ width: 50, height: 50 }} title="Girar">
-            <RotateCw className="w-5 h-5" />
-          </AtlasPressButton>
-          <AtlasPressButton onPress={onA} haptic="uiStrong" className={`rounded-full border-2 text-white font-bold shadow-lg active:scale-95 flex items-center justify-center ${combat.tactical ? "bg-rose-600/85 border-rose-300" : "bg-emerald-600/85 border-emerald-300"}`} style={{ width: 64, height: 64, fontSize: 18 }}>
-            {combat.tactical ? "⚔" : "A"}
-          </AtlasPressButton>
-        </div>
 
         {combat.tactical && (() => {
           const typeStyle = (t) => t === "definitive" ? { bg: "rgba(251,191,36,0.22)", bd: "#fbbf24" } : t === "hybrid" ? { bg: "rgba(217,70,239,0.25)", bd: "#d946ef" } : t === "class" ? { bg: "rgba(245,158,11,0.25)", bd: "#f59e0b" } : t === "weapon" ? { bg: "rgba(56,189,248,0.2)", bd: "#38bdf8" } : { bg: "rgba(100,116,139,0.3)", bd: "#94a3b8" };

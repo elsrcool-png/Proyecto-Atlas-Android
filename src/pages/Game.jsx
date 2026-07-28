@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { REGIONS } from "@/lib/atlasData";
 import { SECTOR_NEED } from "@/lib/atlasMissions";
 import useAtlasSession from "@/hooks/useAtlasSession";
-import MainMenu from "@/components/atlas/MainMenu";
-import CharacterSelect from "@/components/atlas/CharacterSelect";
+import MainMenu from "@/components/atlas/ui-v3/MainMenuV3";
+import CharacterSelect from "@/components/atlas/ui-v3/CharacterSelectV3";
 import CharacterPanel from "@/components/atlas/CharacterPanel";
 import RhombusMap from "@/components/atlas/RhombusMap";
 import ActionLog from "@/components/atlas/ActionLog";
-import CombatView from "@/components/atlas/CombatView";
+import CombatView from "@/components/atlas/ui-v3/CombatViewAdapterV3";
 import DiceRoll from "@/components/atlas/DiceRoll";
 import RegionBackdrop from "@/components/atlas/RegionBackdrop";
 import NPCDialog from "@/components/atlas/NPCDialog";
@@ -26,7 +26,7 @@ import BossIntroModal from "@/components/atlas/BossIntroModal";
 import FeedbackToasts from "@/components/atlas/FeedbackToasts";
 import { GIcon } from "@/lib/atlasIcons";
 import { Moon, Trophy, Skull, RotateCcw, MapPin, MessageCircle, Star, Compass, Dices, ShoppingBag, Backpack, Settings as SettingsIcon, Map as MapIcon } from "lucide-react";
-import SettingsModal from "@/components/atlas/SettingsModal";
+import SettingsModal from "@/components/atlas/ui-v3/SettingsModalV3";
 import ShrineModal from "@/components/atlas/ShrineModal";
 import ShrineNotify from "@/components/atlas/ShrineNotify";
 import IntroNarrative from "@/components/atlas/IntroNarrative";
@@ -40,7 +40,7 @@ import CombatAudioIntro from "@/components/atlas/CombatAudioIntro";
 import OrientationToggleButton from "@/components/atlas/OrientationToggleButton";
 import DayNightOverlay from "@/components/atlas/DayNightOverlay";
 import { listSlots, loadSlot, deleteSlot, migrateLegacySave, setActiveSaveSlot } from "@/lib/atlasSave";
-import SaveSlotsModal from "@/components/atlas/SaveSlotsModal";
+import SaveSlotsModal from "@/components/atlas/ui-v3/SaveSlotsModalV3";
 import { sectorIdFromCoords, getSectorDef } from "@/lib/atlasRegionSectors";
 import { generateMissions } from "@/lib/atlasMissions";
 
@@ -208,8 +208,8 @@ export default function Game() {
     onOpenEquipment: () => s.setShowEquipment(true),
     settings, onOpenSettings: () => setShowSettings(true), onRequestOrientation: requestOrientation,
     onUseConsumable: s.useConsumable,
-    onEquipWeapon: s.equipWeapon, onEquipArmor: s.equipArmor, onEquipAccessory: s.equipAccessory,
-    onSellWeapon: s.sellWeapon, onSellArmor: s.sellArmor, onSellAccessory: s.sellAccessory, onSellMaterial: s.sellMaterial,
+    onEquipWeapon: s.equipWeapon, onEquipArmor: s.equipArmor, onEquipHelmet: s.equipHelmet, onEquipAccessory: s.equipAccessory,
+    onSellWeapon: s.sellWeapon, onSellArmor: s.sellArmor, onSellHelmet: s.sellHelmet, onSellAccessory: s.sellAccessory, onSellMaterial: s.sellMaterial,
     onEquipClassWeapon: s.equipClassWeapon, onSellClassWeapon: s.sellClassWeapon,
     onOpenSmith: s.openSmith, onCloseSmith: () => s.setShowSmith(false), onCraftWeapon: s.craftWeapon, onUpgradeWeapon: s.upgradeWeapon, showSmith: s.showSmith,
     smithTier: s.smithTier, onRepairEquipment: s.repairEquipment, onRestoreGreenRelic: s.restoreGreenRelic, worldFlags: s.worldFlags,
@@ -357,10 +357,10 @@ export default function Game() {
       {s.showEquipment && (
         <EquipmentModal
           player={s.player}
-          onEquipWeapon={s.equipWeapon} onEquipArmor={s.equipArmor} onEquipAccessory={s.equipAccessory}
+          onEquipWeapon={s.equipWeapon} onEquipArmor={s.equipArmor} onEquipHelmet={s.equipHelmet} onEquipAccessory={s.equipAccessory}
           onEquipClassWeapon={s.equipClassWeapon}
           onSellClassWeapon={s.sellClassWeapon}
-          onSellWeapon={s.sellWeapon} onSellArmor={s.sellArmor} onSellAccessory={s.sellAccessory} onSellMaterial={s.sellMaterial}
+          onSellWeapon={s.sellWeapon} onSellArmor={s.sellArmor} onSellHelmet={s.sellHelmet} onSellAccessory={s.sellAccessory} onSellMaterial={s.sellMaterial}
           onClose={() => s.setShowEquipment(false)}
         />
       )}
@@ -369,7 +369,7 @@ export default function Game() {
       {s.showSheet && (<CharacterSheet player={s.player} missionsDone={Object.values(s.missions).filter(m => m.status === "done").length} onEquip={s.equipAccessory} onClose={() => s.setShowSheet(false)} />)}
       {s.showBackpack && (<BackpackModal player={s.player} onEquip={s.equipAccessory} onSell={s.sellAccessory} onDiscard={s.discardAccessory} onUseConsumable={s.useConsumable} onClose={() => s.setShowBackpack(false)} />)}
       {s.chestReward && (<ChestRewardModal reward={s.chestReward} onClose={s.closeChestReward} />)}
-      {s.showShop && (<ShopModal player={s.player} onBuy={s.buyPotion} onBuyEquipment={s.buyEquipment} onSellWeapon={s.sellWeapon} onSellArmor={s.sellArmor} onSellAccessory={s.sellAccessory} onSellMaterial={s.sellMaterial} tier={s.shopTier} regionId={s.region.id} worldFlags={s.worldFlags} onClose={() => s.setShowShop(false)} />)}
+      {s.showShop && (<ShopModal player={s.player} onBuy={s.buyPotion} onBuyEquipment={s.buyEquipment} onSellWeapon={s.sellWeapon} onSellArmor={s.sellArmor} onSellHelmet={s.sellHelmet} onSellAccessory={s.sellAccessory} onSellMaterial={s.sellMaterial} tier={s.shopTier} regionId={s.region.id} worldFlags={s.worldFlags} onClose={() => s.setShowShop(false)} />)}
       <FeedbackToasts toasts={s.enemy ? [] : s.toasts} compact={(settings.hudDensity || "clean") === "clean"} />
       {showSettings && <SettingsModal settings={settings} onChange={updateSettings} onRequestOrientation={requestOrientation} onReset={() => updateSettings(defaultSettings())} onClose={() => setShowSettings(false)} />}
       {s.shrineModal && <ShrineModal data={s.shrineModal} onActivate={() => { audio.playPortal(); s.onActivateShrine(s.shrineModal.id); }} onClose={s.closeShrine} onTravel={(id) => { audio.playPortal(); s.travelToSanctuary(id); }} onRest={s.restAtSanctuary} activatedSanctuaries={s.activatedSanctuaries} unlockedSanctuaries={s.unlockedSanctuaries} unlockedRegions={s.unlockedRegions} lastActivatedSanctuaryId={s.lastActivatedSanctuaryId} />}

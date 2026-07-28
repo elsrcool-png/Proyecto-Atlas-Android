@@ -6,6 +6,7 @@ import { CLASS_WEAPONS } from "@/lib/atlasWeapons";
 import { xpToNext, REGION_META } from "@/lib/atlasProgression";
 import { Gem, Star, Coins, Sword } from "lucide-react";
 import { GIcon } from "@/lib/atlasIcons";
+import { HELMETS } from "@/lib/atlasLoot";
 import ChibiSprite from "./ChibiSprite";
 
 const ENERGY_BAR = { Guerrero: "from-red-500 to-rose-400", Mago: "from-blue-500 to-sky-400", "Pícaro": "from-amber-500 to-yellow-400" };
@@ -28,7 +29,7 @@ export default function CharacterPanel({ player, threat, onOpenSheet, bossAlive,
   return (
     <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-5 backdrop-blur">
       <div className="flex items-center gap-3 mb-4">
-        <ChibiSprite race={player.race} cls={player.class} size={48} />
+        <ChibiSprite player={player} race={player.race} cls={player.class} size={48} surface="characterPanel" />
         <div className="min-w-0 flex-1">
           <h3 className="text-slate-100 font-semibold leading-tight">{player.race} {player.class}</h3>
           <p className="text-xs text-slate-400 flex items-center gap-1"><GIcon name={player.raceIcon} size={12} /> Nivel {player.level ?? 1}</p>
@@ -64,11 +65,16 @@ export default function CharacterPanel({ player, threat, onOpenSheet, bossAlive,
           <p className="text-[10px] text-fuchsia-200/80 mt-0.5">⚔ {CLASS_WEAPONS[player.classWeapon].ability.name}</p>
         </div>
       )}
-      {player.accessory && ACCESSORIES[player.accessory] && (
-        <div className={`mb-3 rounded-lg border px-3 py-2 bg-slate-800/40 ${RARITY_COLOR[ACCESSORIES[player.accessory].rarity]}`}>
-          <div className="flex items-center gap-2"><Gem className="w-3.5 h-3.5" /><span className="text-[11px] font-medium">{ACCESSORIES[player.accessory].name}</span><span className="text-[9px] uppercase tracking-wider ml-auto">{ACCESSORIES[player.accessory].rarity}</span></div>
+      {player.helmet && HELMETS[player.helmet] && (
+        <div className="mb-2 rounded-lg border border-slate-700 px-3 py-2 bg-slate-800/40">
+          <div className="flex items-center gap-2"><GIcon name="shield" size={14} /><span className="text-[11px] font-medium text-slate-200">{HELMETS[player.helmet].name}</span><span className="text-[9px] uppercase tracking-wider ml-auto text-slate-400">Casco</span></div>
         </div>
       )}
+      {[player.accessory, player.accessory2].filter(Boolean).map((id, index) => ACCESSORIES[id] ? (
+        <div key={`${id}-${index}`} className={`mb-2 rounded-lg border px-3 py-2 bg-slate-800/40 ${RARITY_COLOR[ACCESSORIES[id].rarity]}`}>
+          <div className="flex items-center gap-2"><Gem className="w-3.5 h-3.5" /><span className="text-[11px] font-medium">{ACCESSORIES[id].name}</span><span className="text-[9px] uppercase tracking-wider ml-auto">Acc. {index + 1}</span></div>
+        </div>
+      ) : null)}
       <button onClick={onOpenSheet} className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 py-2.5 text-xs font-medium text-slate-200 transition mb-4">Hoja de personaje</button>
       <ThreatBar threat={threat} />
     </div>

@@ -1,7 +1,8 @@
 // PROYECTO ATLAS — Sistema de habilidades y equipamiento (capa adicional, sin tocar mecánicas)
-import { WEAPONS, ARMORS } from "@/lib/atlasLoot";
+import { WEAPONS, ARMORS, HELMETS } from "@/lib/atlasLoot";
 import { CLASS_WEAPONS } from "@/lib/atlasWeapons";
 import { resolveWeaponDefId, resolveWeaponInstance } from "@/lib/atlasWeaponInstances";
+import { applyAccessoryCatalog } from "@/lib/atlasRegionalEquipment";
 
 export const CLASS_OFF_TYPE = { Guerrero: "atk", Mago: "arcane", "Pícaro": "precision" };
 
@@ -88,6 +89,7 @@ export const LOOT_ACCESSORIES = {
   charm_desierto: { name: "Amuleto de Dunas", rarity: "Raro", desc: "+1 Def. Física, +1 Def. Mágica. Reliquia del desierto.", bonus: { physDef: 1, magDef: 1 }, region: "desierto" },
 };
 Object.assign(ACCESSORIES, LOOT_ACCESSORIES);
+applyAccessoryCatalog(ACCESSORIES);
 
 export const STARTER_ACCESSORIES = ["anillo_fuerza"];
 export const BOSS_DROPS = ["totem_ancestral", "corona_reinos", "manto_heroe"];
@@ -117,8 +119,9 @@ export function getBonuses(player) {
     const b = CLASS_PASSIVES[player.class].bonus; atk += b.atk; def += b.def; maxHp += b.maxHp;
   }
 
-  if (player.accessory && ACCESSORIES[player.accessory]) {
-    const a = ACCESSORIES[player.accessory];
+  const addAccessory = (id) => {
+    if (!id || !ACCESSORIES[id]) return;
+    const a = ACCESSORIES[id];
     const b = a.bonus || {};
     addOff("atk", b.atk || 0);
     addOff("arcane", b.arcane || 0);
@@ -130,7 +133,9 @@ export function getBonuses(player) {
     if (a.crit) crit += a.crit;
     if (a.speed) speed += a.speed;
     if (a.passive) passives.push(a.passive);
-  }
+  };
+  addAccessory(player.accessory);
+  if (player.equipmentUnlocks?.accessory2 && player.accessory2 !== player.accessory) addAccessory(player.accessory2);
 
   const wDefId = resolveWeaponDefId(player, player.weapon);
   if (wDefId) {
@@ -162,6 +167,16 @@ export function getBonuses(player) {
     maxHp += s.maxHp || 0; maxMp += s.maxMp || 0;
     crit += s.crit || 0; speed += s.speed || 0;
     if (a.passive) passives.push(a.passive);
+  }
+
+  if (player.equipmentUnlocks?.helmet && player.helmet && HELMETS[player.helmet]) {
+    const h = HELMETS[player.helmet];
+    const s = h.stats || {};
+    def += s.physDef || 0; magDef += s.magDef || 0;
+    def += s.defense || 0;
+    maxHp += s.maxHp || 0; maxMp += s.maxMp || 0;
+    crit += s.crit || 0; speed += s.speed || 0;
+    if (h.passive) passives.push(h.passive);
   }
 
   return { atk, def, magDef, maxHp, maxMp, crit, speed, passives };

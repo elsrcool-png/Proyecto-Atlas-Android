@@ -21,9 +21,10 @@ function ok(name, fn) {
   console.log(`✓ ${name}`);
 }
 
-ok('Versión del paquete 2.20.0', () => {
+ok('Versión compatible con Atlas v2.20 o superior', () => {
   const pkg = JSON.parse(read('package.json'));
-  assert.equal(pkg.version, '2.20.0');
+  const [major, minor] = String(pkg.version).split('.').map(Number);
+  assert.ok(major > 2 || (major === 2 && minor >= 20));
 });
 
 ok('Perfiles vertical y horizontal con cuatro controles', () => {
@@ -67,11 +68,15 @@ ok('Editor de controles con arrastre, tamaño, opacidad y presets', () => {
 
 ok('Botón de orientación disponible en exploración, combate y dungeon', () => {
   const explore = read('src/components/atlas/ExploreMode.jsx');
+  const exploreHud = fs.existsSync(path.join(ROOT, 'src/components/atlas/ui-v3/ExploreHudV3.jsx')) ? read('src/components/atlas/ui-v3/ExploreHudV3.jsx') : '';
   const game = read('src/pages/Game.jsx');
   const dungeon = read('src/components/atlas/DungeonView.jsx');
-  assert.match(explore, /OrientationToggleButton/);
+  const dungeonHud = fs.existsSync(path.join(ROOT, 'src/components/atlas/ui-v3/DungeonHudV3.jsx')) ? read('src/components/atlas/ui-v3/DungeonHudV3.jsx') : '';
+  assert.match(`${explore}
+${exploreHud}`, /OrientationToggleButton/);
   assert.match(game, /s\.enemy && <OrientationToggleButton/);
-  assert.match(dungeon, /OrientationToggleButton/);
+  assert.match(`${dungeon}
+${dungeonHud}`, /OrientationToggleButton/);
 });
 
 ok('Respuesta háptica configurable y sincronizada con impactos', () => {

@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
+import ModularHeroSprite from "./ModularHeroSprite";
+import { isHeroModularSurfaceEnabled } from "@/lib/atlasHeroIntegrationFlags";
 import { drawEntity } from "@/lib/atlasEntitySprites";
 import { npcTurnProfile } from "@/lib/atlasNpcMotion";
 import {
@@ -49,7 +51,7 @@ function mergeFilters(...filters) {
   return value || undefined;
 }
 
-export default function EntitySprite({ type, variant, race, cls, dir, moving = false, hurt = false, turn = false, animationKey, pose = "idle", size = 44, className, style, combatMode = false }) {
+export default function EntitySprite({ type, variant, race, cls, player, dir, moving = false, running = false, hurt = false, turn = false, animationKey, animation = null, animationSequence = null, animationQuality = "medio", animationLanded = true, animationKind = "basic", pose = "idle", size = 44, className, style, combatMode = false, surface }) {
   const ref = useRef(null);
   const frameRef = useRef(0);
   const turnProfile = npcTurnProfile(animationKey || variant || type || "entity");
@@ -80,6 +82,31 @@ export default function EntitySprite({ type, variant, race, cls, dir, moving = f
     timeoutId = window.setTimeout(rotateFace, profile.initialDelay);
     return () => window.clearTimeout(timeoutId);
   }, [turn, dir, animationKey, variant, type]);
+
+  const modularSurface = surface || (combatMode ? "combat" : "world");
+  if (type === "player" && player && isHeroModularSurfaceEnabled(modularSurface)) {
+    return (
+      <ModularHeroSprite
+        player={player}
+        race={race}
+        cls={cls}
+        direction={face}
+        moving={moving}
+        running={running}
+        pose={pose}
+        animation={animation}
+        sequence={animationSequence}
+        qualityId={animationQuality}
+        landed={animationLanded}
+        animationKind={animationKind}
+        animationToken={animationKey}
+        size={size}
+        surface={modularSurface}
+        className={className}
+        style={style}
+      />
+    );
+  }
 
   const combatDescriptor = combatMode
     ? (type === "player"

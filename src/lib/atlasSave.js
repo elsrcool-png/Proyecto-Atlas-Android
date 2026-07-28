@@ -7,6 +7,20 @@ const ACTIVE_KEY = "atlas_save_active_slot";
 const LEGACY_MIGRATED_KEY = "atlas_save_legacy_migrated";
 const LEGACY_KEYS = ["atlas_adventure_save_v4", "atlas_adventure_save_v3", "atlas_adventure_save_v2", "atlas_adventure_save_v1"];
 
+
+const VISUAL_DEFAULTS_V5 = Object.freeze({
+  Humano: { raceBase: "humano_neutral_v1", profileId: "appearance_humano_brown_tousled_v1" },
+  Elfo: { raceBase: "elfo_neutral_v1", profileId: "appearance_elfo_blonde_v1" },
+  Enano: { raceBase: "enano_neutral_v1", profileId: "appearance_enano_copper_beard_v1" },
+});
+
+function migrateSaveVisualV5(save) {
+  if (!save?.player) return save;
+  const base = VISUAL_DEFAULTS_V5[save.player.race] || VISUAL_DEFAULTS_V5.Humano;
+  const player = save.player.appearance?.version >= 1 ? save.player : { ...save.player, appearance: { version: 1, ...base, cosmetic: null } };
+  return { ...save, saveVersion: Math.max(5, Number(save.saveVersion) || 0), player };
+}
+
 let activeSaveSlot = null; // 1..3 o null
 
 function clampSlot(n) { const i = Number(n); return i >= 1 && i <= 3 ? i : null; }
@@ -51,7 +65,7 @@ function isValidSave(parsed) {
 export function saveToSlot(n, data) {
   const slot = clampSlot(n);
   if (!slot) return false;
-  const payload = JSON.stringify({ saveVersion: 4, savedAt: Date.now(), ...data });
+  const payload = JSON.stringify(migrateSaveVisualV5({ saveVersion: 5, savedAt: Date.now(), ...data }));
   return safeWrite(SLOT_KEYS[slot - 1], BACKUP_KEYS[slot - 1], payload);
 }
 
@@ -65,14 +79,14 @@ export function loadSlot(n) {
     if (!isValidSave(parsed)) {
       // Contenido corrupto: intentar recuperar desde el respaldo.
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return bp; }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveVisualV5(bp); }
       return null;
     }
-    return parsed;
+    return migrateSaveVisualV5(parsed);
   } catch (e) {
     try {
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return bp; }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveVisualV5(bp); }
     } catch (e2) { }
     return null;
   }

@@ -1,7 +1,8 @@
 // PROYECTO ATLAS — Sistema Global de Loot (capa independiente del motor)
 import { randInt } from "@/lib/atlasWorld";
-import { WEAPONS, ARMORS, MATERIALS, rollLootD10, consumableName } from "@/lib/atlasLoot";
+import { WEAPONS, ARMORS, HELMETS, MATERIALS, rollLootD10, consumableName } from "@/lib/atlasLoot";
 import { ACCESSORIES } from "@/lib/atlasSkills";
+import { REGIONAL_LOOT_EQUIPMENT, equipmentStageForProgress } from "@/lib/atlasRegionalEquipment";
 
 export const REGION_LOOT = {
   verde: {
@@ -75,31 +76,35 @@ function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 function equipKindOf(id) {
   if (WEAPONS[id]) return "weapon";
   if (ARMORS[id]) return "armor";
+  if (HELMETS[id]) return "helmet";
   return "accessory";
 }
 function equipNameOf(kind, id) {
   if (kind === "weapon") return WEAPONS[id].name;
   if (kind === "armor") return ARMORS[id].name;
+  if (kind === "helmet") return HELMETS[id].name;
   return ACCESSORIES[id].name;
 }
 
-function rarityForEquipment(roll, regionIndex) {
-  if (roll === 8) {
-    if (regionIndex === 0) return "Común";
-    if (regionIndex === 1) return Math.random() < 0.5 ? "Común" : "Poco común";
-    return Math.random() < 0.5 ? "Poco común" : "Raro";
-  }
-  if (regionIndex === 0) return "Poco común";
-  if (regionIndex === 1) return "Raro";
-  return Math.random() < 0.5 ? "Raro" : "Épico";
+const RARITY_ORDER = ["Común", "Poco común", "Raro", "Épico"];
+function rarityForEquipment(roll, regionId, stage) {
+  const stageRarity = {
+    verde: { camp: "Común", town: roll === 9 ? "Raro" : "Poco común", city: roll === 9 ? "Épico" : "Raro" },
+    fria: { camp: "Poco común", town: "Raro", city: "Épico" },
+    desierto: { camp: "Raro", town: "Épico", city: "Épico" },
+  };
+  return stageRarity[regionId]?.[stage] || "Común";
 }
 
-function pickEquipment(regionId, rarity) {
-  const table = REGION_LOOT[regionId];
-  const order = [rarity, "Común", "Poco común", "Raro"];
+function pickEquipment(regionId, stage, rarity, equipmentUnlocks = {}) {
+  const stages = REGIONAL_LOOT_EQUIPMENT[regionId] || REGIONAL_LOOT_EQUIPMENT.verde;
+  const table = stages[stage] || stages.camp;
+  const start = Math.max(0, RARITY_ORDER.indexOf(rarity));
+  const order = [rarity, ...RARITY_ORDER.slice(0, start).reverse(), ...RARITY_ORDER.slice(start + 1)];
   for (const r of order) {
-    const pool = table.equipment[r];
-    if (pool && pool.length) {
+    const rawPool = table[r] || [];
+    const pool = rawPool.filter(id => equipmentUnlocks.helmet || !HELMETS[id]);
+    if (pool.length) {
       const id = pick(pool);
       const kind = equipKindOf(id);
       return { kind, id, name: equipNameOf(kind, id), rarity: r };
@@ -210,7 +215,9 @@ export function resolveGlobalLoot(ctx) {
   const mod = ctx.isBoss ? BOSS_MODIFIER : (ENEMY_MODIFIERS[ctx.enemyType] || ENEMY_MODIFIERS.default);
 
   let roll = rollLootD10();
+  const equipmentStage = ctx.settlementStage || equipmentStageForProgress(ctx.regionProgress || 0);
   if (ctx.isBoss && roll < BOSS_MODIFIER.minRoll) roll = BOSS_MODIFIER.minRoll;
+  if (ctx.isElite && roll < 7) roll = Math.random() < 0.55 ? 7 : 8;
   if (roll < 10 && mod.favor && Math.random() < mod.shiftChance) {
     const shifted = shiftToFavor(mod.favor);
     if (shifted) roll = shifted;
@@ -251,14 +258,14 @@ export function resolveGlobalLoot(ctx) {
       return { roll, type: "material", id, name: MATERIALS[id].name, rarity: "Raro", amount: 1, text: `Obtienes un material raro ${table.flavor}: ${MATERIALS[id].name}.` };
     }
     case 8: {
-      const rarity = rarityForEquipment(8, ctx.regionIndex);
-      const eq = pickEquipment(ctx.regionId, rarity);
+      const rarity = rarityForEquipment(8, ctx.regionId, equipmentStage);
+      const eq = pickEquipment(ctx.regionId, equipmentStage, rarity, ctx.equipmentUnlocks);
       if (!eq) return { roll, type: "gold", amount: Math.round(10 * zoneScale), text: "Obtienes oro." };
       return { roll, type: "equipment", kind: eq.kind, id: eq.id, name: eq.name, rarity: eq.rarity, text: `Obtienes equipo ${table.flavor}: ${eq.name}.` };
     }
     case 9: {
-      const rarity = rarityForEquipment(9, ctx.regionIndex);
-      const eq = pickEquipment(ctx.regionId, rarity);
+      const rarity = rarityForEquipment(9, ctx.regionId, equipmentStage);
+      const eq = pickEquipment(ctx.regionId, equipmentStage, rarity, ctx.equipmentUnlocks);
       if (!eq) return { roll, type: "gold", amount: Math.round(15 * zoneScale), text: "Obtienes oro." };
       return { roll, type: "equipment", kind: eq.kind, id: eq.id, name: eq.name, rarity: eq.rarity, text: `Obtienes equipo raro: ${eq.name}.` };
     }

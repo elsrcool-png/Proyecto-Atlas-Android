@@ -1,0 +1,68 @@
+{
+  "schema": "atlas.weapon_family_quality_profiles.v1",
+  "profiles": {
+    "miss": {
+      "source_quality_ids": [
+        "fallo_critico"
+      ],
+      "duration_scale": 1.08,
+      "anticipation_scale": 0.9,
+      "reach_scale": 1.08,
+      "recovery_scale": 1.25,
+      "hitstop_ms": 0,
+      "camera_scale": 0.35,
+      "impact_windows": 0,
+      "reaction": "overextend_or_projectile_miss"
+    },
+    "low": {
+      "source_quality_ids": [
+        "bajo"
+      ],
+      "duration_scale": 1.04,
+      "anticipation_scale": 0.92,
+      "reach_scale": 0.82,
+      "recovery_scale": 1.08,
+      "hitstop_scale": 0.45,
+      "camera_scale": 0.7,
+      "impact_intensity": 0.7
+    },
+    "normal": {
+      "source_quality_ids": [
+        "medio"
+      ],
+      "duration_scale": 1.0,
+      "anticipation_scale": 1.0,
+      "reach_scale": 1.0,
+      "recovery_scale": 1.0,
+      "hitstop_scale": 1.0,
+      "camera_scale": 1.0,
+      "impact_intensity": 1.0
+    },
+    "high": {
+      "source_quality_ids": [
+        "alto"
+      ],
+      "duration_scale": 0.97,
+      "anticipation_scale": 1.08,
+      "reach_scale": 1.12,
+      "recovery_scale": 0.94,
+      "hitstop_scale": 1.2,
+      "camera_scale": 1.18,
+      "impact_intensity": 1.2
+    },
+    "exceptional": {
+      "source_quality_ids": [
+        "critico"
+      ],
+      "duration_scale": 1.05,
+      "anticipation_scale": 1.18,
+      "reach_scale": 1.2,
+      "recovery_scale": 1.05,
+      "hitstop_scale": 1.45,
+      "camera_scale": 1.42,
+      "impact_intensity": 1.45,
+      "critical_clip_preferred": true,
+      "impact_pose_hold_ms": 45
+    }
+  }
+}

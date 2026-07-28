@@ -4,7 +4,7 @@ import { GIcon } from "@/lib/atlasIcons";
 import { ACCESSORIES, RARITY_COLOR, getBonuses } from "@/lib/atlasSkills";
 import { getSkillSet, ENERGY, OFFENSIVE_STAT } from "@/lib/atlasSkillDesign";
 import { getWeaponAbility, CLASS_WEAPONS } from "@/lib/atlasWeapons";
-import { ARMORS, RARITIES, statsText } from "@/lib/atlasLoot";
+import { ARMORS, HELMETS, RARITIES, statsText } from "@/lib/atlasLoot";
 import { DICE_GROUPS } from "@/lib/atlasDiceSystem";
 import ChibiSprite from "./ChibiSprite";
 
@@ -26,13 +26,15 @@ export default function CharacterSheet({ player, missionsDone, onEquip, onClose 
   const weaponAbility = getWeaponAbility(player);
   const cw = player.classWeapon ? CLASS_WEAPONS[player.classWeapon] : null;
   const ar = player.armor ? ARMORS[player.armor] : null;
+  const he = player.helmet ? HELMETS[player.helmet] : null;
   const ac = player.accessory ? ACCESSORIES[player.accessory] : null;
+  const ac2 = player.accessory2 ? ACCESSORIES[player.accessory2] : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4 py-6 overflow-y-auto" onClick={onClose}>
       <div className="rounded-2xl bg-slate-900 border border-slate-800 max-w-lg w-full p-6 my-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3"><ChibiSprite race={player.race} cls={player.class} size={56} /><div><h2 className="text-lg font-semibold text-slate-100">{player.race} {player.class}</h2><p className="text-xs text-slate-400 flex items-center gap-1"><GIcon name={player.raceIcon} size={12} /> Nivel {player.level} · Experiencia {player.xp || 0}</p></div></div>
+          <div className="flex items-center gap-3"><ChibiSprite player={player} race={player.race} cls={player.class} size={56} surface="characterSheet" /><div><h2 className="text-lg font-semibold text-slate-100">{player.race} {player.class}</h2><p className="text-xs text-slate-400 flex items-center gap-1"><GIcon name={player.raceIcon} size={12} /> Nivel {player.level} · Experiencia {player.xp || 0}</p></div></div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
@@ -47,7 +49,9 @@ export default function CharacterSheet({ player, missionsDone, onEquip, onClose 
           <div className="grid grid-cols-1 gap-1.5">
             <EquipRow label="Arma" name={cw?.name} stats={cw ? statsText(cw) : null} ability={cw ? `${cw.ability.name} · ${cw.ability.cost} ${energy?.short || "energía"}` : null} empty={!cw} />
             <EquipRow label="Armadura" name={ar?.name} rarity={ar?.rarity} stats={ar ? statsText(ar) : null} empty={!ar} />
-            <EquipRow label="Accesorio" name={ac?.name} rarity={ac?.rarity} stats={ac ? statsText(ac) : null} empty={!ac} />
+            <EquipRow label={player.equipmentUnlocks?.helmet ? "Casco" : "Casco · bloqueado hasta vencer Región Verde"} name={he?.name} rarity={he?.rarity} stats={he ? statsText(he) : null} empty={!he} />
+            <EquipRow label="Accesorio I" name={ac?.name} rarity={ac?.rarity} stats={ac ? statsText(ac) : null} empty={!ac} />
+            <EquipRow label={player.equipmentUnlocks?.accessory2 ? "Accesorio II" : "Accesorio II · bloqueado hasta vencer Región Ártica"} name={ac2?.name} rarity={ac2?.rarity} stats={ac2 ? statsText(ac2) : null} empty={!ac2} />
           </div>
         </div>
         <div className="mb-4">
@@ -71,7 +75,7 @@ export default function CharacterSheet({ player, missionsDone, onEquip, onClose 
           <h3 className="flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-amber-300 mb-2"><Gem className="w-3.5 h-3.5" /> Accesorios</h3>
           <div className="grid sm:grid-cols-2 gap-2">
             {inventory.length === 0 && <p className="text-xs text-slate-500 col-span-2">Sin accesorios. Derrota jefes para obtener botín legendario.</p>}
-            {inventory.map(id => { const a = ACCESSORIES[id]; const equipped = player.accessory === id; return (<button key={id} onClick={() => onEquip(id)} className={`text-left rounded-lg border px-3 py-2 transition ${equipped ? RARITY_COLOR[a.rarity] + " ring-1 ring-amber-400" : "border-slate-700 bg-slate-800/40 hover:bg-slate-800/70"}`}><div className="flex items-center justify-between"><span className="text-sm font-medium">{a.name}</span><span className="text-[9px] uppercase tracking-wider">{a.rarity}</span></div><p className="text-[11px] text-slate-400 mt-0.5">{a.desc}</p><p className="text-[10px] text-emerald-400 mt-1">{formatStats(a.bonus)}</p></button>); })}
+            {inventory.map(id => { const a = ACCESSORIES[id]; if (!a) return null; const equipped1 = player.accessory === id; const equipped2 = player.accessory2 === id; return (<div key={id} className={`rounded-lg border px-3 py-2 transition ${(equipped1 || equipped2) ? RARITY_COLOR[a.rarity] + " ring-1 ring-amber-400" : "border-slate-700 bg-slate-800/40"}`}><div className="flex items-center justify-between"><span className="text-sm font-medium">{a.name}</span><span className="text-[9px] uppercase tracking-wider">{a.rarity}</span></div><p className="text-[11px] text-slate-400 mt-0.5">{a.desc}</p><p className="text-[10px] text-emerald-400 mt-1">{formatStats(a.bonus)}</p><div className="flex gap-1.5 mt-2"><button onClick={() => onEquip(id, 1)} className={`text-[10px] rounded px-2 py-1 ${equipped1 ? "bg-emerald-700" : "bg-sky-700 hover:bg-sky-600"} text-white`}>{equipped1 ? "Equipado I" : "Equipar I"}</button><button onClick={() => onEquip(id, 2)} disabled={!player.equipmentUnlocks?.accessory2} className={`text-[10px] rounded px-2 py-1 ${!player.equipmentUnlocks?.accessory2 ? "bg-slate-700 text-slate-500" : equipped2 ? "bg-emerald-700 text-white" : "bg-violet-700 hover:bg-violet-600 text-white"}`}>{!player.equipmentUnlocks?.accessory2 ? "II bloqueado" : equipped2 ? "Equipado II" : "Equipar II"}</button></div></div>); })}
           </div>
         </div>
       </div>

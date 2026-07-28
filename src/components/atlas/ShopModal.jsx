@@ -2,21 +2,21 @@ import React, { useState } from "react";
 import { X, Coins, Heart, Zap } from "lucide-react";
 import { HP_POTIONS, energyPotionsFor } from "@/lib/atlasShop";
 import { ENERGY } from "@/lib/atlasSkillDesign";
-import { shopEquipmentForTier, RARITIES, statsText, WEAPONS, ARMORS } from "@/lib/atlasLoot";
-import { ACCESSORIES } from "@/lib/atlasSkills";
+import { shopEquipmentForTier, RARITIES, statsText, WEAPONS, ARMORS, HELMETS } from "@/lib/atlasLoot";
+import { ACCESSORIES, CLASS_OFF_TYPE } from "@/lib/atlasSkills";
 import { GIcon } from "@/lib/atlasIcons";
 import ShopSellTab from "@/components/atlas/ShopSellTab";
 
 const SIZES_BY_TIER = { camp: ["Pequeña"], town: ["Pequeña", "Mediana"], city: ["Pequeña", "Mediana", "Grande"] };
 const TITLE_BY_TIER = { camp: "Mercader del campamento", town: "Mercader del pueblo", city: "Mercader de la ciudad" };
 
-export default function ShopModal({ player, onBuy, onBuyEquipment, onSellWeapon, onSellArmor, onSellAccessory, onSellMaterial, onClose, tier = "city", regionId = "verde", worldFlags = {} }) {
+export default function ShopModal({ player, onBuy, onBuyEquipment, onSellWeapon, onSellArmor, onSellHelmet, onSellAccessory, onSellMaterial, onClose, tier = "city", regionId = "verde", worldFlags = {} }) {
   const [tab, setTab] = useState("buy");
   const allowed = SIZES_BY_TIER[tier] || SIZES_BY_TIER.city;
   const enPots = energyPotionsFor(player.class).filter(p => allowed.includes(p.size));
   const energy = ENERGY[player.class];
   const gold = player.gold || 0;
-  const equipList = shopEquipmentForTier(tier, ACCESSORIES, regionId, worldFlags);
+  const equipList = shopEquipmentForTier(tier, ACCESSORIES, regionId, worldFlags).filter(e => e.kind !== "helmet" || player.equipmentUnlocks?.helmet);
 
   return (
     <div className="atlas-landscape-dialog fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4 py-6" onClick={onClose}>
@@ -38,12 +38,21 @@ export default function ShopModal({ player, onBuy, onBuyEquipment, onSellWeapon,
             </div>
             <h3 className="text-[11px] uppercase tracking-widest text-violet-300 mb-2 flex items-center gap-1 mt-4"><GIcon name="sword" size={14} /> Equipamiento {tier === "camp" ? "básico" : tier === "town" ? "común" : "raro y épico"}</h3>
             <div className="space-y-2 mb-3">
-              {equipList.map(e => { const aff = gold >= e.price; const rc = RARITIES[e.rarity]?.color; const ref = e.kind === "weapon" ? WEAPONS[e.id] : e.kind === "armor" ? ARMORS[e.id] : ACCESSORIES[e.id]; return (<div key={`${e.kind}-${e.id}`} className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2"><div className="min-w-0 mr-2"><p className="text-sm truncate" style={{ color: rc }}>{e.name}</p><p className="text-[11px] text-slate-400 truncate">{statsText(ref)}{ref?.passive ? ` · ${ref.passive.desc}` : ""}</p></div><button onClick={() => onBuyEquipment?.(e)} disabled={!aff} className={`text-xs rounded px-3 py-1.5 font-medium whitespace-nowrap ${aff ? "bg-amber-600 hover:bg-amber-500 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}>{e.price} oro</button></div>); })}
+              {equipList.map(e => {
+                const levelOk = (player.level || 1) >= (e.requiredLevel || 1);
+                const rc = RARITIES[e.rarity]?.color;
+                const ref = e.kind === "weapon" ? WEAPONS[e.id] : e.kind === "armor" ? ARMORS[e.id] : e.kind === "helmet" ? HELMETS[e.id] : ACCESSORIES[e.id];
+                const classOk = e.kind !== "weapon" || ref?.offType === CLASS_OFF_TYPE[player.class];
+                const affordable = gold >= e.price && levelOk && classOk;
+                const kindLabel = e.kind === "helmet" ? "Casco" : e.kind === "weapon" ? "Arma" : e.kind === "armor" ? "Armadura" : "Accesorio";
+                const buttonLabel = !classOk ? "Otra clase" : !levelOk ? `Nv. ${e.requiredLevel}` : `${e.price} oro`;
+                return (<div key={`${e.kind}-${e.id}`} className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2"><div className="min-w-0 mr-2"><p className="text-sm truncate" style={{ color: rc }}>{e.name}</p><p className="text-[11px] text-slate-400 truncate">{statsText(ref)}{ref?.passive ? ` · ${ref.passive.desc}` : ""}</p><p className={`text-[10px] ${levelOk && classOk ? "text-slate-500" : "text-rose-400"}`}>Nivel {e.requiredLevel || 1} · {kindLabel}{e.recommendedClass ? ` · ${e.recommendedClass}` : ""}</p></div><button onClick={() => onBuyEquipment?.(e)} disabled={!affordable} className={`text-xs rounded px-3 py-1.5 font-medium whitespace-nowrap ${affordable ? "bg-amber-600 hover:bg-amber-500 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}>{buttonLabel}</button></div>);
+              })}
               {equipList.length === 0 && <p className="text-[11px] text-slate-500 italic">El inventario de este asentamiento aún no está disponible. Completa su cadena narrativa.</p>}
             </div>
             <p className="text-[10px] text-slate-500 leading-snug">Las pociones de vida pequeñas se usan en combate; las medianas/grandes y las de energía se usan desde la mochila en zona segura. Los legendarios nunca se venden en tiendas.</p>
           </>
-        ) : (<ShopSellTab player={player} onSellWeapon={onSellWeapon} onSellArmor={onSellArmor} onSellAccessory={onSellAccessory} onSellMaterial={onSellMaterial} />)}
+        ) : (<ShopSellTab player={player} onSellWeapon={onSellWeapon} onSellArmor={onSellArmor} onSellHelmet={onSellHelmet} onSellAccessory={onSellAccessory} onSellMaterial={onSellMaterial} />)}
       </div>
     </div>
   );

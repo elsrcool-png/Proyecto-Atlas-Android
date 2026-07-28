@@ -1,0 +1,35 @@
+{
+  "schema": "atlas.phase8.fallback_rules.v1",
+  "principles": [
+    "El objeto equipado conserva sus estadísticas aunque falte arte.",
+    "Nunca reutilizar el objeto previamente equipado como fallback.",
+    "Nunca cambiar familia de arma por conveniencia visual.",
+    "El cuerpo neutral siempre permanece renderizable."
+  ],
+  "weapon": [
+    "exact_item",
+    "regional_family_stage_generic",
+    "regional_family_generic",
+    "global_family_generic",
+    "legacy_full_sprite_or_hidden_weapon"
+  ],
+  "armor": [
+    "exact_item_racial_fit",
+    "regional_family_stage_generic_racial_fit",
+    "regional_family_generic_racial_fit",
+    "global_family_generic_racial_fit",
+    "neutral_body_with_safe_underclothes"
+  ],
+  "helmet": [
+    "exact_item_racial_fit",
+    "regional_family_generic_racial_fit",
+    "global_family_generic_racial_fit",
+    "no_helmet_keep_hair"
+  ],
+  "accessory": [
+    "exact_item_or_effect",
+    "regional_family_generic",
+    "effect_only_if_defined",
+    "hidden_keep_stats"
+  ]
+}

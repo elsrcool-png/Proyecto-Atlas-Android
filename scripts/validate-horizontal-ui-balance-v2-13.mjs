@@ -29,6 +29,10 @@ else pass(`versión ${pkg.version} conserva horizontal, HUD y balance v2.13`);
 const settings = read("src/lib/atlasSettings.js");
 const game = read("src/pages/Game.jsx");
 const explore = read("src/components/atlas/ExploreMode.jsx");
+const exploreHud = fs.existsSync(path.join(root, "src/components/atlas/ui-v3/ExploreHudV3.jsx"))
+  ? read("src/components/atlas/ui-v3/ExploreHudV3.jsx")
+  : "";
+const exploreUi = `${explore}\n${exploreHud}`;
 const settingsModal = read("src/components/atlas/SettingsModal.jsx");
 const feedback = read("src/components/atlas/FeedbackToasts.jsx");
 const combat = read("src/components/atlas/CombatView.jsx");
@@ -48,9 +52,9 @@ else pass("PWA declara orientación landscape");
 assertIncludes(explore, "const horizontal = deviceLandscape;", "el layout horizontal depende de la orientación real del dispositivo");
 assertIncludes(explore, "const viewScale = horizontal ? 1.08 : 1.55;", "escala de mapa horizontal conserva legibilidad");
 assertIncludes(explore, "const hudClean", "ExploreMode reconoce HUD limpio");
-assertIncludes(explore, "atlas-objective-compass", "brújula usa clase adaptable");
-assertIncludes(explore, "atlas-top-hud", "HUD superior usa clase adaptable");
-assertIncludes(explore, "atlas-joystick-wrap", "joystick usa área segura adaptable");
+assertIncludes(exploreUi, "atlas-objective-compass", "brújula usa clase adaptable");
+assertIncludes(exploreUi, "atlas-top-hud", "HUD superior usa clase adaptable");
+assertIncludes(exploreUi, "atlas-joystick-wrap", "joystick usa área segura adaptable");
 assertIncludes(settingsModal, 'value="clean"', "Ajustes permite HUD limpio");
 assertIncludes(css, "@media (orientation: landscape) and (max-height: 640px)", "hay reglas para móviles horizontales bajos");
 assertIncludes(css, "env(safe-area-inset", "los controles respetan recortes y bordes del teléfono");

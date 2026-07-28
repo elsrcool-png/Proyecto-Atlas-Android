@@ -97,7 +97,7 @@ export default function CharacterSelect({ onSelect }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {RACES.map(r => (
                 <CardButton key={r.id} active={race === r.id} onClick={() => pickRace(r.id)}>
-                  <div className="flex flex-col items-center text-center gap-2"><ChibiSprite race={r.id} cls="Guerrero" size={56} /><div className="flex items-center gap-1.5"><GIcon name={r.icon} size={14} /><h3 className="font-semibold">{r.id}</h3></div><p className="text-[11px] text-slate-400 leading-snug">{r.desc}</p></div>
+                  <div className="flex flex-col items-center text-center gap-2"><ChibiSprite player={{ race: r.id, class: "Guerrero", equipmentUnlocks: { helmet: false, accessory2: false } }} race={r.id} cls="Guerrero" size={56} surface="characterSelect" /><div className="flex items-center gap-1.5"><GIcon name={r.icon} size={14} /><h3 className="font-semibold">{r.id}</h3></div><p className="text-[11px] text-slate-400 leading-snug">{r.desc}</p></div>
                 </CardButton>
               ))}
             </div>
@@ -109,7 +109,7 @@ export default function CharacterSelect({ onSelect }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {CLASSES.map(c => (
                 <CardButton key={c.id} active={cls === c.id} onClick={() => pickClass(c.id)}>
-                  <div className="flex flex-col items-center text-center gap-2"><ChibiSprite race={race} cls={c.id} size={56} /><div className="flex items-center gap-1.5"><GIcon name={c.icon} size={14} /><h3 className="font-semibold">{c.id}</h3></div><p className="text-[11px] text-slate-400 leading-snug">{c.desc}</p><span className="text-[10px] text-amber-300/80">{c.energy}</span></div>
+                  <div className="flex flex-col items-center text-center gap-2"><ChibiSprite player={{ race, class: c.id, equipmentUnlocks: { helmet: false, accessory2: false } }} race={race} cls={c.id} size={56} surface="characterSelect" /><div className="flex items-center gap-1.5"><GIcon name={c.icon} size={14} /><h3 className="font-semibold">{c.id}</h3></div><p className="text-[11px] text-slate-400 leading-snug">{c.desc}</p><span className="text-[10px] text-amber-300/80">{c.energy}</span></div>
                 </CardButton>
               ))}
             </div>
@@ -119,7 +119,7 @@ export default function CharacterSelect({ onSelect }) {
           <div>
             <div className="flex items-center justify-between mb-4"><button onClick={back} className="text-xs text-slate-400 hover:text-slate-200">‹ Volver</button><h2 className="text-center text-sm text-slate-400">Reparte <span className="text-sky-300">{remaining}</span> punto(s) restante(s)</h2><span className="w-12" /></div>
             <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-5 mb-4">
-              <div className="flex items-center gap-3 mb-3"><ChibiSprite race={race} cls={cls} size={56} /><div><h3 className="font-semibold">{race} {cls}</h3><p className="text-[11px] text-slate-400 leading-snug">{IDENTITY[base.id]}</p></div></div>
+              <div className="flex items-center gap-3 mb-3"><ChibiSprite player={{ race, class: cls, equipmentUnlocks: { helmet: false, accessory2: false } }} race={race} cls={cls} size={56} surface="characterSelect" /><div><h3 className="font-semibold">{race} {cls}</h3><p className="text-[11px] text-slate-400 leading-snug">{IDENTITY[base.id]}</p></div></div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
                 <StatPreview icon="heart" label="HP" base={base.hp} final={finalStats.hp} />
                 <StatPreview icon={offMeta?.icon} label={offMeta?.short} base={base.attack} final={finalStats.attack} />

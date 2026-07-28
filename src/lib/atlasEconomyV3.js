@@ -1,71 +1,9 @@
 // PROYECTO ATLAS — Economía dirigida por asentamiento.
 // Cada tienda ofrece una selección breve y deliberada, no un catálogo infinito.
 
-const STOCK = {
-  verde: {
-    camp: {
-      label: "Campamento del Umbral",
-      weapons: ["sword_thorn", "wand_sapling", "knife_bramble"],
-      armors: ["armor_leaf", "robe_sprout", "vest_scout"],
-      accessories: ["anillo_fuerza", "capa_resistencia", "amuleto_vida"],
-      requiredFlag: "verde:camp_basic_stock",
-    },
-    town: {
-      label: "Pueblo de Robledal",
-      weapons: ["sword_explorer", "staff_hazel", "bow_hawthorn"],
-      armors: ["armor_leather", "robe_herbalist", "vest_ranger"],
-      accessories: ["amulet_vitality", "ring_warrior", "crystal_arcane"],
-      requiredFlag: "verde:trade_route_partial",
-    },
-    city: {
-      label: "Ciudad de Verdalia",
-      weapons: ["spear_guardian", "robe_arcane_w", "bow_verdant"],
-      armors: ["armor_iron", "robe_arcane", "cloak_shadow"],
-      accessories: ["escudo_portatil", "brazal_arcano", "corazon_leon"],
-      requiredFlag: "verde:city_services_open",
-    },
-  },
-  fria: {
-    camp: {
-      label: "Campamento Boreal",
-      weapons: ["axe_frost", "wand_sapling", "knife_bramble"],
-      armors: ["armor_pelt", "robe_sprout", "vest_scout"],
-      accessories: ["anillo_fuerza", "capa_resistencia", "amuleto_vida"],
-    },
-    town: {
-      label: "Pueblo Glacial",
-      weapons: ["sword_explorer", "staff_hazel", "bow_hawthorn"],
-      armors: ["armor_leather", "robe_herbalist", "vest_ranger"],
-      accessories: ["amulet_vitality", "ring_warrior", "crystal_arcane"],
-    },
-    city: {
-      label: "Ciudadela Helada",
-      weapons: ["spear_glacier", "robe_arcane_w", "daggers_twin"],
-      armors: ["armor_frost", "robe_arcane", "cloak_shadow"],
-      accessories: ["escudo_portatil", "brazal_arcano", "corazon_leon"],
-    },
-  },
-  desierto: {
-    camp: {
-      label: "Campamento Nómada",
-      weapons: ["scimitar_sand", "wand_sapling", "knife_bramble"],
-      armors: ["armor_silk", "robe_sprout", "vest_scout"],
-      accessories: ["anillo_fuerza", "capa_resistencia", "amuleto_vida"],
-    },
-    town: {
-      label: "Pueblo del Oasis",
-      weapons: ["sword_explorer", "staff_hazel", "bow_hawthorn"],
-      armors: ["armor_leather", "robe_herbalist", "vest_ranger"],
-      accessories: ["amulet_vitality", "ring_warrior", "crystal_arcane"],
-    },
-    city: {
-      label: "Ciudadela del Mercado",
-      weapons: ["spear_guardian", "staff_dune", "daggers_twin"],
-      armors: ["armor_bronze", "robe_arcane", "cloak_shadow"],
-      accessories: ["escudo_portatil", "brazal_arcano", "corazon_leon"],
-    },
-  },
-};
+import { REGIONAL_SHOP_STOCK } from "@/lib/atlasRegionalEquipment";
+
+const STOCK = REGIONAL_SHOP_STOCK;
 
 export const SMITH_TIERS = {
   camp: {
