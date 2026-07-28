@@ -1,7 +1,7 @@
 {
   "name": "base44-app",
   "private": true,
-  "version": "2.22.0",
+  "version": "2.22.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -45,7 +45,9 @@
     "validate:v2-21": "npm run validate:equipment-v2-21 && npm run validate:v2-20",
     "validate:modular-v2-21": "node scripts/validate-modular-integration-v2-21.mjs",
     "validate:prepared-v2-21": "npm run validate:modular-v2-21 && npm run validate:v2-21",
-    "validate:v2-22": "npm run validate:prepared-v2-21"
+    "validate:menu-v2-22-1": "node scripts/validate-menu-input-v2-22-1.mjs",
+    "validate:v2-22": "npm run validate:ui-v2-22-3 && npm run validate:menu-v2-22-1 && npm run validate:prepared-v2-21",
+    "validate:ui-v2-22-3": "node scripts/validate-ui-tabs-landscape-v2-22-3.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.39",

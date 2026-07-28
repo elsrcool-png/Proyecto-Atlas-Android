@@ -34,3 +34,7 @@ npm run build
 ```
 
 No se incluye `node_modules`.
+
+## Corrección v2.22.3
+
+Esta copia incorpora la reparación de entrada táctil y la reorganización completa de la interfaz horizontal. El Centro de Atlas y la mochila usan pestañas reales: solo existe un panel activo y el desplazamiento ocurre dentro de ese panel. Consulta `CORRECCION_V2_22_3_INTERFAZ_HORIZONTAL.md`.

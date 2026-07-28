@@ -16,6 +16,7 @@ export default function AtlasActionButton({
     <AtlasPressButton
       {...props}
       onPress={onPress || onClick}
+      pressOnPointerDown
       haptic={haptic}
       data-active={active ? "true" : "false"}
       className={`atlas-ui-action-button atlas-ui-action-button--${kind} ${className}`.trim()}

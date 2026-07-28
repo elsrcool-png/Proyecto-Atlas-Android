@@ -1,5 +1,5 @@
 const DEFAULT_FLAGS = Object.freeze({
-  uiV3: Object.freeze({ enabled: false }),
+  uiV3: Object.freeze({ enabled: true }),
   heroModular: Object.freeze({
     enabled: false,
     characterSelect: false,

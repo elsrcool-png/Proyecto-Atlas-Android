@@ -1,4 +1,4 @@
-PROYECTO ATLAS VISUAL v2.21.0
-Equipamiento Regional Progresivo, Cascos y Accesorio II
-Base: v2.20 Controles, Estados y Accesibilidad
+PROYECTO ATLAS VISUAL v2.22.3
+Interfaz Horizontal Responsiva, Pestañas Reales y Mochila Completa
+Base: v2.22 Integraciones Técnicas Completas
 Fecha: 2026-07-28

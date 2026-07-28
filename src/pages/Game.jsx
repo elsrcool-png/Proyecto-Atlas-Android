@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { REGIONS } from "@/lib/atlasData";
 import { SECTOR_NEED } from "@/lib/atlasMissions";
 import useAtlasSession from "@/hooks/useAtlasSession";
-import MainMenu from "@/components/atlas/ui-v3/MainMenuV3";
-import CharacterSelect from "@/components/atlas/ui-v3/CharacterSelectV3";
+import MainMenuLegacy from "@/components/atlas/MainMenu";
+import MainMenuV3 from "@/components/atlas/ui-v3/MainMenuV3";
+import CharacterSelectLegacy from "@/components/atlas/CharacterSelect";
+import CharacterSelectV3 from "@/components/atlas/ui-v3/CharacterSelectV3";
 import CharacterPanel from "@/components/atlas/CharacterPanel";
 import RhombusMap from "@/components/atlas/RhombusMap";
 import ActionLog from "@/components/atlas/ActionLog";
-import CombatView from "@/components/atlas/ui-v3/CombatViewAdapterV3";
+import CombatViewLegacy from "@/components/atlas/CombatView";
+import CombatViewV3 from "@/components/atlas/ui-v3/CombatViewAdapterV3";
 import DiceRoll from "@/components/atlas/DiceRoll";
 import RegionBackdrop from "@/components/atlas/RegionBackdrop";
 import NPCDialog from "@/components/atlas/NPCDialog";
@@ -26,7 +29,8 @@ import BossIntroModal from "@/components/atlas/BossIntroModal";
 import FeedbackToasts from "@/components/atlas/FeedbackToasts";
 import { GIcon } from "@/lib/atlasIcons";
 import { Moon, Trophy, Skull, RotateCcw, MapPin, MessageCircle, Star, Compass, Dices, ShoppingBag, Backpack, Settings as SettingsIcon, Map as MapIcon } from "lucide-react";
-import SettingsModal from "@/components/atlas/ui-v3/SettingsModalV3";
+import SettingsModalLegacy from "@/components/atlas/SettingsModal";
+import SettingsModalV3 from "@/components/atlas/ui-v3/SettingsModalV3";
 import ShrineModal from "@/components/atlas/ShrineModal";
 import ShrineNotify from "@/components/atlas/ShrineNotify";
 import IntroNarrative from "@/components/atlas/IntroNarrative";
@@ -40,13 +44,25 @@ import CombatAudioIntro from "@/components/atlas/CombatAudioIntro";
 import OrientationToggleButton from "@/components/atlas/OrientationToggleButton";
 import DayNightOverlay from "@/components/atlas/DayNightOverlay";
 import { listSlots, loadSlot, deleteSlot, migrateLegacySave, setActiveSaveSlot } from "@/lib/atlasSave";
-import SaveSlotsModal from "@/components/atlas/ui-v3/SaveSlotsModalV3";
+import SaveSlotsModalLegacy from "@/components/atlas/SaveSlotsModal";
+import SaveSlotsModalV3 from "@/components/atlas/ui-v3/SaveSlotsModalV3";
 import { sectorIdFromCoords, getSectorDef } from "@/lib/atlasRegionSectors";
 import { generateMissions } from "@/lib/atlasMissions";
+import { getAtlasIntegrationFlags } from "@/lib/atlasHeroIntegrationFlags";
 
 const NPC_KEYS = ["campamento", "pueblo", "ciudad"];
 
 export default function Game() {
+  // v2.22.3: la UI v3 vuelve a estar activa tras corregir la entrada táctil,
+  // el apilado falso de pestañas y los cortes de paneles en horizontal móvil.
+  // El interruptor se conserva para poder volver al conjunto legado durante
+  // una prueba aislada sin desmontar la integración.
+  const uiV3Enabled = getAtlasIntegrationFlags().uiV3.enabled === true;
+  const MainMenu = uiV3Enabled ? MainMenuV3 : MainMenuLegacy;
+  const CharacterSelect = uiV3Enabled ? CharacterSelectV3 : CharacterSelectLegacy;
+  const CombatView = uiV3Enabled ? CombatViewV3 : CombatViewLegacy;
+  const SettingsModal = uiV3Enabled ? SettingsModalV3 : SettingsModalLegacy;
+  const SaveSlotsModal = uiV3Enabled ? SaveSlotsModalV3 : SaveSlotsModalLegacy;
   const board = useAtlasSession();
   const libre = useAtlasSession();
   const [mode, setMode] = useState(null);
