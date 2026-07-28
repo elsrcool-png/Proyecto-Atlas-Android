@@ -2,8 +2,8 @@ import React, { useRef } from "react";
 
 // Botón común de Atlas.
 // - Los menús usan click nativo.
-// - Los controles del juego pueden activarse al soltar el dedo para conservar
-//   multitáctil sin exigir una pulsación larga ni duplicar la acción.
+// - La acción principal puede activarse al tocar; otros controles pueden hacerlo
+//   al soltar. Ambos modos conservan multitáctil y bloquean el click sintético.
 export default function AtlasPressButton({
   onPress,
   onClick,
@@ -26,8 +26,8 @@ export default function AtlasPressButton({
 
     if (!pressOnPointerDown) return;
 
-    // No usamos preventDefault ni pointer capture aquí. Algunas WebView Android
-    // descartan toques breves cuando ambos se combinan sobre botones circulares.
+    // No usamos pointer capture. La acción A se ejecuta aquí para no depender
+    // del pointerup, que algunas WebView Android cancelan en toques breves.
     lastPointerPressAt.current = Date.now();
     press?.(event);
   };

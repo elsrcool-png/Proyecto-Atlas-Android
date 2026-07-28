@@ -38,3 +38,8 @@ No se incluye `node_modules`.
 ## Corrección v2.22.4
 
 Esta copia revierte la activación visual de UI v3 y recupera la interfaz estable anterior. El Centro de Atlas usa un menú de secciones en pantallas separadas, la mochila muestra todo en una sola vista desplazable y el botón A responde a un toque breve. Consulta `CORRECCION_V2_22_4_INTERFAZ_CLASICA_TOQUE_A.md`.
+
+
+## Corrección v2.22.5
+
+El botón A se activa ahora en el primer contacto (`pointerdown`) y no al soltar. Esto corrige los toques rápidos perdidos en Android y mantiene el bloqueo contra ejecuciones dobles. Consulta `CORRECCION_V2_22_5_ACCION_A_INMEDIATA.md`.

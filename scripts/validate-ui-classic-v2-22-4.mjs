@@ -26,9 +26,9 @@ check(!backpack.includes("AtlasTabs"), "Mochila sin pestañas");
 check(!backpack.includes("max-h-[50vh]"), "Mochila sin corte interno de 50vh");
 check(backpack.includes("atlas-backpack-classic__body"), "Mochila con una sola zona desplazable");
 check(press.includes("pressOnPointerUp = false"), "botón admite activación al soltar");
-check(press.includes("No usamos preventDefault ni pointer capture"), "toque Android sin captura invasiva");
-check(action.includes("pressOnPointerUp"), "botón A responde a toque breve");
+check(!press.includes("setPointerCapture"), "toque Android sin captura invasiva");
+check(action.includes('pressOnPointerDown={activateImmediately}'), "botón A responde al primer contacto");
 check(css.includes("Atlas v2.22.4 — interfaz clásica adaptativa"), "adaptación horizontal y áreas seguras");
-check(pkg.version === "2.22.4", "versión 2.22.4");
+check(["2.22.4", "2.22.5"].includes(pkg.version), "base clásica v2.22.4 o corrección v2.22.5");
 
-console.log("\nValidación v2.22.4 correcta: interfaz clásica, mochila completa y toque A reparado.");
+console.log("\nValidación de interfaz clásica correcta: mochila completa y acción A inmediata.");

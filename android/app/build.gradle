@@ -13,8 +13,8 @@ android {
         applicationId "com.tittor.atlas"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 22204
-        versionName "2.22.4"
+        versionCode 22205
+        versionName "2.22.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

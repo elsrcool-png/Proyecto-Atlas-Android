@@ -12,11 +12,16 @@ export default function AtlasActionButton({
   haptic = "uiStrong",
   ...props
 }) {
+  // A debe responder al primer contacto. En algunas WebView Android el
+  // pointerup de un toque rápido puede cancelarse.
+  const activateImmediately = kind === "a";
+
   return (
     <AtlasPressButton
       {...props}
       onPress={onPress || onClick}
-      pressOnPointerUp
+      pressOnPointerDown={activateImmediately}
+      pressOnPointerUp={!activateImmediately}
       haptic={haptic}
       data-active={active ? "true" : "false"}
       className={`atlas-ui-action-button atlas-ui-action-button--${kind} ${className}`.trim()}
