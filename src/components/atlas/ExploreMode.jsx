@@ -8,7 +8,7 @@ import WorldSprite from "./WorldSprite";
 import { GIcon } from "@/lib/atlasIcons";
 import EntitySprite from "./EntitySprite";
 import ShrineMarker from "./ShrineMarker";
-import PlayerHub from "./ui-v3/PlayerHubV3";
+import PlayerHub from "./PlayerHub";
 import GroundTufts from "./GroundTufts";
 import BiomeAmbience from "./BiomeAmbience";
 import FoliageDot from "./FoliageDot";

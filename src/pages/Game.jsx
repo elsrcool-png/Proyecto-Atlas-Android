@@ -53,10 +53,9 @@ import { getAtlasIntegrationFlags } from "@/lib/atlasHeroIntegrationFlags";
 const NPC_KEYS = ["campamento", "pueblo", "ciudad"];
 
 export default function Game() {
-  // v2.22.3: la UI v3 vuelve a estar activa tras corregir la entrada táctil,
-  // el apilado falso de pestañas y los cortes de paneles en horizontal móvil.
-  // El interruptor se conserva para poder volver al conjunto legado durante
-  // una prueba aislada sin desmontar la integración.
+  // v2.22.4: se recupera la interfaz estable anterior. La UI v3 permanece
+  // disponible como integración técnica, pero no se activa por defecto.
+  // Menú, ranuras, ajustes, selección y combate vuelven a sus vistas probadas.
   const uiV3Enabled = getAtlasIntegrationFlags().uiV3.enabled === true;
   const MainMenu = uiV3Enabled ? MainMenuV3 : MainMenuLegacy;
   const CharacterSelect = uiV3Enabled ? CharacterSelectV3 : CharacterSelectLegacy;

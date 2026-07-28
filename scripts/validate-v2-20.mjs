@@ -44,9 +44,11 @@ ok('Botones Pointer Events y joystick con pointerId independiente', () => {
   const button = read('src/components/atlas/AtlasPressButton.jsx');
   const joystick = read('src/components/atlas/Joystick.jsx');
   assert.match(button, /onPointerDown/);
+  assert.match(button, /onPointerUp/);
   assert.match(button, /pointerId/);
-  assert.match(button, /setPointerCapture/);
-  assert.match(button, /touchAction:\s*"none"/);
+  assert.match(button, /pressOnPointerUp/);
+  assert.match(button, /touchAction:\s*directPointerMode\s*\?\s*"none"\s*:\s*"manipulation"/);
+  assert.doesNotMatch(button, /setPointerCapture/);
   assert.match(joystick, /activePointer/);
   assert.match(joystick, /activePointer\.current !== e\.pointerId/);
 });

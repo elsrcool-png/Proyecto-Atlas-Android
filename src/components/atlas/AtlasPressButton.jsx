@@ -1,10 +1,9 @@
 import React, { useRef } from "react";
 
 // Botón común de Atlas.
-// - Por defecto usa el click nativo, que es la ruta más compatible para menú,
-//   modales, teclado, ratón, Android WebView y lectores de pantalla.
-// - Los controles que realmente necesitan respuesta inmediata/multitáctil
-//   pueden activar pressOnPointerDown.
+// - Los menús usan click nativo.
+// - Los controles del juego pueden activarse al soltar el dedo para conservar
+//   multitáctil sin exigir una pulsación larga ni duplicar la acción.
 export default function AtlasPressButton({
   onPress,
   onClick,
@@ -14,32 +13,44 @@ export default function AtlasPressButton({
   style,
   haptic = "ui",
   pressOnPointerDown = false,
+  pressOnPointerUp = false,
   ...props
 }) {
-  const lastImmediatePointerAt = useRef(0);
   const activePointer = useRef(null);
+  const lastPointerPressAt = useRef(0);
   const press = onPress || onClick;
 
   const handlePointerDown = (event) => {
     if (disabled || (event.pointerType === "mouse" && event.button !== 0)) return;
     activePointer.current = event.pointerId;
 
-    // No cancelar el gesto de botones normales. En algunas WebView Android,
-    // preventDefault + pointer capture sobre el menú elimina el click final.
     if (!pressOnPointerDown) return;
 
-    lastImmediatePointerAt.current = Date.now();
-    event.preventDefault();
-    try { event.currentTarget.setPointerCapture?.(event.pointerId); } catch {}
+    // No usamos preventDefault ni pointer capture aquí. Algunas WebView Android
+    // descartan toques breves cuando ambos se combinan sobre botones circulares.
+    lastPointerPressAt.current = Date.now();
     press?.(event);
+  };
+
+  const handlePointerUp = (event) => {
+    const samePointer = activePointer.current === event.pointerId;
+    activePointer.current = null;
+    if (disabled || !pressOnPointerUp || !samePointer) return;
+
+    lastPointerPressAt.current = Date.now();
+    press?.(event);
+  };
+
+  const handlePointerCancel = (event) => {
+    if (activePointer.current === event.pointerId) activePointer.current = null;
   };
 
   const handleClick = (event) => {
     if (disabled) return;
 
-    // Un control inmediato ya ejecutó la acción en pointerdown. Se descarta
-    // únicamente su click de compatibilidad para evitar dobles acciones.
-    if (pressOnPointerDown && Date.now() - lastImmediatePointerAt.current < 650) {
+    // PointerDown/PointerUp ya ejecutaron el toque. Solo se ignora el click
+    // sintético posterior; teclado y lectores de pantalla siguen usando click.
+    if ((pressOnPointerDown || pressOnPointerUp) && Date.now() - lastPointerPressAt.current < 650) {
       event.preventDefault();
       return;
     }
@@ -47,9 +58,7 @@ export default function AtlasPressButton({
     press?.(event);
   };
 
-  const release = (event) => {
-    if (activePointer.current === event.pointerId) activePointer.current = null;
-  };
+  const directPointerMode = pressOnPointerDown || pressOnPointerUp;
 
   return (
     <button
@@ -58,14 +67,14 @@ export default function AtlasPressButton({
       disabled={disabled}
       data-atlas-control="true"
       data-atlas-haptic={haptic}
-      data-atlas-immediate={pressOnPointerDown ? "true" : undefined}
+      data-atlas-pointer-mode={pressOnPointerDown ? "down" : pressOnPointerUp ? "up" : undefined}
       onPointerDown={handlePointerDown}
-      onPointerUp={release}
-      onPointerCancel={release}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
       onClick={handleClick}
       className={`atlas-touch-control select-none ${className}`}
       style={{
-        touchAction: pressOnPointerDown ? "none" : "manipulation",
+        touchAction: directPointerMode ? "none" : "manipulation",
         WebkitUserSelect: "none",
         userSelect: "none",
         ...style,

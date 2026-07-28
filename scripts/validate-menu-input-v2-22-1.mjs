@@ -15,9 +15,10 @@ requireText(game, "getAtlasIntegrationFlags().uiV3.enabled", "interruptor UI v3"
 requireText(game, "uiV3Enabled ? MainMenuV3 : MainMenuLegacy", "selección segura de menú");
 requireText(game, "uiV3Enabled ? SaveSlotsModalV3 : SaveSlotsModalLegacy", "fallback de ranuras");
 requireText(press, "pressOnPointerDown = false", "click compatible por defecto");
-requireText(press, "if (!pressOnPointerDown) return", "pointerdown no invasivo");
-requireText(press, 'touchAction: pressOnPointerDown ? "none" : "manipulation"', "touch-action compatible");
-requireText(action, "pressOnPointerDown", "modo inmediato de controles de acción");
+requireText(press, "pressOnPointerUp = false", "toque breve al soltar");
+requireText(press, "const directPointerMode = pressOnPointerDown || pressOnPointerUp", "modo directo centralizado");
+requireText(press, 'touchAction: directPointerMode ? "none" : "manipulation"', "touch-action compatible");
+requireText(action, "pressOnPointerUp", "acción A por toque breve");
 requireText(menu, "object-cover pointer-events-none", "fondo no interactivo");
 
-console.log("OK v2.22.1: menú estable por defecto, UI v3 protegida y entrada táctil compatible.");
+console.log("OK v2.22.4: menú clásico estable y acción táctil por pulsación breve.");

@@ -382,3 +382,69 @@
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* Atlas v2.22.4 — interfaz clásica adaptativa, sin carrusel de pestañas. */
+.atlas-player-hub,
+.atlas-backpack-classic {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+.atlas-player-hub__body,
+.atlas-backpack-classic__body {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.atlas-player-hub__home {
+  display: grid;
+  gap: 12px;
+}
+
+@media (orientation: landscape) and (max-height: 640px) {
+  .atlas-player-hub__header,
+  .atlas-backpack-classic__header {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+  .atlas-player-hub__home {
+    grid-template-columns: minmax(230px, 0.82fr) minmax(0, 1.6fr);
+    grid-template-areas:
+      "summary menu"
+      "close menu";
+    align-items: stretch;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .atlas-player-hub__summary { grid-area: summary; }
+  .atlas-player-hub__menu {
+    grid-area: menu;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  .atlas-player-hub__menu > button {
+    min-height: 84px !important;
+    padding: 10px !important;
+  }
+  .atlas-player-hub__close { grid-area: close; }
+
+  .atlas-backpack-classic__panel {
+    height: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .atlas-backpack-classic__body {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 420px) {
+  .atlas-player-hub__menu > button {
+    min-height: 96px !important;
+    padding: 11px !important;
+  }
+}

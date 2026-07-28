@@ -1,4 +1,2 @@
-PROYECTO ATLAS VISUAL v2.22.3
-Interfaz Horizontal Responsiva, Pestañas Reales y Mochila Completa
-Base: v2.22 Integraciones Técnicas Completas
-Fecha: 2026-07-28
+PROYECTO ATLAS VISUAL v2.22.4
+Interfaz clásica adaptativa sin pestañas y acción A por toque breve
