@@ -64,3 +64,15 @@ La reducción física de los assets maestros corresponde a la Fase 2 y no forma 
 - Perfiles separados para vertical y horizontal.
 - Editor disponible desde Ajustes y desde Pausa.
 - Pausa permite guardar y volver al menú principal sin borrar la ranura.
+
+## Actualización v2.22.9 — HUD Maestro Adaptativo
+
+- Composiciones independientes para vertical y horizontal.
+- Cabecera compacta con zona, amenaza, misión y estado dinámico.
+- Menú rápido lateral en lugar de seis botones permanentes.
+- Acción A con etiqueta contextual.
+- Perfiles Equilibrado, Limpio, Compacto y Accesible.
+- Editor ampliado para controles y cabecera.
+- Migración automática de ajustes anteriores.
+
+Consulta `ACTUALIZACION_V2_22_9_HUD_MAESTRO_ADAPTATIVO.md` para el detalle técnico.

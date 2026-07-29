@@ -20,6 +20,6 @@ check(press.includes("Date.now() - lastPointerPressAt.current < 650"), "click si
 check(!press.includes("setPointerCapture"), "sin captura de puntero problemática");
 check(explore.includes("onAction={onA}"), "A sigue conectada a interacción de exploración");
 check(dungeon.includes("const onA = useCallback"), "A de dungeon conserva su flujo");
-check(["2.22.5", "2.22.6", "2.22.7", "2.22.8"].includes(pkg.version), "versión 2.22.5 o posterior");
+check(/^2\.22\.(?:[5-9]|[1-9]\d+)$/.test(pkg.version), "versión 2.22.5 o posterior");
 
 console.log("\nValidación v2.22.5 correcta: A responde al primer contacto sin doble ejecución.");

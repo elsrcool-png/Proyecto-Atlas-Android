@@ -926,7 +926,7 @@ export default function ExploreMode({ game }) {
   }
 
   return (
-    <div className={`atlas-ui-v3 atlas-explore-root min-h-screen relative flex flex-col ${horizontal ? "atlas-explore-horizontal" : "atlas-explore-vertical"} ${wantsHorizontal ? "atlas-prefers-horizontal" : ""} ${leftHanded ? "atlas-left-handed" : "atlas-right-handed"}`} style={{ background: "#0a0a0a" }}>
+    <div className={`atlas-ui-v3 atlas-explore-root min-h-screen relative flex flex-col ${horizontal ? "atlas-explore-horizontal" : "atlas-explore-vertical"} ${wantsHorizontal ? "atlas-prefers-horizontal" : ""} ${leftHanded ? "atlas-left-handed" : "atlas-right-handed"} atlas-hud-preset-${settings.hudPreset || "balanced"}`} data-hud-density={settings.hudDensity || "adaptive"} style={{ background: "#0a0a0a" }}>
       <div ref={vpRef} className={`atlas-explore-viewport relative w-full overflow-hidden ${visualScene ? "atlas-green-stable-viewport" : ""}`} style={{ height: separated ? "calc(100dvh - 92px)" : "100dvh" }}>
         <div ref={worldRef} className="absolute top-0 left-0" style={{ width: world.W, height: world.H, transformOrigin: "0 0", willChange: "transform" }}>
           {(!hudClean || settings.debugTargets) && (world.spawnZones || []).map((z, i) => (<div key={i} className="absolute pointer-events-none flex items-center justify-center" style={{ left: z.x - 40, top: z.y - 40, width: 80, height: 80 }}><div className="absolute rounded-full border-2 border-emerald-300/50 animate-pulse" style={{ width: 72, height: 72 }} /><div className="absolute rounded-full border border-emerald-300/30" style={{ width: 48, height: 48 }} /><div className="absolute text-emerald-200/70 text-[9px] font-heading whitespace-nowrap">Invocación</div></div>))}
@@ -1001,6 +1001,8 @@ export default function ExploreMode({ game }) {
             onOpenSectorMap={() => setShowSectorMap(true)}
             onOpenJournal={() => setShowJournal(true)}
             onSwitchBoard={() => game.onSwitchMode("board")}
+            onOpenSheet={game.onOpenSheet}
+            onOpenSettings={game.onOpenSettings}
             proxHint={proxHint}
             separated={separated}
             renderSeparatedControls={false}

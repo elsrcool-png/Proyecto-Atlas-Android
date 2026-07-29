@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { RotateCcw, Smartphone, Keyboard, Bug, Bell, Volume2, Music, Waves, Move, Vibrate } from "lucide-react";
 import AtlasControlEditor from "./AtlasControlEditor";
 import { applyControlPreset } from "@/lib/atlasControlLayout";
+import { applyHudPreset } from "@/lib/atlasHudLayout";
 
 function Option({ label, value, current, onPick }) {
   return (
@@ -65,14 +66,24 @@ export default function SettingsModal({ settings, onChange, onClose, onReset, on
             <p className="text-sm text-slate-300 mb-2">Tamaño de controles</p>
             <div className="grid grid-cols-3 gap-2"><Option label="Pequeño" value="small" current={settings.controlSize} onPick={v => set("controlSize", v)} /><Option label="Normal" value="normal" current={settings.controlSize} onPick={v => set("controlSize", v)} /><Option label="Grande" value="large" current={settings.controlSize} onPick={v => set("controlSize", v)} /></div>
           </div>
-          <button type="button" onClick={() => setShowControlEditor(true)} className="w-full rounded-xl border border-cyan-700/70 bg-cyan-950/45 hover:bg-cyan-900/50 py-2.5 text-sm text-cyan-100 flex items-center justify-center gap-2"><Move className="w-4 h-4" /> Personalizar HUD táctil</button>
+          <div>
+            <p className="text-sm text-slate-300 mb-2">Perfil del HUD Maestro</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Option label="Equilibrado" value="balanced" current={settings.hudPreset || "balanced"} onPick={v => onChange(applyHudPreset(settings, v))} />
+              <Option label="Limpio" value="clean" current={settings.hudPreset || "balanced"} onPick={v => onChange(applyHudPreset(settings, v))} />
+              <Option label="Compacto" value="compact" current={settings.hudPreset || "balanced"} onPick={v => onChange(applyHudPreset(settings, v))} />
+              <Option label="Accesible" value="accessible" current={settings.hudPreset || "balanced"} onPick={v => onChange(applyHudPreset(settings, v))} />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">Cada perfil reorganiza información y controles sin cortar la vista vertical u horizontal.</p>
+          </div>
+          <button type="button" onClick={() => setShowControlEditor(true)} className="w-full rounded-xl border border-cyan-700/70 bg-cyan-950/45 hover:bg-cyan-900/50 py-2.5 text-sm text-cyan-100 flex items-center justify-center gap-2"><Move className="w-4 h-4" /> Personalizar HUD táctil · HUD Maestro</button>
         </div>
 
         <div className="flex items-center gap-2 text-violet-400 mt-4 mb-3"><Bell className="w-4 h-4" /><h3 className="text-xs uppercase tracking-widest">Avisos en pantalla</h3></div>
         <div>
           <p className="text-sm text-slate-300 mb-2">Densidad del HUD</p>
-          <div className="flex gap-2"><Option label="Limpio" value="clean" current={settings.hudDensity || "clean"} onPick={v => set("hudDensity", v)} /><Option label="Completo" value="full" current={settings.hudDensity || "clean"} onPick={v => set("hudDensity", v)} /></div>
-          <p className="text-[10px] text-slate-500 mt-1">Limpio muestra nombres, señales y avisos solo cuando son útiles o estás cerca.</p>
+          <div className="grid grid-cols-3 gap-2"><Option label="Adaptativo" value="adaptive" current={settings.hudDensity || "adaptive"} onPick={v => set("hudDensity", v)} /><Option label="Limpio" value="clean" current={settings.hudDensity || "adaptive"} onPick={v => set("hudDensity", v)} /><Option label="Completo" value="full" current={settings.hudDensity || "adaptive"} onPick={v => set("hudDensity", v)} /></div>
+          <p className="text-[10px] text-slate-500 mt-1">Adaptativo muestra vida y energía al recibir daño, aumentar la amenaza o desplegar los detalles.</p>
         </div>
 
         <div className="flex items-center gap-2 text-cyan-300 mt-4 mb-3"><Volume2 className="w-4 h-4" /><h3 className="text-xs uppercase tracking-widest">Audio</h3></div>

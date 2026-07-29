@@ -42,8 +42,8 @@ const css = read("src/index.css");
 const manifest = JSON.parse(read("public/manifest.json"));
 
 assertIncludes(settings, 'orientation: "horizontal"', "horizontal es la orientación predeterminada");
-assertIncludes(settings, 'hudDensity: "clean"', "HUD limpio es el modo predeterminado");
-if (/layoutVersion:\s*(?:1[3-9]|[2-9]\d)/.test(settings)) pass("ajustes anteriores migran una vez a horizontal limpio"); else fail("ajustes anteriores migran una vez a horizontal limpio");
+if (settings.includes('hudDensity: "adaptive"') || settings.includes('hudDensity: "clean"')) pass("HUD adaptativo o limpio es el modo predeterminado"); else fail("HUD adaptativo o limpio es el modo predeterminado");
+if (/layoutVersion:\s*(?:1[3-9]|[2-9]\d)/.test(settings)) pass("ajustes anteriores migran una vez al HUD adaptativo"); else fail("ajustes anteriores migran una vez al HUD adaptativo");
 assertIncludes(settings, "export async function requestPreferredOrientation", "existe bloqueo de orientación con fallback");
 assertIncludes(game, 'requestPreferredOrientation("horizontal")', "inicio y carga solicitan horizontal desde gesto del usuario");
 if (manifest.orientation !== "landscape") fail(`manifest.orientation esperado landscape, recibido ${manifest.orientation}`);
@@ -53,7 +53,7 @@ assertIncludes(explore, "const horizontal = deviceLandscape;", "el layout horizo
 assertIncludes(explore, "const viewScale = horizontal ? 1.08 : 1.55;", "escala de mapa horizontal conserva legibilidad");
 assertIncludes(explore, "const hudClean", "ExploreMode reconoce HUD limpio");
 assertIncludes(exploreUi, "atlas-objective-compass", "brújula usa clase adaptable");
-assertIncludes(exploreUi, "atlas-top-hud", "HUD superior usa clase adaptable");
+if (exploreUi.includes("atlas-adaptive-hud") || exploreUi.includes("atlas-top-hud")) pass("HUD superior usa clase adaptable"); else fail("HUD superior usa clase adaptable");
 assertIncludes(exploreUi, "atlas-joystick-wrap", "joystick usa área segura adaptable");
 assertIncludes(settingsModal, 'value="clean"', "Ajustes permite HUD limpio");
 assertIncludes(css, "@media (orientation: landscape) and (max-height: 640px)", "hay reglas para móviles horizontales bajos");
@@ -140,7 +140,7 @@ if (process.exitCode) {
 } else {
   console.log("\nVALIDACIÓN HORIZONTAL, HUD Y BALANCE v2.13 CORRECTA");
   console.log("- horizontal predeterminado con fallback legible");
-  console.log("- HUD limpio, avisos cercanos y cola reducida");
+  console.log("- HUD adaptativo, avisos cercanos y cola reducida");
   console.log("- controles y combate adaptados a pantalla baja");
   console.log("- mobs comunes parten cerca de las estadísticas base del jugador");
   console.log("- equipo del jugador conserva ventaja y jefes mantienen su escala");

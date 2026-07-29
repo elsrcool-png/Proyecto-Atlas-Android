@@ -41,7 +41,7 @@ for (const path of guardedModals) {
   );
 }
 
-check(["2.22.6", "2.22.7", "2.22.8"].includes(pkg.version), "versión 2.22.6 o posterior");
+check(/^2\.22\.(?:[6-9]|[1-9]\d+)$/.test(pkg.version), "versión 2.22.6 o posterior");
 check(
   pkg.scripts["validate:v2-22"].includes("validate:action-a-v2-22-6"),
   "validación acumulativa usa la corrección nueva"

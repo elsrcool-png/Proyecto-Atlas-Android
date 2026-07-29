@@ -433,3 +433,274 @@
     padding: 11px !important;
   }
 }
+
+/* Atlas v2.22.9 — HUD Maestro Adaptativo v3. */
+.atlas-adaptive-hud {
+  top: max(6px, env(safe-area-inset-top, 0px));
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(8px, env(safe-area-inset-right, 0px));
+}
+.atlas-adaptive-hud__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) auto auto;
+  grid-template-areas:
+    "zone threat menu"
+    "mission mission mission"
+    "vitals vitals vitals";
+  align-items: start;
+  gap: 6px;
+  width: 100%;
+}
+.atlas-hud-zone {
+  grid-area: zone;
+  position: relative;
+  min-width: 0;
+  max-width: min(54vw, 280px);
+  border: 1px solid var(--atlas-ui-border-soft, rgba(148,163,184,.4));
+  border-radius: 14px;
+  background: linear-gradient(155deg, rgba(8,22,38,.94), rgba(8,18,31,.86));
+  box-shadow: 0 5px 16px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.04);
+  padding: 8px 30px 8px 11px;
+  color: white;
+  overflow: hidden;
+  transform-origin: top left;
+}
+.atlas-hud-zone:active { transform: scale(.98); }
+.atlas-hud-kicker {
+  display: block;
+  color: rgba(203,213,225,.65);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.atlas-hud-zone-name {
+  display: block;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.atlas-hud-zone-meta {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(203,213,225,.7);
+  font-size: 9px;
+}
+.atlas-hud-zone-chevron {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  color: rgba(226,232,240,.75);
+  transition: transform 150ms ease;
+}
+.atlas-hud-threat { grid-area: threat; transform-origin: top left; }
+.atlas-threat-indicator {
+  min-height: 42px;
+  gap: 6px;
+  border-radius: 13px;
+  background: rgba(8,22,38,.9);
+  padding: 7px 9px;
+  box-shadow: 0 5px 16px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.04);
+}
+.atlas-threat-indicator--compact .atlas-threat-value::before { content: "· "; }
+.atlas-hud-menu {
+  grid-area: menu;
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  transform-origin: top right;
+}
+.atlas-hud-menu .atlas-ui-icon-button {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: rgba(8,22,38,.9);
+  box-shadow: 0 5px 16px rgba(0,0,0,.24);
+}
+.atlas-hud-mission {
+  grid-area: mission;
+  display: flex;
+  align-items: center;
+  justify-self: center;
+  width: min(94vw, 580px);
+  min-width: 0;
+  min-height: 38px;
+  gap: 8px;
+  border: 1px solid rgba(217,164,65,.5);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(8,22,38,.94), rgba(13,28,45,.9));
+  box-shadow: 0 5px 16px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.04);
+  padding: 5px 12px 5px 7px;
+  color: white;
+  transform-origin: top center;
+}
+.atlas-hud-mission-icon {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  min-width: 27px;
+  height: 27px;
+  border: 1px solid rgba(251,191,36,.65);
+  border-radius: 999px;
+  background: rgba(15,23,42,.92);
+}
+.atlas-hud-mission-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+}
+.atlas-hud-mission-distance {
+  flex: none;
+  color: rgb(252,211,77);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.atlas-hud-vitals {
+  grid-area: vitals;
+  justify-self: start;
+  width: min(72vw, 330px);
+  padding: 7px 10px !important;
+  transform-origin: top left;
+  animation: atlas-toast-in .18s ease-out;
+}
+.atlas-hud-vitals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.atlas-proximity-hint {
+  width: min(72vw, 390px);
+  max-width: 390px;
+}
+.atlas-action-idle {
+  opacity: .36 !important;
+  filter: saturate(.35);
+  transform: scale(.88);
+}
+.atlas-action-idle span:last-child { display: none; }
+.atlas-action-ready {
+  animation: atlas-action-ready-pulse 1.45s ease-in-out infinite;
+}
+@keyframes atlas-action-ready-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(74,222,128,.16), 0 7px 18px rgba(0,0,0,.34); }
+  50% { box-shadow: 0 0 0 7px rgba(74,222,128,0), 0 7px 18px rgba(0,0,0,.34); }
+}
+
+.atlas-quick-menu-backdrop {
+  background: rgba(2,6,23,.42);
+  pointer-events: auto;
+}
+.atlas-quick-menu-panel {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top, 0px));
+  right: max(8px, env(safe-area-inset-right, 0px));
+  bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  width: min(88vw, 330px);
+  overflow: hidden;
+  border-radius: 18px;
+  animation: atlas-quick-menu-in .18s ease-out;
+}
+.atlas-quick-menu-body {
+  display: grid;
+  gap: 8px;
+  max-height: calc(100dvh - 94px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+@keyframes atlas-quick-menu-in {
+  from { opacity: 0; transform: translateX(22px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (orientation: portrait) {
+  .atlas-adaptive-hud__grid {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .atlas-hud-zone { max-width: min(55vw, 280px); }
+  .atlas-hud-vitals { width: min(82vw, 340px); }
+}
+
+@media (orientation: landscape) {
+  .atlas-adaptive-hud__grid {
+    grid-template-columns: minmax(145px, 220px) auto minmax(180px, 1fr) auto;
+    grid-template-areas:
+      "zone threat mission menu"
+      "vitals vitals . .";
+    gap: 5px;
+  }
+  .atlas-hud-zone {
+    max-width: 220px;
+    min-height: 42px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .atlas-hud-mission {
+    width: 100%;
+    max-width: 560px;
+    min-height: 42px;
+  }
+  .atlas-hud-vitals {
+    width: min(34vw, 300px);
+    padding: 5px 8px !important;
+  }
+  .atlas-hud-menu .atlas-ui-icon-button,
+  .atlas-threat-indicator {
+    height: 42px;
+    min-height: 42px;
+  }
+  .atlas-proximity-hint { width: min(44vw, 390px); }
+}
+
+@media (orientation: landscape) and (max-height: 620px) {
+  .atlas-adaptive-hud { top: max(4px, env(safe-area-inset-top, 0px)); }
+  .atlas-adaptive-hud__grid { grid-template-columns: minmax(132px, 190px) auto minmax(170px, 1fr) auto; }
+  .atlas-hud-zone { max-width: 190px; }
+  .atlas-hud-zone-meta, .atlas-hud-kicker { font-size: 8px; }
+  .atlas-hud-zone-name { font-size: 12px; }
+  .atlas-hud-vitals { display: none; }
+  .atlas-hud-mission-label { font-size: 10px; }
+  .atlas-hud-menu .atlas-ui-icon-button { width: 38px; min-width: 38px; height: 38px; }
+  .atlas-threat-indicator { min-height: 38px; padding: 5px 7px; }
+}
+
+@media (max-width: 390px) and (orientation: portrait) {
+  .atlas-adaptive-hud__grid { gap: 4px; }
+  .atlas-hud-zone { max-width: 52vw; padding-left: 8px; }
+  .atlas-threat-indicator { min-height: 38px; padding: 5px 7px; }
+  .atlas-hud-menu { gap: 3px; }
+  .atlas-hud-menu .atlas-ui-icon-button { width: 38px; min-width: 38px; height: 38px; }
+  .atlas-hud-mission { min-height: 36px; padding-right: 9px; }
+  .atlas-hud-mission-label { font-size: 10px; }
+  .atlas-hud-vitals { width: 100%; }
+}
+
+.atlas-hud-preset-compact .atlas-hud-zone-meta,
+.atlas-hud-preset-compact .atlas-hud-kicker,
+.atlas-hud-preset-compact .atlas-hud-vitals { display: none; }
+.atlas-hud-preset-compact .atlas-hud-zone { padding-top: 6px; padding-bottom: 6px; }
+.atlas-hud-preset-accessible .atlas-hud-mission-label,
+.atlas-hud-preset-accessible .atlas-hud-zone-name { font-size: 14px; }
+.atlas-hud-preset-accessible .atlas-hud-menu .atlas-ui-icon-button { width: 48px; min-width: 48px; height: 48px; }
+
+@media (orientation: landscape) {
+  .atlas-explore-horizontal .atlas-hud-mission {
+    top: auto;
+    width: 100%;
+    max-width: 560px;
+  }
+}

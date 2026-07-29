@@ -1,5 +1,6 @@
 // PROYECTO ATLAS — Ajustes de interfaz móvil, orientación y accesibilidad.
 import { defaultControlProfiles, normalizeControlProfiles } from "@/lib/atlasControlLayout";
+import { defaultHudElements, normalizeHudElements } from "@/lib/atlasHudLayout";
 
 const KEY = "atlas_settings";
 const DEFAULT = {
@@ -10,8 +11,10 @@ const DEFAULT = {
   handedness: "right",
   controlSize: "normal",
   controls: "auto",
-  hudDensity: "clean",
-  layoutVersion: 20,
+  hudDensity: "adaptive",
+  hudPreset: "balanced",
+  hudElements: defaultHudElements(),
+  layoutVersion: 21,
   debugTargets: false,
   controlProfiles: defaultControlProfiles("right"),
   hapticsEnabled: true,
@@ -26,7 +29,7 @@ const DEFAULT = {
 };
 
 export function defaultSettings() {
-  return { ...DEFAULT, controlProfiles: defaultControlProfiles(DEFAULT.handedness) };
+  return { ...DEFAULT, controlProfiles: defaultControlProfiles(DEFAULT.handedness), hudElements: defaultHudElements() };
 }
 
 export function loadSettings() {
@@ -36,10 +39,11 @@ export function loadSettings() {
     // carga de v2.13 migra una sola vez al diseño horizontal limpio; después
     // se respeta cualquier cambio manual del jugador.
     const migrated = Number(stored.layoutVersion || 0) < DEFAULT.layoutVersion
-      ? { ...stored, orientation: "horizontal", hudDensity: "clean", layoutVersion: DEFAULT.layoutVersion }
+      ? { ...stored, orientation: stored.orientation || "horizontal", hudDensity: "adaptive", hudPreset: "balanced", hudElements: defaultHudElements(), layoutVersion: DEFAULT.layoutVersion }
       : stored;
     const next = { ...DEFAULT, ...migrated };
     next.controlProfiles = normalizeControlProfiles(next.controlProfiles, next.handedness);
+    next.hudElements = normalizeHudElements(next.hudElements);
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
     return next;
   } catch {

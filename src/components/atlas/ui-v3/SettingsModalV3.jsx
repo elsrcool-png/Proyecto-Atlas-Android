@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Bell, Bug, Gamepad2, Keyboard, Move, Music, RotateCcw, Smartphone, Vibrate, Volume2, Waves } from "lucide-react";
 import AtlasControlEditor from "../AtlasControlEditor";
 import { applyControlPreset } from "@/lib/atlasControlLayout";
+import { applyHudPreset } from "@/lib/atlasHudLayout";
 import { AtlasButton, AtlasModal, AtlasPanel, AtlasTabs } from "@/components/atlas/ui";
 
 function ChoiceGroup({ label, hint, options, value, onChange, columns }) {
@@ -65,7 +66,8 @@ export default function SettingsModalV3({ settings, onChange, onClose, onReset, 
             <AtlasPanel title="Pantalla" bodyClassName="space-y-4 p-4">
               <ChoiceGroup label="Orientación" value={settings.orientation} onChange={setOrientation} options={[{ label: "Automática", value: "auto" }, { label: "Vertical", value: "vertical" }, { label: "Horizontal", value: "horizontal" }]} />
               {orientationNote && <p className="atlas-ui-hud-card px-3 py-2 text-xs text-sky-100">{orientationNote}</p>}
-              <ChoiceGroup label="Densidad del HUD" value={settings.hudDensity || "clean"} onChange={value => set("hudDensity", value)} options={[{ label: "Limpio", value: "clean" }, { label: "Completo", value: "full" }]} hint="Limpio mantiene nombres y avisos ocultos hasta que son útiles." />
+              <ChoiceGroup label="Densidad del HUD" value={settings.hudDensity || "adaptive"} onChange={value => set("hudDensity", value)} columns={3} options={[{ label: "Adaptativo", value: "adaptive" }, { label: "Limpio", value: "clean" }, { label: "Completo", value: "full" }]} hint="Adaptativo muestra vida y energía cuando el estado de la partida lo requiere." />
+              <ChoiceGroup label="Perfil del HUD Maestro" value={settings.hudPreset || "balanced"} onChange={value => onChange(applyHudPreset(settings, value))} columns={2} options={[{ label: "Equilibrado", value: "balanced" }, { label: "Limpio", value: "clean" }, { label: "Compacto", value: "compact" }, { label: "Accesible", value: "accessible" }]} />
             </AtlasPanel>
             <AtlasPanel title="Distribución" bodyClassName="space-y-4 p-4">
               <ChoiceGroup label="Distribución de controles" value={settings.controlLayout} onChange={value => set("controlLayout", value)} options={[{ label: "Integrados", value: "integrated" }, { label: "Separados", value: "separated" }]} hint="En horizontal, Integrados conserva más altura útil para el mapa." />
@@ -81,8 +83,8 @@ export default function SettingsModalV3({ settings, onChange, onClose, onReset, 
               <ChoiceGroup label="Mano dominante" value={settings.handedness} onChange={value => onChange(applyControlPreset(settings, value))} options={[{ label: "Diestro", value: "right" }, { label: "Zurdo", value: "left" }]} />
             </AtlasPanel>
             <AtlasPanel title="Editor" bodyClassName="p-4">
-              <p className="atlas-ui-muted text-sm leading-relaxed">Mueve, escala y ajusta la opacidad del joystick, botón A, botón B y Correr. La posición se guarda por separado para vertical y horizontal.</p>
-              <AtlasButton className="mt-4" variant="primary" icon={Move} full onPress={() => setShowControlEditor(true)}>Personalizar HUD táctil</AtlasButton>
+              <p className="atlas-ui-muted text-sm leading-relaxed">Mueve los controles y ajusta tamaño, opacidad y visibilidad de la cabecera. La configuración se guarda por orientación sin cortar la vista vertical.</p>
+              <AtlasButton className="mt-4" variant="primary" icon={Move} full onPress={() => setShowControlEditor(true)}>Personalizar HUD táctil · HUD Maestro</AtlasButton>
               <div className="atlas-ui-list-row mt-3"><Keyboard className="h-4 w-4" /><span className="text-sm">Los atajos de teclado actuales se mantienen.</span></div>
             </AtlasPanel>
           </div>
