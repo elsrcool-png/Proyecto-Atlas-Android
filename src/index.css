@@ -271,28 +271,13 @@
   .atlas-explore-horizontal .atlas-flavor-message > div {
     padding: 6px 9px !important;
   }
-  .atlas-explore-horizontal .atlas-joystick-wrap,
-  .atlas-explore-horizontal .atlas-action-wrap {
-    bottom: max(8px, env(safe-area-inset-bottom)) !important;
-  }
-  .atlas-explore-horizontal.atlas-right-handed .atlas-joystick-wrap {
-    left: max(10px, env(safe-area-inset-left)) !important;
-    right: auto !important;
-  }
-  .atlas-explore-horizontal.atlas-right-handed .atlas-action-wrap {
-    right: max(10px, env(safe-area-inset-right)) !important;
-    left: auto !important;
-  }
-  .atlas-explore-horizontal.atlas-left-handed .atlas-joystick-wrap {
-    right: max(10px, env(safe-area-inset-right)) !important;
-    left: auto !important;
-  }
-  .atlas-explore-horizontal.atlas-left-handed .atlas-action-wrap {
-    left: max(10px, env(safe-area-inset-left)) !important;
-    right: auto !important;
-  }
-  .atlas-explore-horizontal .atlas-action-wrap {
-    gap: 6px !important;
+  /* v2.22.8: las posiciones del HUD táctil vienen del perfil guardado.
+     No forzar left/right/bottom aquí: esos !important anulaban el editor. */
+  .atlas-explore-horizontal .atlas-mobile-controls {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
   }
   .atlas-explore-horizontal .atlas-combat-overlay {
     padding: 4px max(6px, env(safe-area-inset-right)) 4px max(6px, env(safe-area-inset-left)) !important;

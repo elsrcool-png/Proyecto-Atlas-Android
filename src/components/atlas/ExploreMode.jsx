@@ -50,6 +50,21 @@ import DungeonEntryDialog from "./DungeonEntryDialog";
 import { normalizeControlProfiles } from "@/lib/atlasControlLayout";
 import ExploreHudV3, { ExploreSeparatedControlsV3 } from "./ui-v3/ExploreHudV3";
 import PauseMenuV3 from "./ui-v3/PauseMenuV3";
+import AtlasControlEditor from "./AtlasControlEditor";
+
+const FIXED_STEP_MS = 1000 / 60;
+const AI_STEP_MS = 50;
+const PROXIMITY_STEP_MS = 1000 / 15;
+const NAVIGATION_STEP_MS = 1000 / 6;
+const MAX_FRAME_MS = 100;
+const MAX_SIMULATION_STEPS = 5;
+const BASE_PLAYER_SPEED_PPS = 3.2 * 60;
+const MIN_PLAYER_SPEED_PPS = 1.6 * 60;
+
+function frameRateIndependentLerp(baseFactor, elapsedMs) {
+  if (elapsedMs <= 0) return 0;
+  return 1 - Math.pow(1 - baseFactor, elapsedMs / FIXED_STEP_MS);
+}
 
 export default function ExploreMode({ game }) {
   const { player, region, regionIndex, bossDefeated, bossUnlocked } = game;
@@ -90,6 +105,7 @@ export default function ExploreMode({ game }) {
   const stepRef = useRef(0);
   const drawnRef = useRef({ dir: "", frame: -1 });
   const enemyEls = useRef([]);
+  const enemyDirectionalEls = useRef([]);
   const villagerEls = useRef([]);
   const villagerBodyEls = useRef([]);
   const villagers = useRef([]);
@@ -130,6 +146,7 @@ export default function ExploreMode({ game }) {
   const [strangerDialog, setStrangerDialog] = useState(false);
   const [nearShrine, setNearShrine] = useState(null);
   const [showHub, setShowHub] = useState(false);
+  const [showHudEditor, setShowHudEditor] = useState(false);
   const [showExploreMap, setShowExploreMap] = useState(false);
   const [showSectorMap, setShowSectorMap] = useState(false);
   const [expEvent, setExpEvent] = useState(null);
@@ -321,7 +338,8 @@ export default function ExploreMode({ game }) {
     lastNear.current = { npc: null, chest: null, storyPoint: null };
     lastNearShrine.current = null;
     setNearNpc(null); setNearChest(null); setNearStoryPoint(null); setNearShrine(null);
-    drawnRef.current = { dir: "", frame: -1 }; facingRef.current = "down"; frameRef.current = 0;
+    drawnRef.current = { dir: "", frame: -1 }; facingRef.current = "down"; frameRef.current = 0; stepRef.current = 0;
+    enemyDirectionalEls.current = [];
     crossingRef.current = false;
     portalCooldown.current = 0;
     lastNearStranger.current = false; setNearStranger(false); setStrangerDialog(false);
@@ -338,232 +356,464 @@ export default function ExploreMode({ game }) {
   useEffect(() => { if (game.respawnPos) { pos.current = { x: game.respawnPos.x, y: game.respawnPos.y }; facingRef.current = game.respawnPos.facing || facingRef.current; cam.current = { x: 0, y: 0 }; graceUntilRef.current = Date.now() + 600; game.consumeRespawn?.(); } }, [game.respawnPos]);
 
   useEffect(() => {
-    if (!world) return;
-    let raf;
-    const loop = () => {
-      if (!inCombat && !paused) {
-        const speed = Math.max(1.6, 3.2 * (1 + (player.speedBonus || 0) * 0.08)) * ((runRef.current || runToggleRef.current) ? 1.6 : 1);
-        let { x, y } = pos.current;
-        if (!crossingRef.current && Date.now() > graceUntilRef.current) {
-          const M = 22;
-          const trans = transitionsRef.current;
-          const northT = trans.find(t => t.direction === "north");
-          const southT = trans.find(t => t.direction === "south");
-          const eastT = trans.find(t => t.direction === "east");
-          const westT = trans.find(t => t.direction === "west");
-          const inCorridorX = (t) => t && x >= t.corridor.x && x <= t.corridor.x + t.corridor.w;
-          const inCorridorY = (t) => t && y >= t.corridor.y && y <= t.corridor.y + t.corridor.h;
-          const attemptCross = (direction, coord) => {
-            crossingRef.current = true;
-            graceUntilRef.current = Date.now() + 600;
-            const result = game.onTravelSector?.(direction, coord);
-            if (result?.ok === false) {
-              showFlavor(result.reason);
-              setTimeout(() => { crossingRef.current = false; }, 500);
-            }
-          };
-          if (game.hasTravelNorth && dir.current.y < -0.25 && y <= M && inCorridorX(northT)) attemptCross("north", x);
-          else if (game.hasTravelSouth && dir.current.y > 0.25 && y >= world.H - M && inCorridorX(southT)) attemptCross("south", x);
-          else if (game.hasTravelEast && dir.current.x > 0.25 && x >= world.W - M && inCorridorY(eastT)) attemptCross("east", y);
-          else if (game.hasTravelWest && dir.current.x < -0.25 && x <= M && inCorridorY(westT)) attemptCross("west", y);
-        }
-        const dx = dir.current.x * speed, dy = dir.current.y * speed;
-        let nx = clamp(x + dx, 16, world.W - 16), ny = clamp(y + dy, 16, world.H - 16);
-        if (!hitSolid(nx, ny, world.solids)) { x = nx; y = ny; }
-        else if (!hitSolid(nx, y, world.solids)) { x = nx; }
-        else if (!hitSolid(x, ny, world.solids)) { y = ny; }
-        pos.current = { x, y };
-        navTickRef.current += 1;
-        if (navTickRef.current >= 10) {
-          navTickRef.current = 0;
-          const nav = missionNavTargetRef.current;
-          const wrap = navWrapRef.current;
-          if (wrap) {
-            if (nav) {
-              const angle = Math.atan2(nav.y - y, nav.x - x) * 180 / Math.PI + 90;
-              const distance = Math.round(Math.hypot(nav.x - x, nav.y - y));
-              wrap.style.display = "";
-              if (navIconRef.current) navIconRef.current.style.transform = `rotate(${angle}deg)`;
-              if (navLabelRef.current) navLabelRef.current.textContent = nav.label;
-              if (navDistRef.current) navDistRef.current.textContent = `${distance} m`;
-            } else {
-              wrap.style.display = "none";
-            }
+    if (!world || inCombat || paused) return;
+
+    let raf = 0;
+    let running = true;
+    let lastFrameAt = performance.now();
+    let simulationAccumulator = 0;
+    let aiAccumulator = 0;
+    let proximityAccumulator = 0;
+    let navigationAccumulator = 0;
+
+    const updateNavigation = () => {
+      const nav = missionNavTargetRef.current;
+      const wrap = navWrapRef.current;
+      if (!wrap) return;
+      if (!nav) {
+        if (wrap.style.display !== "none") wrap.style.display = "none";
+        return;
+      }
+      const { x, y } = pos.current;
+      const angle = Math.atan2(nav.y - y, nav.x - x) * 180 / Math.PI + 90;
+      const distance = Math.round(Math.hypot(nav.x - x, nav.y - y));
+      if (wrap.style.display === "none") wrap.style.display = "";
+      if (navIconRef.current) {
+        const transform = `rotate(${angle.toFixed(2)}deg)`;
+        if (navIconRef.current.style.transform !== transform) navIconRef.current.style.transform = transform;
+      }
+      if (navLabelRef.current && navLabelRef.current.textContent !== nav.label) navLabelRef.current.textContent = nav.label;
+      if (navDistRef.current) {
+        const label = `${distance} m`;
+        if (navDistRef.current.textContent !== label) navDistRef.current.textContent = label;
+      }
+    };
+
+    const simulatePlayer = (stepMs) => {
+      const stepSeconds = stepMs / 1000;
+      const speed = Math.max(
+        MIN_PLAYER_SPEED_PPS,
+        BASE_PLAYER_SPEED_PPS * (1 + (player.speedBonus || 0) * 0.08),
+      ) * ((runRef.current || runToggleRef.current) ? 1.6 : 1);
+      let { x, y } = pos.current;
+
+      if (!crossingRef.current && Date.now() > graceUntilRef.current) {
+        const M = 22;
+        const trans = transitionsRef.current;
+        const northT = trans.find(t => t.direction === "north");
+        const southT = trans.find(t => t.direction === "south");
+        const eastT = trans.find(t => t.direction === "east");
+        const westT = trans.find(t => t.direction === "west");
+        const inCorridorX = (t) => t && x >= t.corridor.x && x <= t.corridor.x + t.corridor.w;
+        const inCorridorY = (t) => t && y >= t.corridor.y && y <= t.corridor.y + t.corridor.h;
+        const attemptCross = (direction, coord) => {
+          crossingRef.current = true;
+          graceUntilRef.current = Date.now() + 600;
+          const result = game.onTravelSector?.(direction, coord);
+          if (result?.ok === false) {
+            showFlavor(result.reason);
+            setTimeout(() => { crossingRef.current = false; }, 500);
           }
+        };
+        if (game.hasTravelNorth && dir.current.y < -0.25 && y <= M && inCorridorX(northT)) attemptCross("north", x);
+        else if (game.hasTravelSouth && dir.current.y > 0.25 && y >= world.H - M && inCorridorX(southT)) attemptCross("south", x);
+        else if (game.hasTravelEast && dir.current.x > 0.25 && x >= world.W - M && inCorridorY(eastT)) attemptCross("east", y);
+        else if (game.hasTravelWest && dir.current.x < -0.25 && x <= M && inCorridorY(westT)) attemptCross("west", y);
+      }
+
+      const dx = dir.current.x * speed * stepSeconds;
+      const dy = dir.current.y * speed * stepSeconds;
+      const nx = clamp(x + dx, 16, world.W - 16);
+      const ny = clamp(y + dy, 16, world.H - 16);
+      if (!hitSolid(nx, ny, world.solids)) { x = nx; y = ny; }
+      else if (!hitSolid(nx, y, world.solids)) x = nx;
+      else if (!hitSolid(x, ny, world.solids)) y = ny;
+      pos.current = { x, y };
+
+      const moving = Math.abs(dir.current.x) + Math.abs(dir.current.y) > 0.1;
+      if (moving) {
+        if (Math.abs(dir.current.x) > Math.abs(dir.current.y)) facingRef.current = dir.current.x < 0 ? "left" : "right";
+        else facingRef.current = dir.current.y < 0 ? "up" : "down";
+        stepRef.current += stepMs;
+        const frameDuration = (runRef.current || runToggleRef.current) ? 50 : 100;
+        while (stepRef.current >= frameDuration) {
+          stepRef.current -= frameDuration;
+          frameRef.current = (frameRef.current + 1) % 4;
         }
-        game.onShrineCheck?.(x, y);
-        const moving = Math.abs(dir.current.x) + Math.abs(dir.current.y) > 0.1;
-        if (moving) {
-          if (Math.abs(dir.current.x) > Math.abs(dir.current.y)) facingRef.current = dir.current.x < 0 ? "left" : "right";
-          else facingRef.current = dir.current.y < 0 ? "up" : "down";
-          stepRef.current += 1;
-          if (stepRef.current >= ((runRef.current || runToggleRef.current) ? 3 : 6)) {
-            stepRef.current = 0;
-            frameRef.current = (frameRef.current + 1) % 4;
-          }
+      } else {
+        stepRef.current = 0;
+        frameRef.current = 0;
+      }
+
+      if (moving) {
+        moveAccum.current += stepMs;
+        idleAccum.current = 0;
+      } else {
+        idleAccum.current += stepMs;
+        moveAccum.current = 0;
+      }
+      if (moveAccum.current >= 40000) moveAccum.current = 0;
+      if (idleAccum.current >= 50000) {
+        idleAccum.current = 0;
+        game.onIdleThreat?.();
+      }
+      eventTimer.current += stepMs;
+      if (eventTimer.current >= (1700 * FIXED_STEP_MS)) {
+        eventTimer.current = 0;
+        game.onThreatEvent?.();
+      }
+    };
+
+    const updateActors = (elapsedMs) => {
+      const frameScale = elapsedMs / FIXED_STEP_MS;
+      const { x, y } = pos.current;
+      const tier = tierOf(threatRef.current);
+      const beh = worldBehavior(tier.id);
+      const safe = world.safeCenter;
+      const safeR = world.safeRadius || 0;
+      const inSafe = (px, py) => safe && Math.hypot(px - safe.x, py - safe.y) < safeR;
+      const playerInSafe = inSafe(x, y);
+
+      enemies.current.forEach((e, i) => {
+        if (e.defeated) return;
+        const prevX = e.x;
+        const prevY = e.y;
+        const dist = Math.hypot(e.x - x, e.y - y);
+        if (beh.chase && dist < beh.detectRange && dist > 0 && !playerInSafe) {
+          const sp = 1.5 * (beh.chaseSpeed || 1) * frameScale;
+          const ang = Math.atan2(y - e.y, x - e.x);
+          e.angle = ang;
+          const ex = e.x + Math.cos(ang) * sp;
+          const ey = e.y + Math.sin(ang) * sp;
+          if (!inSafe(ex, ey) && !hitSolid(ex, ey, world.solids)) { e.x = ex; e.y = ey; }
         } else {
-          stepRef.current = 0;
-          frameRef.current = 0;
-        }
-        if (playerCanvasRef.current && (drawnRef.current.dir !== facingRef.current || drawnRef.current.frame !== frameRef.current)) {
-          drawPlayerFrameWithModularFallback({ surface: "world", legacyDraw: () => drawPlayerSprite(playerCanvasRef.current, player.class, facingRef.current, frameRef.current, 3, player.race) });
-          playerCanvasRef.current.dataset.atlasFacing = facingRef.current;
-          playerCanvasRef.current.dataset.atlasMoving = moving ? "true" : "false";
-          drawnRef.current = { dir: facingRef.current, frame: frameRef.current };
-        }
-        if (playerShadowRef.current) {
-          const planted = frameRef.current % 2 === 0;
-          playerShadowRef.current.style.transform = `translateX(-50%) scaleX(${moving ? (planted ? 1.12 : 0.91) : 1})`;
-          playerShadowRef.current.style.opacity = moving ? (planted ? "0.56" : "0.40") : "0.48";
-        }
-        const tier = tierOf(threatRef.current);
-        const beh = worldBehavior(tier.id);
-        if (moving) { moveAccum.current += 1; idleAccum.current = 0; } else { idleAccum.current += 1; moveAccum.current = 0; }
-        if (moveAccum.current >= 2400) { moveAccum.current = 0; }
-        if (idleAccum.current >= 3000) { idleAccum.current = 0; game.onIdleThreat?.(); }
-        eventTimer.current += 1;
-        if (eventTimer.current >= 1700) { eventTimer.current = 0; game.onThreatEvent?.(); }
-        if ((tier.id === "alta" || tier.id === "muy_alta") && strangerPos && !strangerUsed.current) { const ns = Math.hypot(strangerPos.x - x, strangerPos.y - y) < 44; if (ns !== lastNearStranger.current) { lastNearStranger.current = ns; setNearStranger(ns); } } else if (lastNearStranger.current) { lastNearStranger.current = false; setNearStranger(false); }
-        const vw = vpRef.current?.clientWidth || 800, vh = vpRef.current?.clientHeight || 600;
-        const vs = viewScaleRef.current;
-        const worldSW = world.W * vs, worldSH = world.H * vs;
-        let tx = x * vs - vw / 2; let ty = y * vs - vh / 2;
-        if (worldSW <= vw) tx = (worldSW - vw) / 2; else tx = Math.max(0, Math.min(worldSW - vw, tx));
-        if (worldSH <= vh) ty = (worldSH - vh) / 2; else ty = Math.max(0, Math.min(worldSH - vh, ty));
-        cam.current.x += (tx - cam.current.x) * 0.12; cam.current.y += (ty - cam.current.y) * 0.12;
-        if (worldRef.current) worldRef.current.style.transform = `translate(${-cam.current.x}px, ${-cam.current.y}px) scale(${vs})`;
-        if (playerRef.current) { playerRef.current.style.transform = `translate(${x - 18}px, ${y - 48}px)`; setWorldDepth(playerRef.current, y, 1); }
-        const safe = world.safeCenter; const safeR = world.safeRadius || 0;
-        const inSafe = (px, py) => safe && Math.hypot(px - safe.x, py - safe.y) < safeR;
-        const playerInSafe = inSafe(x, y);
-        enemies.current.forEach((e, i) => {
-          if (e.defeated) return;
-          const prevX = e.x;
-          const prevY = e.y;
-          const dist = Math.hypot(e.x - x, e.y - y);
-          if (beh.chase && dist < beh.detectRange && dist > 0 && !playerInSafe) {
-            const sp = 1.5 * (beh.chaseSpeed || 1);
-            const ang = Math.atan2(y - e.y, x - e.x);
-            e.angle = ang;
-            const ex = e.x + Math.cos(ang) * sp;
-            const ey = e.y + Math.sin(ang) * sp;
-            if (!inSafe(ex, ey) && !hitSolid(ex, ey, world.solids)) { e.x = ex; e.y = ey; }
-          } else {
-            e.timer -= 1;
-            if (e.timer <= 0) { e.angle = Math.random() * Math.PI * 2; e.timer = 60 + Math.random() * 120; }
-            const patrolSp = beh.patrolSpeed || 1;
-            const ex = e.x + Math.cos(e.angle) * (0.9 * patrolSp);
-            const ey = e.y + Math.sin(e.angle) * (0.9 * patrolSp);
-            if (ex < 20 || ex > world.W - 20 || ey < 20 || ey > world.H - 20 || hitSolid(ex, ey, world.solids) || inSafe(ex, ey)) e.angle = Math.random() * Math.PI * 2;
-            else { e.x = ex; e.y = ey; }
+          e.timer = (e.timer || 0) - frameScale;
+          if (e.timer <= 0) {
+            e.angle = Math.random() * Math.PI * 2;
+            e.timer = 60 + Math.random() * 120;
           }
-          const moveX = e.x - prevX;
-          const moveY = e.y - prevY;
-          const enemyMoving = Math.abs(moveX) + Math.abs(moveY) > 0.01;
-          if (enemyMoving) {
-            e.facing = Math.abs(moveX) > Math.abs(moveY)
-              ? (moveX < 0 ? "left" : "right")
-              : (moveY < 0 ? "up" : "down");
+          const patrolSp = (beh.patrolSpeed || 1) * frameScale;
+          const ex = e.x + Math.cos(e.angle) * (0.9 * patrolSp);
+          const ey = e.y + Math.sin(e.angle) * (0.9 * patrolSp);
+          if (ex < 20 || ex > world.W - 20 || ey < 20 || ey > world.H - 20 || hitSolid(ex, ey, world.solids) || inSafe(ex, ey)) e.angle = Math.random() * Math.PI * 2;
+          else { e.x = ex; e.y = ey; }
+        }
+
+        const moveX = e.x - prevX;
+        const moveY = e.y - prevY;
+        const enemyMoving = Math.abs(moveX) + Math.abs(moveY) > 0.01;
+        if (enemyMoving) {
+          e.facing = Math.abs(moveX) > Math.abs(moveY)
+            ? (moveX < 0 ? "left" : "right")
+            : (moveY < 0 ? "up" : "down");
+        }
+        const el = enemyEls.current[i];
+        if (el) {
+          const transform = `translate3d(${(e.x - 17).toFixed(2)}px, ${(e.y - 23).toFixed(2)}px, 0)`;
+          if (e._renderTransform !== transform) {
+            e._renderTransform = transform;
+            el.style.transform = transform;
           }
-          const el = enemyEls.current[i];
-          if (el) {
-            el.style.transform = `translate(${e.x - 17}px, ${e.y - 23}px)`;
+          if (e._renderMoving !== enemyMoving) {
+            e._renderMoving = enemyMoving;
             el.classList.toggle("atlas-moving-actor", enemyMoving);
-            const directional = el.querySelector('[data-atlas-directional-sprite="true"]');
-            if (directional && e.facing) directional.dataset.facing = e.facing;
-            setWorldDepth(el, e.y, 2);
           }
-          if (dist < 30 && !playerInSafe && Date.now() > graceUntilRef.current) {
-            e.defeated = true;
-            if (el) el.style.display = "none";
-            game.markEnemyDefeated?.(e.id);
-            game.onStartCombatThreat?.(e.monster);
-          }
-        });
-        if (regionalBossReady && !bossState.current.defeated && Math.hypot(bossState.current.x - x, bossState.current.y - y) < 36 && Date.now() > graceUntilRef.current) { bossState.current.defeated = true; if (bossEl.current) bossEl.current.style.display = "none"; game.onStartCombat(world.boss.monster); }
-        villagers.current.forEach((v, i) => {
-          v.timer -= 1;
-          if (v.timer <= 0) {
-            if (v.motionMode === "walk") {
-              v.motionMode = "rest";
-              v.timer = 90 + Math.floor(Math.random() * 240);
-            } else {
-              v.motionMode = "walk";
-              v.angle = Math.random() * Math.PI * 2;
-              v.timer = 55 + Math.floor(Math.random() * 150);
-            }
-          }
-          if (v.motionMode === "walk") {
-            const speed = v.walkSpeed || 0.34;
-            const vx = v.x + Math.cos(v.angle) * speed;
-            const vy = v.y + Math.sin(v.angle) * speed;
-            const outsideHome = Math.hypot(vx - v.home.x, vy - v.home.y) > (v.roamRadius || 55);
-            if (outsideHome || hitSolid(vx, vy, world.solids)) {
-              v.angle += Math.PI * (0.65 + Math.random() * 0.7);
-              v.motionMode = "rest";
-              v.timer = 40 + Math.floor(Math.random() * 110);
-            } else {
-              v.x = vx;
-              v.y = vy;
-              if (Math.abs(Math.cos(v.angle)) > 0.15) v.facing = Math.cos(v.angle) < 0 ? "left" : "right";
-            }
-          }
-          const el = villagerEls.current[i];
-          if (el) {
-            el.style.transform = `translate(${v.x - 15}px, ${v.y - 20}px)`;
-            el.classList.toggle("atlas-moving-actor", v.motionMode === "walk");
-            setWorldDepth(el, v.y, 1);
-          }
-          const body = villagerBodyEls.current[i];
-          if (body) {
-            body.classList.toggle("atlas-sprite-walk", v.motionMode === "walk");
-            body.classList.toggle("atlas-sprite-idle", v.motionMode !== "walk");
-            body.style.setProperty("--atlas-npc-mirror", v.facing === "left" ? "-1" : "1");
-          }
-        });
-        fauna.current.forEach((f, i) => { const el = faunaEls.current[i]; const d = Math.hypot(f.x - x, f.y - y); if (d > 300) return; f.timer -= 1; let ang, sp; if (d < 70) { ang = Math.atan2(f.y - y, f.x - x); sp = (f.speed || 1.2) * 1.7; } else { if (f.timer <= 0) { f.angle = Math.random() * Math.PI * 2; f.timer = 90 + Math.random() * 160; } ang = f.angle; sp = 0.4 * (f.speed || 1.2); } const fx = f.x + Math.cos(ang) * sp, fy = f.y + Math.sin(ang) * sp; if (fx > 14 && fx < world.W - 14 && fy > 14 && fy < world.H - 14 && !hitSolid(fx, fy, world.solids)) { f.x = fx; f.y = fy; f.angle = ang; } else f.angle = Math.random() * Math.PI * 2; if (el) { el.style.transform = `translate(${f.x - 10}px, ${f.y - 10}px)`; setWorldDepth(el, f.y); } });
-        // Prioridad: punto narrativo (objetivo de misión) > NPC > santuario > cofre
-        let nn = null, nc = null, nsp = null;
-        for (const sp of visibleStoryPointsRef.current) {
-          const r = sp.interactionRadius || 42;
-          if (Math.hypot(sp.x - x, sp.y - y) < r) { nsp = sp.id; break; }
+          const directional = enemyDirectionalEls.current[i];
+          if (directional && e.facing && directional.dataset.facing !== e.facing) directional.dataset.facing = e.facing;
+          setWorldDepth(el, e.y, 2);
         }
-        if (!nsp) for (const n of world.npcs) if (Math.hypot(n.x - x, n.y - y) < 52) { nn = n.id; break; }
-        let nsh = null;
-        if (!nsp && !nn && game.shrines) for (const s of game.shrines) {
+        if (dist < 30 && !playerInSafe && Date.now() > graceUntilRef.current) {
+          e.defeated = true;
+          if (el) el.style.display = "none";
+          game.markEnemyDefeated?.(e.id);
+          game.onStartCombatThreat?.(e.monster);
+        }
+      });
+
+      if (regionalBossReady && !bossState.current.defeated && Math.hypot(bossState.current.x - x, bossState.current.y - y) < 36 && Date.now() > graceUntilRef.current) {
+        bossState.current.defeated = true;
+        if (bossEl.current) bossEl.current.style.display = "none";
+        game.onStartCombat(world.boss.monster);
+      }
+
+      villagers.current.forEach((v, i) => {
+        v.timer = (v.timer || 0) - frameScale;
+        if (v.timer <= 0) {
+          if (v.motionMode === "walk") {
+            v.motionMode = "rest";
+            v.timer = 90 + Math.floor(Math.random() * 240);
+          } else {
+            v.motionMode = "walk";
+            v.angle = Math.random() * Math.PI * 2;
+            v.timer = 55 + Math.floor(Math.random() * 150);
+          }
+        }
+        if (v.motionMode === "walk") {
+          const speed = (v.walkSpeed || 0.34) * frameScale;
+          const vx = v.x + Math.cos(v.angle) * speed;
+          const vy = v.y + Math.sin(v.angle) * speed;
+          const outsideHome = Math.hypot(vx - v.home.x, vy - v.home.y) > (v.roamRadius || 55);
+          if (outsideHome || hitSolid(vx, vy, world.solids)) {
+            v.angle += Math.PI * (0.65 + Math.random() * 0.7);
+            v.motionMode = "rest";
+            v.timer = 40 + Math.floor(Math.random() * 110);
+          } else {
+            v.x = vx;
+            v.y = vy;
+            if (Math.abs(Math.cos(v.angle)) > 0.15) v.facing = Math.cos(v.angle) < 0 ? "left" : "right";
+          }
+        }
+        const el = villagerEls.current[i];
+        if (el) {
+          const transform = `translate3d(${(v.x - 15).toFixed(2)}px, ${(v.y - 20).toFixed(2)}px, 0)`;
+          if (v._renderTransform !== transform) {
+            v._renderTransform = transform;
+            el.style.transform = transform;
+          }
+          const isWalking = v.motionMode === "walk";
+          if (v._renderMovingClass !== isWalking) {
+            v._renderMovingClass = isWalking;
+            el.classList.toggle("atlas-moving-actor", v.motionMode === "walk");
+          }
+          setWorldDepth(el, v.y, 1);
+        }
+        const body = villagerBodyEls.current[i];
+        if (body) {
+          const isWalking = v.motionMode === "walk";
+          if (v._renderWalking !== isWalking) {
+            v._renderWalking = isWalking;
+            body.classList.toggle("atlas-sprite-walk", isWalking);
+            body.classList.toggle("atlas-sprite-idle", !isWalking);
+          }
+          const mirror = v.facing === "left" ? "-1" : "1";
+          if (v._renderMirror !== mirror) {
+            v._renderMirror = mirror;
+            body.style.setProperty("--atlas-npc-mirror", mirror);
+          }
+        }
+      });
+
+      fauna.current.forEach((f, i) => {
+        const el = faunaEls.current[i];
+        const d = Math.hypot(f.x - x, f.y - y);
+        if (d > 300) return;
+        f.timer = (f.timer || 0) - frameScale;
+        let ang;
+        let sp;
+        if (d < 70) {
+          ang = Math.atan2(f.y - y, f.x - x);
+          sp = (f.speed || 1.2) * 1.7 * frameScale;
+        } else {
+          if (f.timer <= 0) {
+            f.angle = Math.random() * Math.PI * 2;
+            f.timer = 90 + Math.random() * 160;
+          }
+          ang = f.angle;
+          sp = 0.4 * (f.speed || 1.2) * frameScale;
+        }
+        const fx = f.x + Math.cos(ang) * sp;
+        const fy = f.y + Math.sin(ang) * sp;
+        if (fx > 14 && fx < world.W - 14 && fy > 14 && fy < world.H - 14 && !hitSolid(fx, fy, world.solids)) {
+          f.x = fx;
+          f.y = fy;
+          f.angle = ang;
+        } else {
+          f.angle = Math.random() * Math.PI * 2;
+        }
+        if (el) {
+          const transform = `translate3d(${(f.x - 10).toFixed(2)}px, ${(f.y - 10).toFixed(2)}px, 0)`;
+          if (f._renderTransform !== transform) {
+            f._renderTransform = transform;
+            el.style.transform = transform;
+          }
+          setWorldDepth(el, f.y);
+        }
+      });
+    };
+
+    const updateProximity = (elapsedMs) => {
+      const { x, y } = pos.current;
+      game.onShrineCheck?.(x, y);
+
+      const tier = tierOf(threatRef.current);
+      if ((tier.id === "alta" || tier.id === "muy_alta") && strangerPos && !strangerUsed.current) {
+        const ns = Math.hypot(strangerPos.x - x, strangerPos.y - y) < 44;
+        if (ns !== lastNearStranger.current) { lastNearStranger.current = ns; setNearStranger(ns); }
+      } else if (lastNearStranger.current) {
+        lastNearStranger.current = false;
+        setNearStranger(false);
+      }
+
+      let nn = null;
+      let nc = null;
+      let nsp = null;
+      for (const sp of visibleStoryPointsRef.current) {
+        const r = sp.interactionRadius || 42;
+        if (Math.hypot(sp.x - x, sp.y - y) < r) { nsp = sp.id; break; }
+      }
+      if (!nsp) {
+        for (const n of world.npcs) {
+          if (Math.hypot(n.x - x, n.y - y) < 52) { nn = n.id; break; }
+        }
+      }
+      let nsh = null;
+      if (!nsp && !nn && game.shrines) {
+        for (const s of game.shrines) {
           if (!s.revealed) continue;
           if (s.isSanctuary) {
-            // El botón A solo se habilita cuando los pies están realmente
-            // sobre la plataforma central del portal, no desde los lados.
             if (isOnSanctuaryPlatform(s, x, y)) { nsh = s.id; break; }
           } else if (!s.activated && Math.hypot(s.x - x, s.y - y) < 46) {
-            nsh = s.id; break;
+            nsh = s.id;
+            break;
           }
         }
-        if (!nsp && !nn && !nsh) for (const c of world.chests) if (!game.openedChests?.has(c.id) && Math.hypot(c.x - x, c.y - y) < 52) { nc = c.id; break; }
-        if (nn !== lastNear.current.npc) { lastNear.current.npc = nn; setNearNpc(nn); }
-        if (nc !== lastNear.current.chest) { lastNear.current.chest = nc; setNearChest(nc); }
-        if (nsp !== lastNear.current.storyPoint) { lastNear.current.storyPoint = nsp; setNearStoryPoint(nsp); }
-        if (nsh !== lastNearShrine.current) { lastNearShrine.current = nsh; setNearShrine(nsh); }
-        if (expEventRef.current) { const ne = Math.hypot(expEventRef.current.x - x, expEventRef.current.y - y) < 50; if (ne !== lastNearEvent.current) { lastNearEvent.current = ne; setNearEvent(ne); } } else if (lastNearEvent.current) { lastNearEvent.current = false; setNearEvent(false); }
-        if (portalCooldown.current > 0) portalCooldown.current--;
-        if (portalCooldown.current === 0 && Date.now() > graceUntilRef.current && world.portals) { for (const p of world.portals) { if (!p.to.nextRegion) continue; if (Math.hypot(p.x - x, p.y - y) < 30) { portalCooldown.current = 60; if (game.canTravelNextRegion && regionIndex < 2) game.pushLog?.(`✦ El portal a la siguiente región resuena. Usa un Portal de Invocación para viajar a la nueva región.`); break; } } }
-        if (dungeonCdRef.current > 0) dungeonCdRef.current--;
-        const dung = getDungeonForSector(region.id, game.currentSectorId);
-        const ent = getValidDungeonEntrance(dung, world);
-        const nearCamp = recruitCampPos && Math.hypot(recruitCampPos.x - x, recruitCampPos.y - y) < 52;
-        if (nearCamp !== lastNearRecruits.current) { lastNearRecruits.current = nearCamp; setNearRecruits(nearCamp); }
-        // Entrada controlada: NO entrar automáticamente. Detectar proximidad al guardián.
-        if (ent) {
-          const nd = Math.hypot(ent.x - x, ent.y - y) < 46 ? dung?.id : null;
-          if (nd !== lastNearDungeon.current) { lastNearDungeon.current = nd; setNearDungeon(nd); }
-        } else if (lastNearDungeon.current) { lastNearDungeon.current = null; setNearDungeon(null); }
       }
-      raf = requestAnimationFrame(loop);
+      if (!nsp && !nn && !nsh) {
+        for (const chest of world.chests) {
+          if (!game.openedChests?.has(chest.id) && Math.hypot(chest.x - x, chest.y - y) < 52) { nc = chest.id; break; }
+        }
+      }
+      if (nn !== lastNear.current.npc) { lastNear.current.npc = nn; setNearNpc(nn); }
+      if (nc !== lastNear.current.chest) { lastNear.current.chest = nc; setNearChest(nc); }
+      if (nsp !== lastNear.current.storyPoint) { lastNear.current.storyPoint = nsp; setNearStoryPoint(nsp); }
+      if (nsh !== lastNearShrine.current) { lastNearShrine.current = nsh; setNearShrine(nsh); }
+
+      if (expEventRef.current) {
+        const ne = Math.hypot(expEventRef.current.x - x, expEventRef.current.y - y) < 50;
+        if (ne !== lastNearEvent.current) { lastNearEvent.current = ne; setNearEvent(ne); }
+      } else if (lastNearEvent.current) {
+        lastNearEvent.current = false;
+        setNearEvent(false);
+      }
+
+      portalCooldown.current = Math.max(0, portalCooldown.current - elapsedMs);
+      if (portalCooldown.current === 0 && Date.now() > graceUntilRef.current && world.portals) {
+        for (const portal of world.portals) {
+          if (!portal.to.nextRegion) continue;
+          if (Math.hypot(portal.x - x, portal.y - y) < 30) {
+            portalCooldown.current = 1000;
+            if (game.canTravelNextRegion && regionIndex < 2) game.pushLog?.(`✦ El portal a la siguiente región resuena. Usa un Portal de Invocación para viajar a la nueva región.`);
+            break;
+          }
+        }
+      }
+
+      dungeonCdRef.current = Math.max(0, dungeonCdRef.current - elapsedMs);
+      const nearCamp = recruitCampPos && Math.hypot(recruitCampPos.x - x, recruitCampPos.y - y) < 52;
+      if (nearCamp !== lastNearRecruits.current) { lastNearRecruits.current = nearCamp; setNearRecruits(nearCamp); }
+      const entrance = getValidDungeonEntrance(dungeonHere, world);
+      if (entrance) {
+        const nd = Math.hypot(entrance.x - x, entrance.y - y) < 46 ? dungeonHere?.id : null;
+        if (nd !== lastNearDungeon.current) { lastNearDungeon.current = nd; setNearDungeon(nd); }
+      } else if (lastNearDungeon.current) {
+        lastNearDungeon.current = null;
+        setNearDungeon(null);
+      }
     };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [inCombat, paused, world, bossDefeated, regionalBossReady, regionIndex, game.openedChests, game.defeatedEnemyIds, game.defeatedBosses, game.shrines]);
+
+    const renderFrame = (elapsedMs) => {
+      const { x, y } = pos.current;
+      const moving = Math.abs(dir.current.x) + Math.abs(dir.current.y) > 0.1;
+      if (playerCanvasRef.current && (drawnRef.current.dir !== facingRef.current || drawnRef.current.frame !== frameRef.current)) {
+        drawPlayerFrameWithModularFallback({ surface: "world", legacyDraw: () => drawPlayerSprite(playerCanvasRef.current, player.class, facingRef.current, frameRef.current, 3, player.race) });
+        playerCanvasRef.current.dataset.atlasFacing = facingRef.current;
+        playerCanvasRef.current.dataset.atlasMoving = moving ? "true" : "false";
+        drawnRef.current = { dir: facingRef.current, frame: frameRef.current };
+      }
+      if (playerShadowRef.current) {
+        const planted = frameRef.current % 2 === 0;
+        const transform = `translateX(-50%) scaleX(${moving ? (planted ? 1.12 : 0.91) : 1})`;
+        const opacity = moving ? (planted ? "0.56" : "0.40") : "0.48";
+        if (playerShadowRef.current.style.transform !== transform) playerShadowRef.current.style.transform = transform;
+        if (playerShadowRef.current.style.opacity !== opacity) playerShadowRef.current.style.opacity = opacity;
+      }
+
+      const vw = vpRef.current?.clientWidth || 800;
+      const vh = vpRef.current?.clientHeight || 600;
+      const vs = viewScaleRef.current;
+      const worldSW = world.W * vs;
+      const worldSH = world.H * vs;
+      let tx = x * vs - vw / 2;
+      let ty = y * vs - vh / 2;
+      if (worldSW <= vw) tx = (worldSW - vw) / 2;
+      else tx = Math.max(0, Math.min(worldSW - vw, tx));
+      if (worldSH <= vh) ty = (worldSH - vh) / 2;
+      else ty = Math.max(0, Math.min(worldSH - vh, ty));
+      const cameraFactor = frameRateIndependentLerp(0.12, elapsedMs);
+      cam.current.x += (tx - cam.current.x) * cameraFactor;
+      cam.current.y += (ty - cam.current.y) * cameraFactor;
+
+      if (worldRef.current) {
+        const transform = `translate3d(${-cam.current.x.toFixed(2)}px, ${-cam.current.y.toFixed(2)}px, 0) scale(${vs})`;
+        if (worldRef.current.style.transform !== transform) worldRef.current.style.transform = transform;
+      }
+      if (playerRef.current) {
+        const transform = `translate3d(${(x - 18).toFixed(2)}px, ${(y - 48).toFixed(2)}px, 0)`;
+        if (playerRef.current.style.transform !== transform) playerRef.current.style.transform = transform;
+        setWorldDepth(playerRef.current, y, 1);
+      }
+    };
+
+    const scheduleNextFrame = () => {
+      if (running && !document.hidden) raf = requestAnimationFrame(loop);
+    };
+
+    const loop = (now) => {
+      if (!running || document.hidden) return;
+      const elapsedMs = Math.min(MAX_FRAME_MS, Math.max(0, now - lastFrameAt));
+      lastFrameAt = now;
+      simulationAccumulator += elapsedMs;
+      aiAccumulator += elapsedMs;
+      proximityAccumulator += elapsedMs;
+      navigationAccumulator += elapsedMs;
+
+      let simulationSteps = 0;
+      while (simulationAccumulator >= FIXED_STEP_MS && simulationSteps < MAX_SIMULATION_STEPS) {
+        simulatePlayer(FIXED_STEP_MS);
+        simulationAccumulator -= FIXED_STEP_MS;
+        simulationSteps += 1;
+      }
+      if (simulationSteps === MAX_SIMULATION_STEPS && simulationAccumulator >= FIXED_STEP_MS) simulationAccumulator = 0;
+
+      while (aiAccumulator >= AI_STEP_MS) {
+        updateActors(AI_STEP_MS);
+        aiAccumulator -= AI_STEP_MS;
+      }
+      while (proximityAccumulator >= PROXIMITY_STEP_MS) {
+        updateProximity(PROXIMITY_STEP_MS);
+        proximityAccumulator -= PROXIMITY_STEP_MS;
+      }
+      if (navigationAccumulator >= NAVIGATION_STEP_MS) {
+        navigationAccumulator %= NAVIGATION_STEP_MS;
+        updateNavigation();
+      }
+
+      renderFrame(elapsedMs);
+      scheduleNextFrame();
+    };
+
+    const onVisibilityChange = () => {
+      cancelAnimationFrame(raf);
+      lastFrameAt = performance.now();
+      simulationAccumulator = 0;
+      aiAccumulator = 0;
+      proximityAccumulator = 0;
+      navigationAccumulator = 0;
+      if (!document.hidden) scheduleNextFrame();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    updateNavigation();
+    updateProximity(PROXIMITY_STEP_MS);
+    renderFrame(FIXED_STEP_MS);
+    scheduleNextFrame();
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [inCombat, paused, world, bossDefeated, regionalBossReady, regionIndex, game.openedChests, game.defeatedEnemyIds, game.defeatedBosses, game.shrines, dungeonHere, recruitCampPos]);
 
   const onA = () => {
     if (inCombat) return;
@@ -678,7 +928,7 @@ export default function ExploreMode({ game }) {
   return (
     <div className={`atlas-ui-v3 atlas-explore-root min-h-screen relative flex flex-col ${horizontal ? "atlas-explore-horizontal" : "atlas-explore-vertical"} ${wantsHorizontal ? "atlas-prefers-horizontal" : ""} ${leftHanded ? "atlas-left-handed" : "atlas-right-handed"}`} style={{ background: "#0a0a0a" }}>
       <div ref={vpRef} className={`atlas-explore-viewport relative w-full overflow-hidden ${visualScene ? "atlas-green-stable-viewport" : ""}`} style={{ height: separated ? "calc(100dvh - 92px)" : "100dvh" }}>
-        <div ref={worldRef} className="absolute top-0 left-0" style={{ width: world.W, height: world.H, transformOrigin: "0 0" }}>
+        <div ref={worldRef} className="absolute top-0 left-0" style={{ width: world.W, height: world.H, transformOrigin: "0 0", willChange: "transform" }}>
           {(!hudClean || settings.debugTargets) && (world.spawnZones || []).map((z, i) => (<div key={i} className="absolute pointer-events-none flex items-center justify-center" style={{ left: z.x - 40, top: z.y - 40, width: 80, height: 80 }}><div className="absolute rounded-full border-2 border-emerald-300/50 animate-pulse" style={{ width: 72, height: 72 }} /><div className="absolute rounded-full border border-emerald-300/30" style={{ width: 48, height: 48 }} /><div className="absolute text-emerald-200/70 text-[9px] font-heading whitespace-nowrap">Invocación</div></div>))}
           {visualScene ? (
             <AssetWorldLayer scene={visualScene} phase="all" debugCollisions={!!settings.debugTargets} />
@@ -709,8 +959,8 @@ export default function ExploreMode({ game }) {
           {!visualScene && decorEls}
           {world.chests.map(c => { const opened = game.openedChests?.has(c.id); const glow = c.type === "legendary" ? "drop-shadow(0 0 10px rgba(251,191,36,0.9))" : c.type === "ancient" ? "drop-shadow(0 0 8px rgba(167,139,250,0.75))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.6))"; return (<span key={c.id} className="absolute flex flex-col items-center" style={{ left: c.x - 22, top: c.y - 22, zIndex: getWorldDepth(c.y, 1) }}><div className="atlas-shadow" /><PixelSprite grid={getChestPixel(opened ? "open" : "closed")} palette={CHEST_PALETTE} scale={3} className={opened ? "atlas-toast-in" : ""} style={{ filter: glow }} />{!opened && c.type !== "common" && (!hudClean || nearChest === c.id) && <span className={`mt-0.5 rounded px-1.5 py-0.5 text-[8px] font-heading ${c.type === "legendary" ? "bg-amber-900/85 text-amber-200" : "bg-violet-950/85 text-violet-200"}`}>{c.type === "legendary" ? "3d20" : "ANTIGUO"}</span>}</span>); })}
           {world.npcs.map(n => { const near = nearNpc === n.id; const isMission = missionNpcIds.has(n.id); const isTarget = missionNavTarget?.targetId === n.id; return (<div key={n.id} className="absolute flex flex-col items-center atlas-world-entity" style={{ left: n.x - 22, top: n.y - 42, zIndex: isTarget ? 9998 : getWorldDepth(n.y, 1) }}><div className="relative"><div className="atlas-shadow" />{isTarget && !inCombat && (<><span className="absolute -inset-2 rounded-full border-2 border-amber-300 animate-pulse z-0" style={{ boxShadow: "0 0 16px 6px rgba(251,191,36,0.45)" }} /><span className="absolute -top-7 left-1/2 -translate-x-1/2 z-20 rounded-full bg-amber-300 text-slate-950 p-1 shadow-lg"><Navigation className="w-3 h-3" /></span></>)}{npcReadyIds.has(n.id) && !inCombat && !isTarget && (<span className="absolute -top-3 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-amber-400 flex items-center justify-center z-10 text-[8px] text-slate-950 font-bold" style={{ boxShadow: "0 0 8px 3px rgba(251,191,36,0.7)" }}><Star className="w-2 h-2" /></span>)}{!npcReadyIds.has(n.id) && isMission && !inCombat && !isTarget && (<span className="absolute -top-3 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-amber-300 animate-pulse z-10" style={{ boxShadow: "0 0 8px 3px rgba(251,191,36,0.7)" }} />)}{!npcReadyIds.has(n.id) && !isMission && (n.role === "smith" || n.role === "merchant" || n.role === "inn") && !inCombat && !isTarget && (!hudClean || near) && (<span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900/85 border border-slate-500 p-0.5 z-10 flex items-center justify-center"><GIcon name={n.role === "smith" ? "hammer" : n.role === "merchant" ? "package" : "moon"} size={9} /></span>)}<span className="atlas-sprite-idle block relative z-10" style={npcIdleAnimationStyle(n.id)}><EntitySprite type={n.sprite.type} variant={n.sprite.variant} turn animationKey={n.id} size={42} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" /></span></div><div className="flex items-center gap-1 mt-0.5 transition-opacity duration-200 pointer-events-none whitespace-nowrap" style={{ opacity: (near || isTarget) && !inCombat ? 1 : 0 }}><span className={`text-[9px] px-1.5 py-0.5 rounded leading-none ${isTarget ? "bg-amber-300 text-slate-950 font-bold" : "text-white bg-slate-900/75"}`}>{n.name}</span>{isMission && !isTarget && (<span className="text-[9px] text-slate-900 bg-amber-300 rounded px-1 py-0.5 font-bold leading-none shadow">!</span>)}</div></div>); })}
-          {(world.villagers || []).map((v, i) => (<span key={v.id} ref={el => villagerEls.current[i] = el} className="absolute atlas-world-entity" style={{ left: 0, top: 0, transform: `translate(${v.x - 15}px, ${v.y - 20}px)`, zIndex: getWorldDepth(v.y, 1), willChange: "transform" }}><div className="flex flex-col items-center"><div className="atlas-shadow" /><span ref={el => villagerBodyEls.current[i] = el} className="atlas-npc-independent atlas-sprite-idle" style={npcIdleAnimationStyle(v.id)}><EntitySprite type="villager" variant={v.icon === "shield" ? "guard" : "civilian"} dir="right" size={30} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" /></span></div></span>))}
-          {faunaMeta.slice(0, faunaCount).map((m, i) => { const f = fauna.current[i] || { x: 0, y: 0 }; return (<span key={m.id} ref={el => faunaEls.current[i] = el} className="absolute atlas-sprite-idle atlas-world-entity" style={{ left: 0, top: 0, transform: `translate(${f.x - 10}px, ${f.y - 10}px)`, zIndex: getWorldDepth(f.y), fontSize: 18, lineHeight: 1, willChange: "transform", filter: "drop-shadow(1px 2px 2px rgba(0,0,0,0.5))", pointerEvents: "none" }}>{m.emoji}</span>); })}
+          {(world.villagers || []).map((v, i) => (<span key={v.id} ref={el => villagerEls.current[i] = el} className="absolute atlas-world-entity atlas-simulated-actor" style={{ left: 0, top: 0, transform: `translate3d(${v.x - 15}px, ${v.y - 20}px, 0)`, zIndex: getWorldDepth(v.y, 1), willChange: "transform" }}><div className="flex flex-col items-center"><div className="atlas-shadow" /><span ref={el => villagerBodyEls.current[i] = el} className="atlas-npc-independent atlas-sprite-idle" style={npcIdleAnimationStyle(v.id)}><EntitySprite type="villager" variant={v.icon === "shield" ? "guard" : "civilian"} dir="right" size={30} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" /></span></div></span>))}
+          {faunaMeta.slice(0, faunaCount).map((m, i) => { const f = fauna.current[i] || { x: 0, y: 0 }; return (<span key={m.id} ref={el => faunaEls.current[i] = el} className="absolute atlas-sprite-idle atlas-world-entity atlas-simulated-actor" style={{ left: 0, top: 0, transform: `translate3d(${f.x - 10}px, ${f.y - 10}px, 0)`, zIndex: getWorldDepth(f.y), fontSize: 18, lineHeight: 1, willChange: "transform", filter: "drop-shadow(1px 2px 2px rgba(0,0,0,0.5))", pointerEvents: "none" }}>{m.emoji}</span>); })}
           {(world.smoke || []).map((s, i) => (<div key={i} className="absolute pointer-events-none" style={{ left: s.x, top: s.y, zIndex: getWorldDepth(s.y, 12) }}><div className="absolute w-2.5 h-2.5 rounded-full bg-slate-100/25 atlas-smoke" /><div className="absolute w-2.5 h-2.5 rounded-full bg-slate-100/20 atlas-smoke" style={{ animationDelay: "1.2s" }} /><div className="absolute w-2.5 h-2.5 rounded-full bg-slate-100/20 atlas-smoke" style={{ animationDelay: "2.4s" }} /></div>))}
           {(world.signposts || []).map((s, i) => <Signpost key={`sg${i}`} s={s} />)}
           {(world.ambientNpcs || []).map(n => <AmbientNpc key={n.id} npc={n} compact={hudClean} onTalk={(npc) => showFlavor(npc.lines[0])} />)}
@@ -721,7 +971,7 @@ export default function ExploreMode({ game }) {
           {strangerVisible && strangerPos && (<div className="absolute flex flex-col items-center atlas-world-entity" style={{ left: strangerPos.x - 22, top: strangerPos.y - 36, zIndex: getWorldDepth(strangerPos.y, 1) }}><div className="relative"><div className="atlas-shadow" /><span className="atlas-sprite-idle block"><EntitySprite type="stranger" turn animationKey={`stranger_${region.id}_${game.currentSectorId}`} size={44} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" /></span>{nearStranger && !inCombat && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] text-slate-900 bg-fuchsia-300 rounded-full px-1.5 py-0.5 font-bold animate-bounce shadow">?</span>}</div>{(!hudClean || nearStranger) && <span className="text-[9px] text-fuchsia-200 bg-slate-900/70 px-1.5 py-0.5 rounded mt-0.5 whitespace-nowrap">Desconocido</span>}</div>)}
           {(game.shrines || []).filter(s => s.revealed).map(s => (<ShrineMarker key={s.id} shrine={s} near={nearShrine === s.id} compact={hudClean} />))}
           {world.boss && !bossState.current.defeated && (<div ref={bossEl} className="absolute flex flex-col items-center atlas-world-entity" style={{ left: world.boss.x - 28, top: world.boss.y - 42, zIndex: missionNavTarget?.targetId === world.boss.monster.id ? 9998 : getWorldDepth(world.boss.y, 2) }}><div className="relative"><div className="atlas-shadow" />{missionNavTarget?.targetId === world.boss.monster.id && <span className="absolute -inset-3 rounded-full border-2 border-amber-300 animate-pulse" style={{ boxShadow: "0 0 20px 8px rgba(251,191,36,.45)" }} />}<span className="atlas-sprite-idle block relative z-10"><EntitySprite type="boss" variant={world.boss.monster.id} turn animationKey={world.boss.monster.id} size={56} className="drop-shadow-[0_3px_6px_rgba(0,0,0,0.6)]" /></span></div><span className="text-[9px] text-red-300 bg-red-950/70 px-1.5 py-0.5 rounded mt-0.5">JEFE</span></div>)}
-          {enemyList.map((e, i) => { if (e.defeated) return null; const isTarget = missionNavTarget?.targetId === e.id; return (<span key={e.id} ref={el => enemyEls.current[i] = el} className="absolute atlas-world-entity" style={{ left: 0, top: 0, zIndex: isTarget ? 9998 : getWorldDepth(e.y, 2), willChange: "transform" }}><div className="relative flex flex-col items-center">{isTarget && <span className="absolute -inset-2 rounded-full border-2 border-amber-300 animate-pulse" style={{ boxShadow: "0 0 14px 5px rgba(251,191,36,.4)" }} />}<div className="atlas-shadow" /><span className="relative z-10"><EntitySprite type="monster" variant={e.monster.id} moving size={34} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" /></span></div></span>); })}
+          {enemyList.map((e, i) => { if (e.defeated) return null; const isTarget = missionNavTarget?.targetId === e.id; return (<span key={e.id} ref={el => { enemyEls.current[i] = el; enemyDirectionalEls.current[i] = el?.querySelector('[data-atlas-directional-sprite="true"]') || null; }} className="absolute atlas-world-entity atlas-simulated-actor" style={{ left: 0, top: 0, transform: `translate3d(${e.x - 17}px, ${e.y - 23}px, 0)`, zIndex: isTarget ? 9998 : getWorldDepth(e.y, 2), willChange: "transform" }}><div className="relative flex flex-col items-center">{isTarget && <span className="absolute -inset-2 rounded-full border-2 border-amber-300 animate-pulse" style={{ boxShadow: "0 0 14px 5px rgba(251,191,36,.4)" }} />}<div className="atlas-shadow" /><span className="relative z-10"><EntitySprite type="monster" variant={e.monster.id} moving size={34} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" /></span></div></span>); })}
           {world.portals && world.portals.filter(p => p.to.nextRegion).map((p, i) => { if (!(game.canTravelNextRegion && regionIndex < 2)) return null; return (<div key={i} className="absolute flex flex-col items-center animate-pulse" style={{ left: p.x - 20, top: p.y - 24, zIndex: getWorldDepth(p.y, 2) }}><GIcon name="globe" size={36} />{!hudClean && <span className="text-[8px] text-fuchsia-300 whitespace-nowrap">Siguiente región</span>}</div>); })}
           {(() => { const d = getDungeonForSector(region.id, game.currentSectorId); if (!d) return null; const e = getValidDungeonEntrance(d, world); const guardian = getDungeonEntranceNpc(d); return (<div className="absolute flex flex-col items-center atlas-world-entity" style={{ left: e.x - 20, top: e.y - 42, zIndex: getWorldDepth(e.y, 1) }}><div className="relative"><div className="atlas-shadow" />{nearDungeon && !inCombat && <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-amber-300 animate-pulse z-10" style={{ boxShadow: "0 0 8px 3px rgba(251,191,36,0.7)" }} />}<span className="atlas-sprite-idle block relative z-10">{guardian && <EntitySprite type={guardian.sprite.type} variant={guardian.sprite.variant} turn animationKey={guardian.id || guardian.name} size={40} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />}</span></div>{(!hudClean || nearDungeon) && <span className={`text-[8px] mt-0.5 px-1.5 py-0.5 rounded whitespace-nowrap ${nearDungeon ? "bg-amber-300 text-slate-900 font-bold" : "bg-slate-900/70 text-amber-200"}`}>{guardian?.name || "Guardián"}</span>}</div>); })()}
           {recruitCampPos && (<div className="absolute flex flex-col items-center atlas-world-entity" style={{ left: recruitCampPos.x - 26, top: recruitCampPos.y - 30, zIndex: getWorldDepth(recruitCampPos.y, 1) }}><div className="flex items-end gap-0.5"><div className="w-7 h-7 rounded-sm bg-amber-700 border-2 border-amber-300 flex items-center justify-center" style={{ boxShadow: "0 0 10px 3px rgba(217,119,6,0.4)" }}><span className="text-amber-100 text-sm">⛺</span></div></div><div className="flex gap-0.5 mt-0.5">{recruitsList.slice(0, 3).map((r, i) => (<span key={r.id} className="w-2 h-2 rounded-full" style={{ background: i === 0 ? "#f87171" : i === 1 ? "#38bdf8" : "#a78bfa" }} />))}</div>{(!hudClean || nearRecruits) && <span className={`text-[8px] mt-0.5 px-1.5 py-0.5 rounded whitespace-nowrap ${nearRecruits ? "bg-amber-300 text-slate-900 font-bold" : "bg-slate-900/70 text-amber-200"}`}>Aventureros</span>}</div>)}
@@ -777,7 +1027,8 @@ export default function ExploreMode({ game }) {
             onSwitchBoard={() => game.onSwitchMode("board")}
             onOpenSheet={game.onOpenSheet}
             onOpenSettings={game.onOpenSettings}
-            onAbandon={game.onReset}
+            onCustomizeHud={() => setShowHudEditor(true)}
+            onReturnMainMenu={game.onReturnMainMenu}
           />
         )}
         {strangerDialog && !inCombat && (<div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4"><div className="rounded-2xl bg-slate-900 border border-fuchsia-800 p-6 max-w-sm w-full text-center"><div className="flex justify-center mb-3"><GIcon name="user" size={40} style={{ color: "#e9d5ff" }} /></div><p className="text-sm text-fuchsia-100 italic mb-4">«He estado siguiéndote. Atlas conoce tu nombre. Ven conmigo.»</p><div className="flex gap-2"><button onClick={() => { game.onStrangerMeet?.(); strangerUsed.current = true; setStrangerDialog(false); setNearStranger(false); }} className="flex-1 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 py-2.5 text-sm font-medium text-white">Aceptar</button><button onClick={() => setStrangerDialog(false)} className="flex-1 rounded-xl bg-slate-700 hover:bg-slate-600 py-2.5 text-sm text-slate-200">Ignorar</button></div></div></div>)}
@@ -798,6 +1049,7 @@ export default function ExploreMode({ game }) {
         />
       )}
       {showHub && (<PlayerHub player={player} region={region} missions={game.missions} missionDefs={game.missionDefs} settings={game.settings} onUpdateSettings={game.onUpdateSettings} onUseConsumable={game.onUseConsumable} onEquipWeapon={game.onEquipWeapon} onEquipArmor={game.onEquipArmor} onEquipHelmet={game.onEquipHelmet} onEquipAccessory={game.onEquipAccessory} onSellWeapon={game.onSellWeapon} onSellArmor={game.onSellArmor} onSellHelmet={game.onSellHelmet} onSellAccessory={game.onSellAccessory} onSellMaterial={game.onSellMaterial} onEquipClassWeapon={game.onEquipClassWeapon} onSellClassWeapon={game.onSellClassWeapon} onClose={() => setShowHub(false)} />)}
+      {showHudEditor && (<AtlasControlEditor settings={settings} onChange={game.onUpdateSettings} onClose={() => setShowHudEditor(false)} />)}
       {showExploreMap && (<ExplorationMap discovered={game.discoveredBlocks || new Set()} currentRegion={game.regionIndex} currentBlock={game.blockIndex} defeatedBosses={game.defeatedBosses} game={game} exploreBlocks={game.exploreBlocks} playerPos={pos.current} playerDir={facingRef.current} lastShrine={game.lastShrine} onClose={() => setShowExploreMap(false)} />)}
       {showSectorMap && (<SectorMapModal region={region} regionIndex={regionIndex} col={game.blockIndex} row={game.sectorRow} visitedSectors={game.visitedSectors} unlockedSectors={game.unlockedSectors} bossDefeated={bossDefeated} onClose={() => setShowSectorMap(false)} />)}
       {showJournal && (<MissionJournal missions={game.missions} missionDefs={game.missionDefs} region={region} priorityMissionId={game.priorityMissionId} onSetActive={game.setMissionActive} onSetPriority={game.setPriorityMission} onClose={() => setShowJournal(false)} />)}

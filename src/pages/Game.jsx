@@ -191,6 +191,15 @@ export default function Game() {
   const s = mode === "board" ? board : libre;
   if (!s.player) return <CharacterSelect onSelect={(c) => { activatePreferredOrientation(); s.start(c, pendingNewSlot); setPendingNewSlot(null); }} />;
 
+  const returnToMainMenu = () => {
+    // reset() persiste la sesión activa antes de limpiar el jugador.
+    s.reset();
+    setMode(null);
+    setPendingNewSlot(null);
+    setMenuView(null);
+    refreshSlots();
+  };
+
   const region = s.region;
   const snpc = s.activeSettlementNpc;
   const snpcMissions = snpc ? (s.missionDefs[snpc.sector] || []).filter(d => d.role === snpc.role).map(d => ({ def: d, state: s.missions[d.id], lockReason: s.getMissionLockReason(d.id) })) : [];
@@ -207,7 +216,7 @@ export default function Game() {
     onRest: s.onRest, onOpenShop: s.onOpenShop, onAdvanceTime: advanceTime,
     threat: s.threat, onStartCombatThreat: s.onStartCombatThreat, onThreatEvent: s.onThreatEvent,
     onExploreThreat: s.onExploreThreat, onIdleThreat: s.onIdleThreat, onStrangerMeet: s.onStrangerMeet,
-    onSwitchMode: (m) => setMode(m), onTravelNextRegion: s.travelNextRegion, onReset: s.reset,
+    onSwitchMode: (m) => setMode(m), onTravelNextRegion: s.travelNextRegion, onReset: s.reset, onReturnMainMenu: returnToMainMenu,
     onTravelSector: s.onTravelSector, canTravelNorth: s.canTravelNorth, canTravelSouth: s.canTravelSouth,
     canTravelEast: s.canTravelEast, canTravelWest: s.canTravelWest,
     hasTravelNorth: s.hasTravelNorth, hasTravelSouth: s.hasTravelSouth, hasTravelEast: s.hasTravelEast, hasTravelWest: s.hasTravelWest,

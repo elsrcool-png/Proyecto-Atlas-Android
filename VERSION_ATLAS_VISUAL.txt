@@ -1,2 +1,1 @@
-PROYECTO ATLAS VISUAL v2.22.6
-Acción A de toque único sin cierre fantasma del diálogo en Android
+PROYECTO ATLAS VISUAL v2.22.7

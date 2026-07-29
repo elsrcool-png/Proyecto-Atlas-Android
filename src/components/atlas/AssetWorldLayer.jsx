@@ -5,7 +5,27 @@ import "@/styles/atlas-world-modular.css";
 const BASE_LAYERS = new Set(["ground", "base", "decal", "shadow", "low", "solid", "world", "back"]);
 const FRONT_LAYERS = new Set(["foreground", "front", "overlay", "fx"]);
 const DEPTH_LAYERS = new Set(["back", "low", "solid", "world", "foreground", "front", "overlay", "fx"]);
-const PRELOADED = new Set();
+const PRELOADED_IMAGES = new Map();
+const MAX_PRELOADED_IMAGES = 48;
+
+function keepPreloadedImage(src, image) {
+  if (PRELOADED_IMAGES.has(src)) PRELOADED_IMAGES.delete(src);
+  PRELOADED_IMAGES.set(src, image);
+  while (PRELOADED_IMAGES.size > MAX_PRELOADED_IMAGES) {
+    const oldest = PRELOADED_IMAGES.keys().next().value;
+    PRELOADED_IMAGES.delete(oldest);
+  }
+}
+
+function preloadImage(src, fetchPriority = "auto") {
+  if (!src || PRELOADED_IMAGES.has(src)) return;
+  const image = new Image();
+  image.decoding = "async";
+  image.fetchPriority = fetchPriority;
+  image.src = src;
+  keepPreloadedImage(src, image);
+  image.decode?.().catch(() => {});
+}
 
 function normalizePhase(phase) {
   if (["front", "foreground", "overlay", "fx"].includes(phase)) return "front";
@@ -71,8 +91,8 @@ function ObjectImage({ item }) {
         src={src}
         alt=""
         draggable={false}
-        decoding="sync"
-        loading="eager"
+        decoding="async"
+        loading={item.eager || layer === "ground" ? "eager" : "lazy"}
         fetchPriority={item.eager || layer === "ground" ? "high" : "auto"}
         style={{ objectFit: item.objectFit || (layer === "ground" ? "cover" : "contain") }}
         onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
@@ -87,24 +107,21 @@ function ObjectImage({ item }) {
 export default function AssetWorldLayer({ scene, visualScene, config, phase = "all", debugCollisions = false }) {
   const activeScene = scene || visualScene || config;
 
-  const sceneSources = useMemo(() => {
+  const criticalSources = useMemo(() => {
     if (!activeScene) return [];
-    return [...(activeScene.baseLayers || []), ...(activeScene.objects || [])]
+    const baseLayers = activeScene.baseLayers || activeScene.layers?.base || [];
+    const objects = activeScene.objects || [];
+    return [...baseLayers, ...objects]
+      .filter((item) => item.eager || (item.layer || "ground") === "ground")
       .map((item) => item.src || item.asset)
       .filter(Boolean);
   }, [activeScene]);
 
-  // Calienta la caché sin ocultar ni volver a montar la escena. En Android,
-  // el antiguo fade de dos capas completas provocaba destellos al desplazar cámara.
+  // Solo anticipa terreno y activos marcados como críticos. El resto se deja al
+  // navegador con decodificación asíncrona para no congelar el hilo principal.
   useEffect(() => {
-    for (const src of new Set(sceneSources)) {
-      if (PRELOADED.has(src)) continue;
-      PRELOADED.add(src);
-      const image = new Image();
-      image.decoding = "sync";
-      image.src = src;
-    }
-  }, [sceneSources]);
+    for (const src of new Set(criticalSources)) preloadImage(src, "high");
+  }, [criticalSources]);
 
   if (!activeScene) return null;
   const normalized = normalizePhase(phase);

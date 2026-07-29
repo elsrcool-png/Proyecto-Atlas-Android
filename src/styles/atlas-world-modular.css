@@ -115,18 +115,18 @@
 
 
 /* Atlas Visual v2.4 — estabilización de toda la Región Verde en Android. */
-.atlas-world-scene--green-v24 {
+:is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) {
   opacity: 1;
   transition: none;
   backface-visibility: visible;
 }
-.atlas-world-scene--green-v24 .atlas-world-object {
+:is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) .atlas-world-object {
   contain: layout paint;
   backface-visibility: visible;
 }
 /* Los contornos y sombras de A2 están horneados en cada sprite. */
-.atlas-world-scene--green-v24 .atlas-world-object--outlined > img { filter: none; }
-.atlas-world-scene--green-v24 .atlas-world-object--solid::after { display: none; }
+:is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) .atlas-world-object--outlined > img { filter: none; }
+:is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) .atlas-world-object--solid::after { display: none; }
 
 /* Evita el barrido de una capa de niebla gigante mientras se mueve la cámara. */
 .atlas-green-stable-viewport .atlas-fog {
@@ -145,8 +145,31 @@
   }
 }
 
+
+/* Atlas v2.22.7 — actores simulados a frecuencia reducida con interpolación visual. */
+.atlas-simulated-actor {
+  transition: transform 52ms linear;
+  backface-visibility: hidden;
+}
+
+/* Perfil automático para Android/táctil: conserva una sombra simple, pero evita
+   encadenar cinco filtros y una sombra borrosa por cada objeto del mapa. */
+@media (max-width: 900px), (pointer: coarse) {
+  .atlas-world-scene .atlas-world-object--outlined > img {
+    filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .30));
+  }
+  :is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) .atlas-world-object--outlined > img {
+    filter: none;
+  }
+  .atlas-world-scene .atlas-world-object--solid::after { display: none; }
+  .atlas-world-entity {
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .36));
+  }
+  .atlas-world-portal-glow { box-shadow: 0 0 12px rgba(34, 211, 238, .28); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .atlas-world-scene--green-v24 .atlas-world-portal-glow,
-  .atlas-world-scene--green-v24 .atlas-world-fire-glow,
-  .atlas-world-scene--green-v24 .atlas-world-forge-glow { animation: none; }
+  :is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) .atlas-world-portal-glow,
+  :is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) .atlas-world-fire-glow,
+  :is(.atlas-world-scene--verde, .atlas-world-scene--green-v24) .atlas-world-forge-glow { animation: none; }
 }

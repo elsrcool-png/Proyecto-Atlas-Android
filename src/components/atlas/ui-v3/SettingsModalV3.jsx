@@ -81,8 +81,8 @@ export default function SettingsModalV3({ settings, onChange, onClose, onReset, 
               <ChoiceGroup label="Mano dominante" value={settings.handedness} onChange={value => onChange(applyControlPreset(settings, value))} options={[{ label: "Diestro", value: "right" }, { label: "Zurdo", value: "left" }]} />
             </AtlasPanel>
             <AtlasPanel title="Editor" bodyClassName="p-4">
-              <p className="atlas-ui-muted text-sm leading-relaxed">Mueve, escala y ajusta la opacidad del joystick, botón A, botón B y correr sin alterar la lógica de movimiento.</p>
-              <AtlasButton className="mt-4" variant="primary" icon={Move} full onPress={() => setShowControlEditor(true)}>Abrir editor de controles</AtlasButton>
+              <p className="atlas-ui-muted text-sm leading-relaxed">Mueve, escala y ajusta la opacidad del joystick, botón A, botón B y Correr. La posición se guarda por separado para vertical y horizontal.</p>
+              <AtlasButton className="mt-4" variant="primary" icon={Move} full onPress={() => setShowControlEditor(true)}>Personalizar HUD táctil</AtlasButton>
               <div className="atlas-ui-list-row mt-3"><Keyboard className="h-4 w-4" /><span className="text-sm">Los atajos de teclado actuales se mantienen.</span></div>
             </AtlasPanel>
           </div>

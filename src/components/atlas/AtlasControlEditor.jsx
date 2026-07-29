@@ -24,7 +24,7 @@ function ControlChip({ id, item, selected, onPointerDown }) {
 }
 
 export default function AtlasControlEditor({ settings, onChange, onClose }) {
-  const [orientation, setOrientation] = useState("landscape");
+  const [orientation, setOrientation] = useState(() => (typeof window !== "undefined" && window.matchMedia?.("(orientation: landscape)").matches ? "landscape" : "portrait"));
   const [selected, setSelected] = useState("joystick");
   const previewRef = useRef(null);
   const dragRef = useRef(null);
@@ -67,7 +67,7 @@ export default function AtlasControlEditor({ settings, onChange, onClose }) {
     <div className="fixed inset-0 z-[75] bg-slate-950/90 backdrop-blur flex items-center justify-center px-3 py-3" onClick={onClose}>
       <div className="w-full max-w-xl max-h-[96dvh] overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-4" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-3 mb-3">
-          <div><h2 className="text-base font-semibold text-white">Personalizar controles</h2><p className="text-[11px] text-slate-400">Arrastra cada control. Se guarda por orientación.</p></div>
+          <div><h2 className="text-base font-semibold text-white">Personalizar HUD táctil</h2><p className="text-[11px] text-slate-400">Arrastra el joystick y los botones A, B y Correr. Los cambios se aplican al instante y se guardan por orientación.</p></div>
           <button type="button" onClick={onClose} className="text-xl text-slate-300">✕</button>
         </div>
         <div className="grid grid-cols-2 gap-2 mb-3">
@@ -86,7 +86,7 @@ export default function AtlasControlEditor({ settings, onChange, onClose }) {
           {IDS.map(id => <ControlChip key={id} id={id} item={current[id]} selected={selected === id} onPointerDown={e => startDrag(e, id)} />)}
         </div>
         <div className="mt-4 rounded-xl border border-slate-700 bg-slate-950/40 p-3 space-y-3">
-          <label className="block text-sm text-slate-200">Control seleccionado
+          <label className="block text-sm text-slate-200">Elemento seleccionado
             <select value={selected} onChange={e => setSelected(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm">
               {IDS.map(id => <option key={id} value={id}>{CONTROL_LABELS[id]}</option>)}
             </select>
@@ -104,7 +104,7 @@ export default function AtlasControlEditor({ settings, onChange, onClose }) {
           <button type="button" onClick={() => onChange(applyControlPreset(settings, "compact"))} className="rounded-lg bg-slate-800 py-2 text-xs">Compacto</button>
           <button type="button" onClick={() => onChange(applyControlPreset(settings, "tablet"))} className="rounded-lg bg-slate-800 py-2 text-xs">Tablet</button>
         </div>
-        <button type="button" onClick={() => onChange(applyControlPreset(settings, settings.handedness || "right"))} className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-800 py-2.5 text-sm flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" /> Restablecer posiciones</button>
+        <button type="button" onClick={() => onChange(applyControlPreset(settings, settings.handedness || "right"))} className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-800 py-2.5 text-sm flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" /> Restablecer HUD táctil</button>
       </div>
     </div>
   );

@@ -65,7 +65,7 @@ export default function SettingsModal({ settings, onChange, onClose, onReset, on
             <p className="text-sm text-slate-300 mb-2">Tamaño de controles</p>
             <div className="grid grid-cols-3 gap-2"><Option label="Pequeño" value="small" current={settings.controlSize} onPick={v => set("controlSize", v)} /><Option label="Normal" value="normal" current={settings.controlSize} onPick={v => set("controlSize", v)} /><Option label="Grande" value="large" current={settings.controlSize} onPick={v => set("controlSize", v)} /></div>
           </div>
-          <button type="button" onClick={() => setShowControlEditor(true)} className="w-full rounded-xl border border-cyan-700/70 bg-cyan-950/45 hover:bg-cyan-900/50 py-2.5 text-sm text-cyan-100 flex items-center justify-center gap-2"><Move className="w-4 h-4" /> Mover, escalar y ajustar opacidad</button>
+          <button type="button" onClick={() => setShowControlEditor(true)} className="w-full rounded-xl border border-cyan-700/70 bg-cyan-950/45 hover:bg-cyan-900/50 py-2.5 text-sm text-cyan-100 flex items-center justify-center gap-2"><Move className="w-4 h-4" /> Personalizar HUD táctil</button>
         </div>
 
         <div className="flex items-center gap-2 text-violet-400 mt-4 mb-3"><Bell className="w-4 h-4" /><h3 className="text-xs uppercase tracking-widest">Avisos en pantalla</h3></div>
