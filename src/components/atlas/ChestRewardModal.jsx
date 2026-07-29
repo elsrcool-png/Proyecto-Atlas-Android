@@ -110,7 +110,7 @@ export default function ChestRewardModal({ reward, onClose }) {
   }
 
   return (
-    <div className="atlas-landscape-dialog fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur px-4" onClick={onClose}>
+    <div className="atlas-landscape-dialog fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur px-4" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className={`rounded-2xl bg-slate-900 border-2 ${accent} max-w-sm w-full p-5 shadow-2xl`} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200 flex items-center gap-2"><GIcon name={icon} size={16} /> {title}</h3><button onClick={onClose} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button></div>
         {body}

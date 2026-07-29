@@ -6,7 +6,7 @@ export default function DestinyEventModal({ data, onClose }) {
   if (!data || !data.event) return null;
   const { event, rewards = [] } = data;
   return (
-    <div className="atlas-landscape-dialog fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 backdrop-blur px-4" onClick={onClose}>
+    <div className="atlas-landscape-dialog fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 backdrop-blur px-4" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 220, damping: 18 }}
         className="rounded-2xl bg-gradient-to-b from-fuchsia-950/80 to-slate-900 border border-fuchsia-600/60 p-6 max-w-sm w-full text-center" onClick={e => e.stopPropagation()}>
         <div className="flex justify-center mb-3"><GIcon name="sparkles" size={44} style={{ color: "#e9d5ff" }} /></div>

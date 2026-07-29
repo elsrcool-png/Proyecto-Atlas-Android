@@ -14,7 +14,7 @@ export default function RecruitDialog({ recruits, companion, playerGold, onHire,
   const hasCompanion = !!companion;
 
   return (
-    <div className="atlas-landscape-dialog fixed inset-0 z-40 flex items-center justify-center bg-slate-950/85 backdrop-blur px-3 py-4" onClick={onClose}>
+    <div className="atlas-landscape-dialog fixed inset-0 z-40 flex items-center justify-center bg-slate-950/85 backdrop-blur px-3 py-4" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto rounded-2xl bg-slate-900 border border-amber-700/60 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 flex items-center justify-between p-3 bg-slate-900/95 border-b border-slate-700">
           <div className="flex items-center gap-2">

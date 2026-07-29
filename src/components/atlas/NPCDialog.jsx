@@ -30,7 +30,7 @@ export default function NPCDialog({ npc, sectorMissions, threat, onActivate, onC
   const total = list.length;
 
   return (
-    <div className="atlas-landscape-dialog fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4 py-6" onClick={onClose}>
+    <div className="atlas-landscape-dialog fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4 py-6" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="rounded-2xl bg-slate-900 border border-slate-700 p-5 max-w-lg w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-4 mb-4">
           <div className="relative w-16 h-20 shrink-0 rounded-xl bg-slate-950/55 border border-slate-700 flex items-end justify-center overflow-hidden">

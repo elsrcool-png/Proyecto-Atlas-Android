@@ -19,7 +19,7 @@ export default function ShopModal({ player, onBuy, onBuyEquipment, onSellWeapon,
   const equipList = shopEquipmentForTier(tier, ACCESSORIES, regionId, worldFlags).filter(e => e.kind !== "helmet" || player.equipmentUnlocks?.helmet);
 
   return (
-    <div className="atlas-landscape-dialog fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4 py-6" onClick={onClose}>
+    <div className="atlas-landscape-dialog fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4 py-6" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="rounded-2xl bg-slate-900 border border-slate-800 max-w-md w-full p-5 max-h-[88vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3"><h2 className="flex items-center gap-2 text-base font-semibold text-slate-100"><Coins className="w-5 h-5 text-amber-300" /> {TITLE_BY_TIER[tier] || "Tienda del mercader"}</h2><button onClick={onClose} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button></div>
         <div className="flex items-center justify-between mb-4 text-xs">

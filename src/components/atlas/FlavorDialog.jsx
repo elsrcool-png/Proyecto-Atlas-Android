@@ -5,7 +5,7 @@ export default function FlavorDialog({ data, onClose }) {
   if (!data) return null;
   const npc = data.npc;
   return (
-    <div className="atlas-landscape-dialog fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4" onClick={onClose}>
+    <div className="atlas-landscape-dialog fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur px-4" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="rounded-2xl bg-slate-900 border border-slate-700 p-5 max-w-sm w-full" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-3 mb-3">
           <GIcon name={npc.icon} size={32} />

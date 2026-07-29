@@ -19,7 +19,7 @@ const ACTION_ICONS = {
  */
 export default function NpcInteractionMenu({ npc, actions, onSelect, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm px-4 pb-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm px-4 pb-4" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div
         className="rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl w-full max-w-[320px] overflow-hidden"
         onClick={e => e.stopPropagation()}

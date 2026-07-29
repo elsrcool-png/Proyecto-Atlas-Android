@@ -1,2 +1,2 @@
-PROYECTO ATLAS VISUAL v2.22.5
-Acción A inmediata al tocar en Android, sin pulsación larga
+PROYECTO ATLAS VISUAL v2.22.6
+Acción A de toque único sin cierre fantasma del diálogo en Android

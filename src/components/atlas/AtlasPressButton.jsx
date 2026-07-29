@@ -1,9 +1,10 @@
 import React, { useRef } from "react";
 
 // Botón común de Atlas.
-// - Los menús usan click nativo.
-// - La acción principal puede activarse al tocar; otros controles pueden hacerlo
-//   al soltar. Ambos modos conservan multitáctil y bloquean el click sintético.
+// - Menús normales usan click nativo.
+// - Los controles táctiles pueden activarse al tocar o al soltar.
+// - Se bloquea el click de compatibilidad que Android genera después del toque.
+//   Ese click podía caer sobre el modal recién abierto y cerrarlo de inmediato.
 export default function AtlasPressButton({
   onPress,
   onClick,
@@ -20,25 +21,53 @@ export default function AtlasPressButton({
   const lastPointerPressAt = useRef(0);
   const press = onPress || onClick;
 
+  const armGhostClickBlock = (pointerEvent) => {
+    if (typeof document === "undefined" || typeof window === "undefined") return;
+
+    const startedAt = performance.now();
+    const originX = Number(pointerEvent.clientX || 0);
+    const originY = Number(pointerEvent.clientY || 0);
+    const maxAgeMs = 520;
+    const maxDistancePx = 48;
+
+    const blockCompatibilityClick = (clickEvent) => {
+      const age = performance.now() - startedAt;
+      const dx = Number(clickEvent.clientX || 0) - originX;
+      const dy = Number(clickEvent.clientY || 0) - originY;
+      const sameTouchArea = (dx * dx + dy * dy) <= maxDistancePx * maxDistancePx;
+
+      if (age > maxAgeMs || !sameTouchArea) return;
+
+      clickEvent.preventDefault();
+      clickEvent.stopPropagation();
+      clickEvent.stopImmediatePropagation?.();
+    };
+
+    document.addEventListener("click", blockCompatibilityClick, true);
+    window.setTimeout(() => {
+      document.removeEventListener("click", blockCompatibilityClick, true);
+    }, maxAgeMs + 80);
+  };
+
+  const activateFromPointer = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    armGhostClickBlock(event);
+    lastPointerPressAt.current = Date.now();
+    press?.(event);
+  };
+
   const handlePointerDown = (event) => {
     if (disabled || (event.pointerType === "mouse" && event.button !== 0)) return;
     activePointer.current = event.pointerId;
-
-    if (!pressOnPointerDown) return;
-
-    // No usamos pointer capture. La acción A se ejecuta aquí para no depender
-    // del pointerup, que algunas WebView Android cancelan en toques breves.
-    lastPointerPressAt.current = Date.now();
-    press?.(event);
+    if (pressOnPointerDown) activateFromPointer(event);
   };
 
   const handlePointerUp = (event) => {
     const samePointer = activePointer.current === event.pointerId;
     activePointer.current = null;
     if (disabled || !pressOnPointerUp || !samePointer) return;
-
-    lastPointerPressAt.current = Date.now();
-    press?.(event);
+    activateFromPointer(event);
   };
 
   const handlePointerCancel = (event) => {
@@ -48,10 +77,12 @@ export default function AtlasPressButton({
   const handleClick = (event) => {
     if (disabled) return;
 
-    // PointerDown/PointerUp ya ejecutaron el toque. Solo se ignora el click
-    // sintético posterior; teclado y lectores de pantalla siguen usando click.
-    if ((pressOnPointerDown || pressOnPointerUp) && Date.now() - lastPointerPressAt.current < 650) {
+    // El toque directo ya ejecutó la acción. Este segundo click pertenece al
+    // mismo gesto y no debe atravesar hacia el diálogo que acaba de montarse.
+    if ((pressOnPointerDown || pressOnPointerUp) && Date.now() - lastPointerPressAt.current < 700) {
       event.preventDefault();
+      event.stopPropagation();
+      event.nativeEvent?.stopImmediatePropagation?.();
       return;
     }
 

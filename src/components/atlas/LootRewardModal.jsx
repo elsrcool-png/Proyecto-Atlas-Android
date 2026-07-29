@@ -23,7 +23,7 @@ export default function LootRewardModal({ data, onClose }) {
   };
   const itemObj = data.type === "equipment" ? (data.kind === "weapon" ? WEAPONS[data.id] : data.kind === "armor" ? ARMORS[data.id] : ACCESSORIES[data.id]) : null;
   return (
-    <div className="atlas-landscape-dialog fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/85 backdrop-blur px-4" onClick={onClose}>
+    <div className="atlas-landscape-dialog fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/85 backdrop-blur px-4" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <motion.div initial={{ scale: 0.85, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 240, damping: 20 }}
         className="rounded-2xl bg-slate-900 border border-slate-700 p-6 max-w-sm w-full text-center" onClick={e => e.stopPropagation()}>
         <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400 mb-1">Recompensa de combate</p>
