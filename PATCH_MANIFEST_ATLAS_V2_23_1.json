@@ -1,0 +1,26 @@
+{
+  "project": "Proyecto Atlas",
+  "version": "2.23.1",
+  "baseVersion": "2.23.0",
+  "title": "Combate universal por suma de dados",
+  "changes": [
+    "La tabla 1-20 se aplica al ataque básico y a todas las habilidades ofensivas del combate clásico.",
+    "Técnica, Fuerza y Versátil entregan su total real a la resolución de daño.",
+    "La reducción de daño existente se aplica después del daño bruto universal.",
+    "Los modificadores de calidad se convierten en desplazamientos dentro de la misma tabla.",
+    "Los registros distinguen la fórmula de dados, la suma real, la suma efectiva y la banda de daño.",
+    "Se conserva compatibilidad con las correcciones de misiones, consumibles y herrería de v2.23.0."
+  ],
+  "modifiedFiles": [
+    "src/lib/createAtlasCombatActions.js",
+    "src/lib/atlasDamageSystem.js",
+    "src/lib/atlasEngine.js",
+    "scripts/validate-v2-23.mjs",
+    "scripts/validate-v2-23-1.mjs",
+    "package.json",
+    "package-lock.json"
+  ],
+  "validationCommand": "npm run validate:v2-23-1",
+  "saveMigrationRequired": false,
+  "tacticalDungeonCombatChanged": false
+}

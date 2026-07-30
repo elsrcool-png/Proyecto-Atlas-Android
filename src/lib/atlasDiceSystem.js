@@ -42,15 +42,31 @@ export function rollDiceGroup(groupId) {
   return { group: groupId, label: group.label, rolls, total, min, max };
 }
 
+export function countNaturalOnes(rollResult) {
+  if (!rollResult || !Array.isArray(rollResult.rolls)) return 0;
+  return rollResult.rolls.reduce((count, die) => count + (Number(die?.result) === 1 ? 1 : 0), 0);
+}
+
+export function criticalFailureThreshold(rollResult) {
+  const diceCount = Array.isArray(rollResult?.rolls) ? rollResult.rolls.length : 0;
+  return diceCount > 0 ? Math.ceil(diceCount / 2) : 0;
+}
+
+// Regla canónica Atlas: una tirada falla críticamente cuando la mitad o más
+// de sus dados individuales muestran 1. Para 1d20, esto conserva el 1 natural.
+export function isCriticalFailureRoll(rollResult) {
+  const threshold = criticalFailureThreshold(rollResult);
+  return threshold > 0 && countNaturalOnes(rollResult) >= threshold;
+}
+
 export function resolveQuality(rollResult) {
-  if (!rollResult) return QUALITY.fallo_critico;
+  if (!rollResult || isCriticalFailureRoll(rollResult)) return QUALITY.fallo_critico;
   const { total, min, max } = rollResult;
   const range = max - min;
   if (range <= 0) return QUALITY.medio;
 
   const ratio = (total - min) / range;
 
-  if (ratio <= 0.05) return QUALITY.fallo_critico;
   if (ratio <= 0.33) return QUALITY.bajo;
   if (ratio <= 0.65) return QUALITY.medio;
   if (ratio <= 0.89) return QUALITY.alto;

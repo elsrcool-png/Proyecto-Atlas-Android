@@ -1,6 +1,6 @@
 // PROYECTO ATLAS — Inteligencia Artificial de Enemigos
-import { resolveQuality, upgradeQuality, QUALITY } from "@/lib/atlasDiceSystem";
-import { resolveAttack, singleDieResult } from "@/lib/atlasDamageSystem";
+import { QUALITY } from "@/lib/atlasDiceSystem";
+import { resolveAttack, resolveD20Quality } from "@/lib/atlasDamageSystem";
 import { scaleMonsterStats } from "@/lib/atlasEnemyScaling";
 import { GREEN_MONSTER_IDS } from "@/lib/atlasGreenBestiary";
 import { balanceEnemyFromPlayerBase } from "@/lib/atlasEnemyBalance";
@@ -296,11 +296,8 @@ export function decideEnemyAction(enemy, roll) {
 // propios no dañinos y se aplican siempre; el estado solo si no hubo fallo.
 export function executeEnemyAbility(enemy, ability, player, roll) {
   const eff = ability.effect || {};
-  const quality = resolveQuality(singleDieResult(20, roll));
-  let qId = quality.id;
-  if (qId !== "fallo_critico" && qId !== "critico" && (enemy.crit || 0) > 0 && Math.random() < (enemy.crit || 0)) {
-    qId = upgradeQuality(qId);
-  }
+  const quality = resolveD20Quality(roll);
+  const qId = quality.id; // Solo 20 natural es crítico en tiradas 1d20.
   const effAtk = Math.max(0, Math.round((enemy.attack || 0) * (eff.damage || 1)));
   const res = resolveAttack({
     qualityId: qId,
@@ -308,6 +305,8 @@ export function executeEnemyAbility(enemy, ability, player, roll) {
     def: player.defense || 0,
     opponentAtk: player.attack || 0,
     opponentDef: enemy.defense || 0,
+    rollTotal: roll,
+    forceCritical: roll === 20,
   });
 
   let heal = 0;
@@ -339,17 +338,16 @@ export function executeEnemyAbility(enemy, ability, player, roll) {
 // Resolución canónica del ataque básico de un enemigo (Atlas Alpha 1.0).
 // Mismo daño que el jugador. Fallo crítico = 0 daño + contraataque del jugador.
 export function executeEnemyBasicAttack(enemy, player, roll) {
-  const quality = resolveQuality(singleDieResult(20, roll));
-  let qId = quality.id;
-  if (qId !== "fallo_critico" && qId !== "critico" && (enemy.crit || 0) > 0 && Math.random() < (enemy.crit || 0)) {
-    qId = upgradeQuality(qId);
-  }
+  const quality = resolveD20Quality(roll);
+  const qId = quality.id; // Solo 20 natural es crítico en tiradas 1d20.
   const res = resolveAttack({
     qualityId: qId,
     atk: enemy.attack,
     def: player.defense || 0,
     opponentAtk: player.attack || 0,
     opponentDef: enemy.defense || 0,
+    rollTotal: roll,
+    forceCritical: roll === 20,
   });
   return {
     damage: res.damage,

@@ -29,6 +29,6 @@ check(press.includes("pressOnPointerUp = false"), "botón admite activación al 
 check(!press.includes("setPointerCapture"), "toque Android sin captura invasiva");
 check(action.includes('pressOnPointerDown={activateImmediately}'), "botón A responde al primer contacto");
 check(css.includes("Atlas v2.22.4 — interfaz clásica adaptativa"), "adaptación horizontal y áreas seguras");
-check(/^2\.22\.(?:[4-9]|[1-9]\d+)$/.test(pkg.version), "base clásica v2.22.4 o correcciones posteriores");
+{ const [ma, mi, pa] = pkg.version.split(".").map(Number); check(ma > 2 || (ma === 2 && (mi > 22 || (mi === 22 && pa >= 4))), "base clásica v2.22.4 o correcciones posteriores"); }
 
 console.log("\nValidación de interfaz clásica correcta: mochila completa y acción A inmediata.");

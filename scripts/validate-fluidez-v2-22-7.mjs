@@ -12,7 +12,7 @@ const joystick = read("src/components/atlas/Joystick.jsx");
 const worldCss = read("src/styles/atlas-world-modular.css");
 const pkg = JSON.parse(read("package.json"));
 
-check(/^2\.22\.(?:7|8|9|[1-9]\d+)$/.test(pkg.version), "versión 2.22.7 o posterior");
+{ const [ma, mi, pa] = pkg.version.split(".").map(Number); check(ma > 2 || (ma === 2 && (mi > 22 || (mi === 22 && pa >= 7))), "versión 2.22.7 o posterior"); }
 check(pkg.scripts["validate:v2-22"].includes("npm run validate:fluidez-v2-22-7"), "validación de fluidez incluida en la cadena acumulativa");
 
 check(explore.includes("const FIXED_STEP_MS = 1000 / 60"), "simulación de paso fijo a 60 Hz");

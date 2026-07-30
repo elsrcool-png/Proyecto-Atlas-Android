@@ -59,6 +59,8 @@ export default function NPCDialog({ npc, sectorMissions, threat, onActivate, onC
                   <span className={`text-[10px] uppercase tracking-wider ${meta.color}`}>{meta.label}</span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-snug mb-1">{def.desc}</p>
+                {def.storySummary && <p className="text-[10px] text-violet-200/90 bg-violet-950/25 border border-violet-900/30 rounded-md px-2 py-1 mb-1"><span className="text-violet-300">Contexto:</span> {def.storySummary}</p>}
+                {!!def.worldChanges?.length && <p className="text-[10px] text-emerald-200/90 bg-emerald-950/20 border border-emerald-900/30 rounded-md px-2 py-1 mb-1"><span className="text-emerald-300">Consecuencia:</span> {def.worldChanges.join(" · ")}</p>}
                 {state?.accepted && state?.status !== "done" && (
                   <p className="text-[10px] text-sky-200 bg-sky-950/30 border border-sky-900/40 rounded-md px-2 py-1 mb-1">
                     <span className="text-sky-400">Objetivo:</span> {getCurrentObjectiveText(def, state)}

@@ -23,16 +23,19 @@ export function resolveTravel(preRolled) {
   return { roll, moves: 2, threatDelta: -1, log: `Viaje d12: ${roll} → ¡Viaje excepcional! Hasta 2 nodos. Amenaza -1.` };
 }
 
-// Resolución canónica del turno de ataque del jugador (Atlas Alpha 1.0).
-// Recibe la calidad del impacto (de resolveQuality) — los dados determinan la
-// calidad, no el daño. Fallo crítico = 0 daño + contraataque automático.
-export function resolveCombatTurn(player, enemy, quality) {
+// Resolución canónica del turno de ataque del jugador.
+// El total de dados entre 1 y 20 determina directamente la banda de daño.
+// Fallo crítico = 0 daño + contraataque automático.
+export function resolveCombatTurn(player, enemy, quality, options = {}) {
   const res = resolveAttack({
     qualityId: quality.id,
     atk: player.attack,
     def: enemy.defense,
     opponentAtk: enemy.attack,
     opponentDef: player.defense,
+    rollTotal: options.rollTotal ?? null,
+    forceCritical: !!options.forceCritical,
+    forceCriticalFailure: !!options.forceCriticalFailure,
   });
   if (res.isFalloCritico) {
     return {
@@ -46,7 +49,7 @@ export function resolveCombatTurn(player, enemy, quality) {
   const redPct = res.reduction ? Math.round(res.reduction * 100) : 0;
   return {
     quality, type, enemyDamage: res.damage, playerDamage: 0, counter: false,
-    log: `${quality.name}. Infliges ${res.damage} daño${redPct ? ` (presión −${redPct}%)` : ""}${quality.id === "critico" ? " — ignora DEF" : ""}.`,
+    log: `${res.rollBand?.label || quality.name}. Infliges ${res.damage} daño${redPct ? ` (presión −${redPct}%)` : ""}${res.ignoresDef ? " · ignora DEF" : ""}.`,
   };
 }
 

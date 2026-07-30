@@ -124,7 +124,7 @@ ok('Congelación de dos turnos consume dos acciones', () => {
 
 ok('Acción bloqueada no gasta durabilidad, energía ni consumibles', () => {
   const actions = read('src/lib/createAtlasCombatActions.js');
-  for (const attempted of ['el ataque básico', 'la habilidad', 'la definitiva', 'usar una poción']) assert.ok(actions.includes(attempted));
+  for (const attempted of ['el ataque básico', 'la habilidad', 'la definitiva', 'usar un consumible']) assert.ok(actions.includes(attempted));
   assert.match(actions, /if \(!statusResult\.canAct\).*resolveBlockedPlayerAction[\s\S]{0,120}damageWeapon\(1\)/);
   assert.match(actions, /No gastas energía, consumibles ni durabilidad/);
   assert.match(actions, /skipDice:\s*true/);

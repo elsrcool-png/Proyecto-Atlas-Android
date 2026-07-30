@@ -18,7 +18,7 @@ const game = read("src/pages/Game.jsx");
 const legacySettings = read("src/components/atlas/SettingsModal.jsx");
 const v3Settings = read("src/components/atlas/ui-v3/SettingsModalV3.jsx");
 
-check(/^2\.22\.(?:8|9|[1-9]\d+)$/.test(pkg.version), "versión 2.22.8 o posterior");
+{ const [ma, mi, pa] = pkg.version.split(".").map(Number); check(ma > 2 || (ma === 2 && (mi > 22 || (mi === 22 && pa >= 8))), "versión 2.22.8 o posterior"); }
 check(!css.includes("atlas-right-handed .atlas-joystick-wrap") && !css.includes("atlas-left-handed .atlas-joystick-wrap"), "CSS no fuerza la posición del joystick sobre el perfil guardado");
 check(editor.includes("Personalizar HUD táctil") && editor.includes("controlProfiles"), "editor del HUD táctil disponible");
 check(legacySettings.includes("Personalizar HUD táctil") && v3Settings.includes("Personalizar HUD táctil"), "editor accesible desde ambos ajustes");

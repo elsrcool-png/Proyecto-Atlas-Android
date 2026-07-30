@@ -14,11 +14,19 @@ const VISUAL_DEFAULTS_V5 = Object.freeze({
   Enano: { raceBase: "enano_neutral_v1", profileId: "appearance_enano_copper_beard_v1" },
 });
 
-function migrateSaveVisualV5(save) {
+function migrateSaveV6(save) {
   if (!save?.player) return save;
   const base = VISUAL_DEFAULTS_V5[save.player.race] || VISUAL_DEFAULTS_V5.Humano;
-  const player = save.player.appearance?.version >= 1 ? save.player : { ...save.player, appearance: { version: 1, ...base, cosmetic: null } };
-  return { ...save, saveVersion: Math.max(5, Number(save.saveVersion) || 0), player };
+  const withAppearance = save.player.appearance?.version >= 1
+    ? save.player
+    : { ...save.player, appearance: { version: 1, ...base, cosmetic: null } };
+  const player = {
+    ...withAppearance,
+    weaponUpgrades: withAppearance.weaponUpgrades || {},
+    armorUpgrades: withAppearance.armorUpgrades || {},
+    helmetUpgrades: withAppearance.helmetUpgrades || {},
+  };
+  return { ...save, saveVersion: Math.max(6, Number(save.saveVersion) || 0), player };
 }
 
 let activeSaveSlot = null; // 1..3 o null
@@ -65,7 +73,7 @@ function isValidSave(parsed) {
 export function saveToSlot(n, data) {
   const slot = clampSlot(n);
   if (!slot) return false;
-  const payload = JSON.stringify(migrateSaveVisualV5({ saveVersion: 5, savedAt: Date.now(), ...data }));
+  const payload = JSON.stringify(migrateSaveV6({ saveVersion: 6, savedAt: Date.now(), ...data }));
   return safeWrite(SLOT_KEYS[slot - 1], BACKUP_KEYS[slot - 1], payload);
 }
 
@@ -79,14 +87,14 @@ export function loadSlot(n) {
     if (!isValidSave(parsed)) {
       // Contenido corrupto: intentar recuperar desde el respaldo.
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveVisualV5(bp); }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV6(bp); }
       return null;
     }
-    return migrateSaveVisualV5(parsed);
+    return migrateSaveV6(parsed);
   } catch (e) {
     try {
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveVisualV5(bp); }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV6(bp); }
     } catch (e2) { }
     return null;
   }

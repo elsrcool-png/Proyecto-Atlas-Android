@@ -22,21 +22,20 @@ export function initMissionsFromDefs(defs, saved = null) {
   return m;
 }
 
-// Marca la primera misión principal de la región como accepted+active dentro
-// de un objeto de misiones recién inicializado. Devuelve el id activado o
-// null si no existe / ya fue iniciada / ya está completada.
+// Descubre la primera misión principal de la región sin aceptarla ni activarla.
+// El jugador debe hablar con el NPC y decidir iniciar el encargo.
 export function activateFirstMissionInFresh(regionId, freshMissions) {
   const firstId = REGION_FIRST_MISSION[regionId];
   if (!firstId || !freshMissions || !freshMissions[firstId]) return null;
   const cur = freshMissions[firstId];
-  if (cur.accepted || cur.status === "done" || cur.status === "ready") return null;
-  freshMissions[firstId] = { ...cur, accepted: true, active: true };
+  if (cur.status === "done" || cur.status === "ready") return null;
+  freshMissions[firstId] = { ...cur, discovered: true, accepted: false, active: false };
   return firstId;
 }
 
 // Resuelve las misiones al entrar a una región destino.
 // - Si la región ya fue visitada (hay stash): restaura sus misiones tal cual.
-// - Si es primera visita: inicializa fresh y activa la primera misión principal.
+// - Si es primera visita: inicializa fresh y descubre la primera misión principal.
 // Devuelve { missions, isFirstVisit, firstId, def } o null si la región es desconocida.
 export function resolveRegionEntryMissions(targetRegionId, missionsByRegion) {
   const stashed = missionsByRegion?.[targetRegionId];

@@ -1,0 +1,223 @@
+{
+  "project": "Proyecto Atlas",
+  "sourceVersion": "2.22.9",
+  "targetIntegration": "2.23.0+",
+  "status": "audited_not_implemented",
+  "workstreams": [
+    {
+      "id": "WS0",
+      "name": "Hotfix bloqueadores",
+      "priority": 0,
+      "items": [
+        {
+          "id": "BUG-01",
+          "title": "Prioridad misión sobre dungeon",
+          "type": "bug",
+          "files": [
+            "src/components/atlas/ExploreMode.jsx"
+          ],
+          "acceptance": "El punto activo de misión controla texto y acción A aunque la dungeon comparta radio."
+        },
+        {
+          "id": "BUG-02",
+          "title": "Combate f13 dentro de Ciudadela",
+          "type": "bug",
+          "files": [
+            "src/components/atlas/ExploreMode.jsx",
+            "src/lib/atlasMissionEncounters.js"
+          ],
+          "acceptance": "Cada enemigo del evento inicia combate dentro del área de defensa sin abandonar la ciudad."
+        },
+        {
+          "id": "BUG-03",
+          "title": "Confirmar derrota después del combate",
+          "type": "bug",
+          "files": [
+            "src/components/atlas/ExploreMode.jsx",
+            "src/hooks/useAtlasSession.js"
+          ],
+          "acceptance": "Escapar o perder restaura el enemigo; solo una muerte confirmada persiste el ID."
+        }
+      ]
+    },
+    {
+      "id": "WS1",
+      "name": "Misiones narrativas y encuentros",
+      "priority": 1,
+      "items": [
+        {
+          "id": "MIS-01",
+          "title": "Estados discovered y available",
+          "type": "feature"
+        },
+        {
+          "id": "MIS-02",
+          "title": "Diálogo por fases de misión",
+          "type": "feature"
+        },
+        {
+          "id": "MIS-03",
+          "title": "Encuentros independientes para 18 objetivos kill",
+          "type": "feature"
+        },
+        {
+          "id": "MIS-04",
+          "title": "Reintento seguro de encuentros",
+          "type": "feature"
+        },
+        {
+          "id": "MIS-05",
+          "title": "Director de escenas de misión",
+          "type": "feature"
+        }
+      ]
+    },
+    {
+      "id": "WS2",
+      "name": "Balance regional y enemigos",
+      "priority": 1,
+      "items": [
+        {
+          "id": "BAL-01",
+          "title": "No neutralizar multiplicador regional",
+          "type": "balance"
+        },
+        {
+          "id": "BAL-02",
+          "title": "Anclaje acotado al poder de equipo",
+          "type": "balance",
+          "decisionRequired": true
+        },
+        {
+          "id": "BAL-03",
+          "title": "Habilidades regionales garantizadas por arquetipo",
+          "type": "feature"
+        },
+        {
+          "id": "BAL-04",
+          "title": "Loadouts visibles de enemigos humanoides",
+          "type": "feature"
+        },
+        {
+          "id": "BAL-05",
+          "title": "Simulador automático por builds",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "id": "WS3",
+      "name": "Combate múltiple",
+      "priority": 2,
+      "items": [
+        {
+          "id": "COM-01A",
+          "title": "Cola de encuentro encadenado",
+          "type": "feature"
+        },
+        {
+          "id": "COM-01B",
+          "title": "2v1 real en Ártica",
+          "type": "feature",
+          "decisionRequired": true
+        },
+        {
+          "id": "COM-01C",
+          "title": "3v1 especial en Árida",
+          "type": "feature",
+          "decisionRequired": true
+        },
+        {
+          "id": "COM-01D",
+          "title": "Selección de objetivo y habilidades de área",
+          "type": "feature"
+        }
+      ]
+    },
+    {
+      "id": "WS4",
+      "name": "Consumibles en combate",
+      "priority": 2,
+      "items": [
+        {
+          "id": "COM-02",
+          "title": "Poción pasa a Consumible",
+          "type": "feature"
+        },
+        {
+          "id": "COM-03",
+          "title": "Selector con cantidades, efectos y bloqueos",
+          "type": "feature"
+        },
+        {
+          "id": "COM-04",
+          "title": "Migración de player.potions",
+          "type": "migration"
+        }
+      ]
+    },
+    {
+      "id": "WS5",
+      "name": "Herrería y mejoras",
+      "priority": 1,
+      "items": [
+        {
+          "id": "FOR-01",
+          "title": "Catálogos regionales por herrero",
+          "type": "feature"
+        },
+        {
+          "id": "FOR-02",
+          "title": "Cotizador único UI/transacción",
+          "type": "bug"
+        },
+        {
+          "id": "FOR-03",
+          "title": "Usar todos los materiales de receta",
+          "type": "bug"
+        },
+        {
+          "id": "FOR-04",
+          "title": "Mostrar stats actuales y siguientes",
+          "type": "feature"
+        },
+        {
+          "id": "FOR-05",
+          "title": "Mejorar armas regionales y de botín",
+          "type": "feature"
+        },
+        {
+          "id": "FOR-06",
+          "title": "Ruta especial de reliquias",
+          "type": "feature"
+        },
+        {
+          "id": "FOR-07",
+          "title": "Mejora de armaduras y cascos",
+          "type": "feature"
+        },
+        {
+          "id": "FOR-08",
+          "title": "Migración de niveles de mejora",
+          "type": "migration"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "cumulativeValidation": "passed",
+    "command": "npm run validate:v2-22",
+    "syntaxFiles": 290,
+    "resolvedLocalImports": 648,
+    "viteBuild": "not_run_missing_dependencies",
+    "dependencyInstall": "blocked_by_registry_missing_zwitch_2_0_4"
+  },
+  "auditCorrections": [
+    {
+      "id": "AUD-01",
+      "title": "Indicador 2/10 identificado correctamente como nivel de Amenaza",
+      "status": "corrected",
+      "effect": "Se retira la migración f13 10→5 del backlog; la captura no evidencia incompatibilidad de guardado."
+    }
+  ]
+}

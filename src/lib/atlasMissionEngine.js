@@ -8,6 +8,7 @@ export function createMissionState(def) {
     status: "pending",
     active: false,
     accepted: false,
+    discovered: false,
     completedObjectives: [],
   };
 }

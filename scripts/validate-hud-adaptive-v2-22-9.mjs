@@ -21,7 +21,7 @@ const stored = read("src/lib/atlasSettings.js");
 const explore = read("src/components/atlas/ExploreMode.jsx");
 const css = read("src/index.css");
 
-check(pkg.version === "2.22.9", "versión 2.22.9");
+{ const [ma, mi, pa] = pkg.version.split(".").map(Number); check(ma > 2 || (ma === 2 && (mi > 22 || (mi === 22 && pa >= 9))), "versión 2.22.9 o posterior"); }
 check(pkg.scripts?.["validate:v2-22"]?.includes("validate:hud-adaptive-v2-22-9"), "validación adaptativa incluida en cadena acumulativa");
 check(hud.includes("atlas-adaptive-hud") && hud.includes("atlas-hud-mission") && hud.includes("atlas-hud-vitals"), "cabecera adaptativa real");
 check(hud.includes("resolveActionLabel") && hud.includes("atlas-action-idle") && !hud.includes('sublabel={actionReady ? "Acción"'), "botón A contextual y discreto cuando no se usa");

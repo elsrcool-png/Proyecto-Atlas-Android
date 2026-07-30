@@ -14,6 +14,7 @@ import { resolveCombatScene } from "@/lib/atlasCombatScenes";
 import { atlasVibrate } from "@/lib/atlasHaptics";
 import { getSkillStatusHints } from "@/lib/atlasSkillStatusHints";
 import AtlasPressButton from "./AtlasPressButton";
+import { HP_POTIONS, energyPotionsFor } from "@/lib/atlasShop";
 
 const CLASS_ELEMENT = { Guerrero: "fisico", Mago: "arcano", "Pícaro": "sombra" };
 const ENERGY_BAR_COLOR = { Guerrero: "bg-red-500", Mago: "bg-blue-500", "Pícaro": "bg-amber-500" };
@@ -41,7 +42,7 @@ function bannerInfo(t) {
   if (t === "MAYOR") return ["Golpe mayor", "bg-orange-500 text-white"];
   if (t === "¡HABILIDAD CRÍTICA!") return ["¡HABILIDAD CRÍTICA!", "bg-amber-400 text-slate-900"];
   if (/HABILIDAD/.test(t)) return ["¡Habilidad!", "bg-fuchsia-500 text-white"];
-  if (t === "OBJETO") return ["Poción", "bg-emerald-500 text-white"];
+  if (t === "OBJETO") return ["Consumible", "bg-emerald-500 text-white"];
   if (t === "ENEMY_ATTACK") return ["¡Ataque enemigo!", "bg-red-600 text-white"];
   if (t === "ENEMY_ABILITY") return ["¡Habilidad enemiga!", "bg-fuchsia-600 text-white"];
   if (t === "PLAYER_PARALYZED") return ["⚡ PARALIZADO · acción perdida", "bg-fuchsia-600 text-white"];
@@ -74,6 +75,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
   const [attackPose, setAttackPose] = useState("slash");
   const [heroAnimation, setHeroAnimation] = useState({ source: "phase6", id: "combat_ready_base", token: 0, sequence: null, qualityId: "medio", landed: true, kind: "basic" });
   const [sequenceBusy, setSequenceBusy] = useState(false);
+  const [showConsumables, setShowConsumables] = useState(false);
   const [displayPlayerHp, setDisplayPlayerHp] = useState(() => Math.max(0, Number(player?.hp || 0)));
   const [displayEnemyHp, setDisplayEnemyHp] = useState(() => Math.max(0, Number(enemy?.hp || 0)));
   const [landscape, setLandscape] = useState(() => typeof window !== "undefined" && window.matchMedia?.("(orientation: landscape) and (max-height: 640px)").matches);
@@ -388,9 +390,29 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
   }, [dying]);
 
   const [bannerLabel, bannerColor] = banner ? bannerInfo(banner.text) : ["", ""];
-  const potions = player.potions || 0;
-  const hpFull = player.hp >= player.maxHp;
   const controlsLocked = busy || sequenceBusy;
+  const combatConsumables = useMemo(() => {
+    const hpItems = HP_POTIONS.map(item => ({
+      ...item,
+      count: item.id === "hp_s" ? (player.potions || 0) : (player.consumables?.[item.id] || 0),
+      effect: `Recupera ${item.heal} HP`,
+      disabled: player.hp >= player.maxHp,
+      disabledReason: "Vida completa",
+    }));
+    const energyItems = energyPotionsFor(player.class).map(item => ({
+      ...item,
+      count: player.consumables?.[item.id] || 0,
+      effect: `Recupera ${item.restore} ${player.energyName || "energía"}`,
+      disabled: (player.mp || 0) >= (player.maxMp || 0),
+      disabledReason: "Energía completa",
+    }));
+    const antidote = {
+      id: "antidote", name: "Antídoto", count: player.consumables?.antidote || 0,
+      effect: "Elimina Veneno", disabled: !playerStatuses?.poison, disabledReason: "Sin veneno",
+    };
+    return [...hpItems, ...energyItems, antidote].filter(item => item.count > 0);
+  }, [player.potions, player.consumables, player.hp, player.maxHp, player.mp, player.maxMp, player.class, player.energyName, playerStatuses]);
+  const combatConsumableCount = combatConsumables.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, ease: "easeOut" }} className={`atlas-combat-view relative rounded-2xl overflow-hidden border border-red-900/40 flex flex-col h-full ${landscape ? "atlas-combat-landscape" : ""}`} style={{ minHeight: landscape ? 0 : 460 }}>
@@ -495,6 +517,21 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
       </div>
 
       <div className={`atlas-combat-actions relative z-10 bg-slate-950/85 border-t border-slate-800/80 backdrop-blur ${landscape ? "p-1.5" : "p-3"}`}>
+        <AnimatePresence>
+          {showConsumables && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="absolute z-40 left-2 right-2 bottom-full mb-2 rounded-xl border border-emerald-700/60 bg-slate-950/95 p-2 shadow-2xl">
+              <div className="flex items-center justify-between mb-1.5"><span className="text-xs font-medium text-emerald-200">Elegir consumible</span><button onClick={() => setShowConsumables(false)} className="text-slate-400 hover:text-white text-xs">Cerrar</button></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto">
+                {combatConsumables.map(item => (
+                  <button key={item.id} disabled={item.disabled || controlsLocked} onClick={() => { onItem?.(item.id); setShowConsumables(false); }} className={`rounded-lg border px-2 py-1.5 text-left ${item.disabled ? "border-slate-700 bg-slate-900/70 text-slate-500" : "border-emerald-700/50 bg-emerald-950/35 hover:bg-emerald-900/45 text-slate-100"}`}>
+                    <span className="flex justify-between gap-2 text-[10px] font-medium"><span>{item.name}</span><span>x{item.count}</span></span>
+                    <span className="block text-[9px] text-slate-400">{item.disabled ? item.disabledReason : item.effect} · consume turno</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className={`grid gap-2 ${landscape ? "grid-cols-6" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
           <AtlasPressButton onPress={onAttack} disabled={controlsLocked || dying} haptic="uiStrong" className="flex items-center gap-1.5 rounded-lg bg-red-600/90 hover:bg-red-500 disabled:opacity-40 border border-red-400/30 px-2 py-1.5 transition text-left">
             <Swords className="w-4 h-4 text-white shrink-0" />
@@ -521,9 +558,9 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
               </AtlasPressButton>
             );
           })}
-          <AtlasPressButton onPress={onItem} disabled={potions <= 0 || hpFull || controlsLocked || dying} className="flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-40 border border-emerald-400/30 px-2 py-1.5 transition text-left">
+          <AtlasPressButton onPress={() => setShowConsumables(v => !v)} disabled={combatConsumableCount <= 0 || controlsLocked || dying} className="flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-40 border border-emerald-400/30 px-2 py-1.5 transition text-left">
             <FlaskConical className="w-4 h-4 text-white shrink-0" />
-            <div className="min-w-0 flex-1 leading-tight"><span className="block text-[10px] font-medium text-white truncate">Poción</span><span className="block text-[9px] text-white/70 font-mono">{hpFull ? "Lleno" : `x${potions} usar`}</span></div>
+            <div className="min-w-0 flex-1 leading-tight"><span className="block text-[10px] font-medium text-white truncate">Consumible</span><span className="block text-[9px] text-white/70 font-mono">{combatConsumableCount > 0 ? `x${combatConsumableCount} elegir` : "Sin objetos"}</span></div>
           </AtlasPressButton>
         </div>
         <AtlasPressButton onPress={onEscape} disabled={controlsLocked || dying || enemy.boss} className={`w-full flex items-center justify-center gap-2 rounded-lg bg-slate-800/70 hover:bg-slate-700 disabled:opacity-40 text-xs font-medium text-slate-200 transition ${landscape ? "mt-1 py-1" : "mt-2 py-2"}`}>

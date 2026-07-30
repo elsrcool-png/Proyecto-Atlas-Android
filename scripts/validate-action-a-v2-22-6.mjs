@@ -41,7 +41,7 @@ for (const path of guardedModals) {
   );
 }
 
-check(/^2\.22\.(?:[6-9]|[1-9]\d+)$/.test(pkg.version), "versión 2.22.6 o posterior");
+{ const [ma, mi, pa] = pkg.version.split(".").map(Number); check(ma > 2 || (ma === 2 && (mi > 22 || (mi === 22 && pa >= 6))), "versión 2.22.6 o posterior"); }
 check(
   pkg.scripts["validate:v2-22"].includes("validate:action-a-v2-22-6"),
   "validación acumulativa usa la corrección nueva"

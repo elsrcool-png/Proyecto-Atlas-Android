@@ -218,8 +218,9 @@ export default function ExploreMode({ game }) {
     sectorId: game.currentSectorId,
     missionId: currentMissionEntry?.id || null,
     objectiveId: currentObjective?.id || null,
+    objective: currentObjective || null,
     world,
-  }), [region.id, game.currentSectorId, currentMissionEntry?.id, currentObjective?.id, world]);
+  }), [region.id, game.currentSectorId, currentMissionEntry?.id, currentObjective?.id, currentObjective?.count, currentObjective?.targetId, world]);
   const clearAmbientEnemies = shouldClearSectorEnemies(region.id, game.currentSectorId, bossDefeated, game.worldFlags || {});
   const activeEnemySource = missionEncounterEnemies || (clearAmbientEnemies ? [] : (world?.enemies || []));
   const missionNavTarget = (() => {
@@ -291,6 +292,12 @@ export default function ExploreMode({ game }) {
   useEffect(() => {
     if (!inCombat) {
       dir.current = { x: 0, y: 0 };
+      enemies.current.forEach((e, i) => {
+        e.engaged = false;
+        const el = enemyEls.current[i];
+        if (el && !e.defeated) el.style.display = "";
+      });
+      graceUntilRef.current = Date.now() + 500;
       setJoystickKey(k => k + 1);
     } else {
       runRef.current = false;
@@ -475,17 +482,18 @@ export default function ExploreMode({ game }) {
       const playerInSafe = inSafe(x, y);
 
       enemies.current.forEach((e, i) => {
-        if (e.defeated) return;
+        if (e.defeated || e.engaged) return;
+        const missionSafeCombat = !!(e.missionOnly || e.combatAllowedInSafeZone);
         const prevX = e.x;
         const prevY = e.y;
         const dist = Math.hypot(e.x - x, e.y - y);
-        if (beh.chase && dist < beh.detectRange && dist > 0 && !playerInSafe) {
+        if ((beh.chase || e.missionOnly) && dist < (e.missionOnly ? Math.max(beh.detectRange || 0, 260) : beh.detectRange) && dist > 0 && (!playerInSafe || missionSafeCombat)) {
           const sp = 1.5 * (beh.chaseSpeed || 1) * frameScale;
           const ang = Math.atan2(y - e.y, x - e.x);
           e.angle = ang;
           const ex = e.x + Math.cos(ang) * sp;
           const ey = e.y + Math.sin(ang) * sp;
-          if (!inSafe(ex, ey) && !hitSolid(ex, ey, world.solids)) { e.x = ex; e.y = ey; }
+          if ((!inSafe(ex, ey) || missionSafeCombat) && !hitSolid(ex, ey, world.solids)) { e.x = ex; e.y = ey; }
         } else {
           e.timer = (e.timer || 0) - frameScale;
           if (e.timer <= 0) {
@@ -495,7 +503,7 @@ export default function ExploreMode({ game }) {
           const patrolSp = (beh.patrolSpeed || 1) * frameScale;
           const ex = e.x + Math.cos(e.angle) * (0.9 * patrolSp);
           const ey = e.y + Math.sin(e.angle) * (0.9 * patrolSp);
-          if (ex < 20 || ex > world.W - 20 || ey < 20 || ey > world.H - 20 || hitSolid(ex, ey, world.solids) || inSafe(ex, ey)) e.angle = Math.random() * Math.PI * 2;
+          if (ex < 20 || ex > world.W - 20 || ey < 20 || ey > world.H - 20 || hitSolid(ex, ey, world.solids) || (inSafe(ex, ey) && !missionSafeCombat)) e.angle = Math.random() * Math.PI * 2;
           else { e.x = ex; e.y = ey; }
         }
 
@@ -522,11 +530,13 @@ export default function ExploreMode({ game }) {
           if (directional && e.facing && directional.dataset.facing !== e.facing) directional.dataset.facing = e.facing;
           setWorldDepth(el, e.y, 2);
         }
-        if (dist < 30 && !playerInSafe && Date.now() > graceUntilRef.current) {
-          e.defeated = true;
+        const collisionDist = Math.hypot(e.x - x, e.y - y);
+        if (collisionDist < 30 && (!playerInSafe || missionSafeCombat) && Date.now() > graceUntilRef.current) {
+          // El enemigo solo se registra como derrotado al ganar el combate.
+          // Escapar o perder rearma el actor y evita borrar objetivos de misión.
+          e.engaged = true;
           if (el) el.style.display = "none";
-          game.markEnemyDefeated?.(e.id);
-          game.onStartCombatThreat?.(e.monster);
+          game.onStartCombatThreat?.(e.monster, { worldEnemyId: e.id, missionOnly: !!e.missionOnly });
         }
       });
 
@@ -817,9 +827,7 @@ export default function ExploreMode({ game }) {
 
   const onA = () => {
     if (inCombat) return;
-    if (nearDungeon) { if (!dungeonAccess.unlocked) { showFlavor(dungeonAccess.reason); return; } setShowDungeonEntry(true); return; }
-    if (nearRecruits) { setShowRecruits(true); return; }
-    // Prioridad: objetivo de misión / punto narrativo > NPC > objetivo > desconocido > santuario > evento > cofre
+    // Prioridad: objetivo activo de misión > NPC > cofres/recursos > dungeon.
     if (nearStoryPoint) {
       const point = visibleStoryPointsRef.current.find(p => p.id === nearStoryPoint);
       const result = game.onStoryPoint?.(point || nearStoryPoint);
@@ -827,6 +835,7 @@ export default function ExploreMode({ game }) {
       setNearStoryPoint(null);
       return;
     }
+    if (nearRecruits) { setShowRecruits(true); return; }
     if (nearNpcDef) {
       if (nearNpcActions.length <= 1) {
         executeNpcAction(nearNpcActions[0] || { type: "dialogue" }, nearNpcDef);
@@ -839,6 +848,7 @@ export default function ExploreMode({ game }) {
     else if (nearShrine) { game.onOpenShrine?.(nearShrine); }
     else if (nearEvent && expEventRef.current) { const ev = expEventRef.current; if (ev.kind === "merchant") { game.onOpenShop?.("camp"); showFlavor(randomEventLine(ev)); } else { showFlavor(randomEventLine(ev)); } }
     else if (nearChest != null) { const chest = world.chests.find(c => c.id === nearChest) || nearChest; setNearChest(null); game.openChest(chest); }
+    else if (nearDungeon) { if (!dungeonAccess.unlocked) { showFlavor(dungeonAccess.reason); return; } setShowDungeonEntry(true); }
   };
 
   useKeyboardControls({
@@ -905,7 +915,7 @@ export default function ExploreMode({ game }) {
     }
   };
   const nearShrineDef = nearShrine ? (game.shrines || []).find(sh => sh.id === nearShrine) : null;
-  const proxHint = !inCombat && (nearDungeon ? `Hablar con el guardián de la dungeon` : nearRecruits ? "Hablar con los aventureros" : nearStoryPointDef ? (nearStoryPointDef.proximityLabel || `Examinar: ${nearStoryPointDef.label}`) : nearNpcDef ? (nearNpcActions.length > 1 ? `Interactuar con ${nearNpcDef.name}` : nearNpcActions[0]?.type === "shop" ? `Comprar a ${nearNpcDef.name}` : nearNpcActions[0]?.type === "smith" ? `Forjar en la herrería` : nearNpcActions[0]?.type === "rest" ? `Descansar en ${nearNpcDef.name} (${nearNpcDef.rest} oro)` : nearNpcActions[0]?.type === "restore_relic" ? `Restaurar reliquia` : nearNpcActions[0]?.type === "claim" ? `Reclamar recompensa` : nearNpcActions[0]?.type === "continue" ? `Continuar misión` : `Hablar con ${nearNpcDef.name}`) : nearChest != null ? (() => { const c = world.chests.find(x => x.id === nearChest); return c?.type === "legendary" ? "Abrir cofre legendario (3d20)" : c?.type === "ancient" ? "Abrir cofre antiguo (d20)" : "Abrir cofre común"; })() : nearStranger ? "Hablar con el desconocido" : nearShrineDef ? (nearShrineDef.isSanctuary ? (nearShrineDef.activated ? "Usar Portal de Invocación" : "Activar Portal de Invocación") : "Santuario de Atlas") : nearEvent && expEventRef.current ? (expEventRef.current.kind === "merchant" ? "Comprar al comerciante ambulante" : "Examinar") : null);
+  const proxHint = !inCombat && (nearStoryPointDef ? (nearStoryPointDef.proximityLabel || `Examinar: ${nearStoryPointDef.label}`) : nearRecruits ? "Hablar con los aventureros" : nearNpcDef ? (nearNpcActions.length > 1 ? `Interactuar con ${nearNpcDef.name}` : nearNpcActions[0]?.type === "shop" ? `Comprar a ${nearNpcDef.name}` : nearNpcActions[0]?.type === "smith" ? `Forjar en la herrería` : nearNpcActions[0]?.type === "rest" ? `Descansar en ${nearNpcDef.name} (${nearNpcDef.rest} oro)` : nearNpcActions[0]?.type === "restore_relic" ? `Restaurar reliquia` : nearNpcActions[0]?.type === "claim" ? `Reclamar recompensa` : nearNpcActions[0]?.type === "continue" ? `Continuar misión` : `Hablar con ${nearNpcDef.name}`) : nearChest != null ? (() => { const c = world.chests.find(x => x.id === nearChest); return c?.type === "legendary" ? "Abrir cofre legendario (3d20)" : c?.type === "ancient" ? "Abrir cofre antiguo (d20)" : "Abrir cofre común"; })() : nearStranger ? "Hablar con el desconocido" : nearShrineDef ? (nearShrineDef.isSanctuary ? (nearShrineDef.activated ? "Usar Portal de Invocación" : "Activar Portal de Invocación") : "Santuario de Atlas") : nearEvent && expEventRef.current ? (expEventRef.current.kind === "merchant" ? "Comprar al comerciante ambulante" : "Examinar") : nearDungeon ? `Hablar con el guardián de la dungeon` : null);
   const actionReady = !!proxHint;
   const actionButtonClass = actionReady
     ? "bg-emerald-500/95 border-emerald-100 ring-4 ring-emerald-300/35 shadow-[0_0_18px_rgba(52,211,153,.65)] animate-pulse"
@@ -1059,7 +1069,7 @@ export default function ExploreMode({ game }) {
       {npcMenu && (<NpcInteractionMenu npc={npcMenu.npc} actions={npcMenu.actions} onSelect={(action) => executeNpcAction(action, npcMenu.npc)} onClose={() => setNpcMenu(null)} />)}
       {showRecruits && recruitsList.length > 0 && (<RecruitDialog recruits={recruitsList} companion={game.companion} playerGold={player.gold} onHire={(r) => { game.hireAdventurer?.(r); }} onDismiss={() => game.dismissCompanion?.()} onClose={() => setShowRecruits(false)} />)}
       {showDungeonEntry && dungeonHere && dungeonEntryNpc && dungeonAccess.unlocked && (<DungeonEntryDialog npc={dungeonEntryNpc} dungeon={dungeonHere} isFirstTime={dungeonFirstTime} hasCompanion={!!game.companion} canHire={recruitsList.length > 0} onAsk={() => game.onDungeonAsk?.(dungeonHere.id)} onEnter={() => { setShowDungeonEntry(false); game.enterDungeon?.(dungeonHere.id); }} onHire={() => setShowRecruits(true)} onClose={() => setShowDungeonEntry(false)} />)}
-      {game.showSmith && (<BlacksmithModal player={player} tier={game.smithTier} worldFlags={game.worldFlags} onCraft={game.onCraftWeapon} onUpgrade={game.onUpgradeWeapon} onEquip={game.onEquipClassWeapon} onRepair={game.onRepairEquipment} onRestoreRelic={game.onRestoreGreenRelic} onClose={game.onCloseSmith} />)}
+      {game.showSmith && (<BlacksmithModal player={player} regionId={region.id} tier={game.smithTier} worldFlags={game.worldFlags} onForgeEquipment={game.forgeEquipment} onUpgradeEquipment={game.upgradeEquipment} onEquipEquipment={game.equipSmithEquipment} onRepair={game.onRepairEquipment} onRestoreRelic={game.onRestoreGreenRelic} onClose={game.onCloseSmith} />)}
     </div>
   );
 }

@@ -143,7 +143,7 @@ export function getBonuses(player) {
     const instance = resolveWeaponInstance(player, player.weapon);
     const ib = (instance && typeof instance !== "string") ? (instance.bonus || {}) : {};
     const s = w.stats || {};
-    addOff(w.offType, (s.attack || 0) + (ib.attack || 0));
+    addOff(w.offType, (s.attack || 0) + (ib.attack || 0) + (player.weaponUpgrades?.[player.weapon] || 0));
     maxMp += (s.maxMp || 0) + (ib.maxMp || 0);
     crit += (s.crit || 0) + (ib.crit || 0);
     speed += (s.speed || 0) + (ib.speed || 0);
@@ -166,6 +166,9 @@ export function getBonuses(player) {
     def += s.defense || 0;
     maxHp += s.maxHp || 0; maxMp += s.maxMp || 0;
     crit += s.crit || 0; speed += s.speed || 0;
+    const armorUpgrade = player.armorUpgrades?.[player.armor] || 0;
+    def += armorUpgrade;
+    magDef += Math.floor(armorUpgrade / 2);
     if (a.passive) passives.push(a.passive);
   }
 
@@ -176,6 +179,9 @@ export function getBonuses(player) {
     def += s.defense || 0;
     maxHp += s.maxHp || 0; maxMp += s.maxMp || 0;
     crit += s.crit || 0; speed += s.speed || 0;
+    const helmetUpgrade = player.helmetUpgrades?.[player.helmet] || 0;
+    def += Math.ceil(helmetUpgrade / 2);
+    magDef += Math.floor(helmetUpgrade / 2);
     if (h.passive) passives.push(h.passive);
   }
 

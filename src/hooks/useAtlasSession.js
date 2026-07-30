@@ -3,7 +3,7 @@ import { REGIONS, MONSTERS } from "@/lib/atlasData";
 import { recomputePlayer, ACCESSORIES, STARTER_ACCESSORIES, BOSS_DROPS, CLASS_OFF_TYPE } from "@/lib/atlasSkills";
 import { makeWeaponInstance, normalizeWeaponInventory, resolveWeaponDefId } from "@/lib/atlasWeaponInstances";
 import { ENERGY, getSkillSet } from "@/lib/atlasSkillDesign";
-import { getWeaponAbility, getLootWeaponAbility, CLASS_WEAPONS, WEAPON_MAX_UPGRADE, getGreenRelicWeaponId } from "@/lib/atlasWeapons";
+import { getWeaponAbility, getLootWeaponAbility, CLASS_WEAPONS, getGreenRelicWeaponId } from "@/lib/atlasWeapons";
 import { getPotion } from "@/lib/atlasShop";
 import { rollDie, canTravel, resolveTravel, resolveEscape, resolveEncounter } from "@/lib/atlasEngine";
 import { randInt } from "@/lib/atlasWorld";
@@ -33,10 +33,11 @@ import { rollDiceGroup } from "@/lib/atlasDiceSystem";
 import { buildCombatSequence } from "@/lib/atlasCombatDirector";
 import { tickAtlasStatuses } from "@/lib/atlasStatusAtlas";
 import { getSmithTierById } from "@/lib/atlasEconomyV3";
+import { createAtlasSmithActions } from "@/lib/createAtlasSmithActions";
 import { canRestoreGreenRelic, consumeGreenRelicComponents, getGreenRelicForm, getMissingGreenRelicComponents } from "@/lib/atlasRelics";
 import { resolveCommonChest, resolveAncientChest, generateLegendaryChestWeapon, missingLegendarySeals, requiredSealsForRegion } from "@/lib/atlasChestSystem";
 import { getSectorDef, getStartingCoords, getInitialUnlockedSectorKeys, getMissionUnlocks, sectorIdFromCoords, sectorKey, getNeighborSectorId, getBlockedReason, getBossGateMissionId, getBossMissionId, isSectorUnlocked, coordsFromSectorId } from "@/lib/atlasRegionSectors";
-import { createMissionState, normalizeMissionState, getMissionLockReason as missionLockReason, advanceMission, activeStoryPointIds as collectActiveStoryPointIds } from "@/lib/atlasMissionEngine";
+import { createMissionState, normalizeMissionState, getMissionLockReason as missionLockReason, getCurrentObjectiveText, advanceMission, activeStoryPointIds as collectActiveStoryPointIds } from "@/lib/atlasMissionEngine";
 import { getMissingMissionSectors } from "@/lib/atlasMissionSectors";
 import { getTransition } from "@/lib/atlasTransitions";
 import { initMissionsFromDefs, REGION_FIRST_MISSION, activateFirstMissionInFresh, resolveRegionEntryMissions } from "@/lib/atlasRegionMissions";
@@ -325,6 +326,8 @@ export default function useAtlasSession() {
     if (canActive && !priorityMissionId) setPriorityMissionId(id);
     toast(canActive ? `Misión aceptada: ${def.name}` : `Misión aceptada: ${def.name} (diario lleno)`, "mission");
     pushLog(`▶ ${def.name} — ${def.desc}`);
+    if (def.storySummary) pushLog(`Historia: ${def.storySummary}`);
+    if (def.objectives?.[0]?.text) pushLog(`Objetivo inicial: ${def.objectives[0].text}`);
 
     // Si la misión se acepta estando ya dentro del sector solicitado,
     // registra la entrada de inmediato. Esto evita que una partida reanudada
@@ -375,8 +378,10 @@ export default function useAtlasSession() {
     advanceMissionEvent({ type: "enter_sector", sectorId: currentSectorId });
     const matched = advanceMissionEvent({ type: "interact", targetId: id, sectorId: currentSectorId });
     const label = typeof storyPoint === "object" ? storyPoint.label : "Punto narrativo";
+    const activeEntry = Object.entries(missionsRef.current || {}).find(([mid, state]) => state?.active && state.status !== "done" && missionDefMap[mid]);
+    const nextText = activeEntry ? getCurrentObjectiveText(missionDefMap[activeEntry[0]], activeEntry[1]) : "La pista queda registrada en el diario.";
     return matched
-      ? { ok: true, message: `${label}: la campaña avanza.` }
+      ? { ok: true, message: `${label}: ${storyPoint?.description || "encuentras una nueva pista"}. Nuevo objetivo: ${nextText}` }
       : { ok: false, message: `${label}: este no es el objetivo actual de la misión.` };
   };
 
@@ -476,7 +481,7 @@ export default function useAtlasSession() {
       player: playerRef.current, regionIndex, blockIndex, sectorRow, threat: threatStateRef.current,
       missions, openedChests: [...openedChests], defeatedBosses: [...defeatedBosses],
       defeatedEnemyIds: [...defeatedEnemyIds], visitedSectors: [...visitedSectors],
-      priorityMissionId, unlockedSectors: [...unlockedSectors], worldFlags: worldFlagsRef.current, saveVersion: 4,
+      priorityMissionId, unlockedSectors: [...unlockedSectors], worldFlags: worldFlagsRef.current, saveVersion: 6,
       activatedSanctuaries: [...activatedSanctuariesRef.current], unlockedSanctuaries: [...unlockedSanctuaries],
       lastActivatedSanctuaryId: lastActivatedSanctuaryIdRef.current,
       unlockedRegions: [...unlockedRegionsRef.current], lastRegionId: region.id, lastSectorId: currentSectorId,
@@ -566,7 +571,7 @@ export default function useAtlasSession() {
     const en = ENERGY[character.class];
     const starterWeaponId = { Guerrero: "starter_espada_recluta", Mago: "starter_baston_aprendiz", "Pícaro": "starter_dagas_bronce" }[character.class];
     const starterArmorId = { Guerrero: "starter_armor_cuero", Mago: "starter_tunica_aprendiz", "Pícaro": "starter_ropaje_ligero" }[character.class];
-    const base = { ...character, level: 1, statPoints: 0, baseAttack: character.attack, baseDefense: character.physicalDefense ?? character.defense, baseMagicalDefense: character.magicalDefense ?? character.defense, baseMaxHp: character.hp, hp: character.hp, accessory: null, accessory2: null, accessoryInventory: [...STARTER_ACCESSORIES], helmet: null, helmetInventory: [], equipmentUnlocks: { helmet: false, accessory2: false }, weapon: null, armor: starterArmorId, armorInventory: [starterArmorId], weaponInventory: [], classWeapon: starterWeaponId, classWeaponInventory: [starterWeaponId], weaponUpgrades: {}, materials: {}, baseMaxMp: maxMp, xp: 0, gold: 0, maxMp, mp: maxMp, energyType: en?.id, energyName: en?.name, potions: 3, consumables: {}, questItems: {}, relics: {}, equipmentCondition: 100, weaponDurability: 100, weaponDurabilityMax: 100 };
+    const base = { ...character, level: 1, statPoints: 0, baseAttack: character.attack, baseDefense: character.physicalDefense ?? character.defense, baseMagicalDefense: character.magicalDefense ?? character.defense, baseMaxHp: character.hp, hp: character.hp, accessory: null, accessory2: null, accessoryInventory: [...STARTER_ACCESSORIES], helmet: null, helmetInventory: [], equipmentUnlocks: { helmet: false, accessory2: false }, weapon: null, armor: starterArmorId, armorInventory: [starterArmorId], weaponInventory: [], classWeapon: starterWeaponId, classWeaponInventory: [starterWeaponId], weaponUpgrades: {}, armorUpgrades: {}, helmetUpgrades: {}, materials: {}, baseMaxMp: maxMp, xp: 0, gold: 0, maxMp, mp: maxMp, energyType: en?.id, energyName: en?.name, potions: 3, consumables: {}, questItems: {}, relics: {}, equipmentCondition: 100, weaponDurability: 100, weaponDurabilityMax: 100 };
     setPlayer(recomputePlayer(base));
     setRegionIndex(0);
     setBlockIndex(startCoords.col);
@@ -577,7 +582,7 @@ export default function useAtlasSession() {
     const startFirstId = activateFirstMissionInFresh(r0.id, initialMissions);
     missionsByRegionRef.current = { [r0.id]: initialMissions };
     missionsRef.current = initialMissions;
-    setMissions(initialMissions); setNpcDialog(null); setShowLevelUp(false); setShowSheet(false); setShowBackpack(false); setPriorityMissionId(startFirstId || null);
+    setMissions(initialMissions); setNpcDialog(null); setShowLevelUp(false); setShowSheet(false); setShowBackpack(false); setPriorityMissionId(null);
     setChestReward(null); setToasts([]); setOpenedChests(new Set()); setDefeatedEnemyIds(new Set());
     setVisitedSectors(new Set());
     setUnlockedSectors(new Set(deriveUnlockedSectorKeys(r0.id, generateMissions(r0), initialMissions)));
@@ -597,7 +602,7 @@ export default function useAtlasSession() {
     setRespawnPos(initialSpawn);
     lastShrineRef.current = { regionIndex: 0, blockIndex: startCoords.col, sectorRow: startCoords.row, x: initialSpawn.x, y: initialSpawn.y, sanctuaryId: initialSanctuary.id };
     setLastShrine(lastShrineRef.current);
-    setLog([`Nuevo aventurero: ${character.race} ${character.class} llega a ${r0.name}.`]);
+    setLog([`Nuevo aventurero: ${character.race} ${character.class} llega a ${r0.name}.`, startFirstId ? "◆ Hay un nuevo encargo disponible en el campamento. Habla con sus habitantes para conocer qué ocurre." : ""] .filter(Boolean));
     setShowIntro(true);
     setScreen("playing");
   };
@@ -831,6 +836,9 @@ export default function useAtlasSession() {
       equipmentCondition: save.player.equipmentCondition ?? 100,
       weaponDurability: save.player.weaponDurability ?? save.player.equipmentCondition ?? 100,
       weaponDurabilityMax: save.player.weaponDurabilityMax ?? 100,
+      weaponUpgrades: save.player.weaponUpgrades || {},
+      armorUpgrades: save.player.armorUpgrades || {},
+      helmetUpgrades: save.player.helmetUpgrades || {},
     };
     if (migratedPlayer.accessory2 && migratedPlayer.accessory2 === migratedPlayer.accessory) migratedPlayer.accessory2 = null;
     setPlayer(recomputePlayer(migratedPlayer));
@@ -956,7 +964,7 @@ export default function useAtlasSession() {
     pushLog(`¡${enemyData.name} aparece! (ATK ${enemyData.attack} · DEF ${enemyData.defense} · HP ${enemyData.hp})`);
   };
 
-  const startCombatThreat = (monster) => {
+  const startCombatThreat = (monster, context = {}) => {
     const beh = worldBehavior(tierOf(threatStateRef.current).id);
     const isElite = Math.random() < beh.eliteChance;
     const normalized = monster?._atlasPlayerAnchored
@@ -975,7 +983,7 @@ export default function useAtlasSession() {
         mp, maxMp: mp, elite: true, bonusGold: 12 + Math.round(beh.rewardBonus * 40),
       };
     }
-    startCombat(m);
+    startCombat({ ...m, worldEnemyId: context.worldEnemyId || m.worldEnemyId || null, missionOnly: !!(context.missionOnly || m.missionOnly) });
   };
 
   const enemyTurn = (currentEnemy, currentPlayer) => {
@@ -1748,47 +1756,9 @@ export default function useAtlasSession() {
     setPlayer(p => recomputePlayer({ ...p, classWeapon: p.classWeapon === id ? null : p.classWeapon, classWeaponInventory: (p.classWeaponInventory || []).filter(x => x !== id), gold: (p.gold || 0) + val }));
     toast(`Vendido: +${val} oro`, "gold");
   };
-  const craftWeapon = (id) => {
-    const w = CLASS_WEAPONS[id]; if (!w || w.relic || w.starter) return;
-    const tier = getSmithTierById(smithTier);
-    if (!tier.canCraftSlots.includes(w.slot)) { toast(`${tier.label} no puede forjar esta categoría`, "info"); return; }
-    const p = playerRef.current;
-    if ((p?.classWeaponInventory || []).includes(id)) { toast("Ya posees esta arma", "info"); return; }
-    const r = w.recipe || {};
-    if ((p?.gold || 0) < (r.gold || 0)) { toast("No tienes oro suficiente", "info"); return; }
-    const mats = p?.materials || {};
-    for (const [mid, need] of Object.entries(r.materials || {})) if ((mats[mid] || 0) < need) { toast("Faltan materiales para forjar", "info"); return; }
-    setPlayer(prev => {
-      const nm = { ...(prev.materials || {}) };
-      for (const [mid, need] of Object.entries(r.materials || {})) { nm[mid] = (nm[mid] || 0) - need; if (nm[mid] <= 0) delete nm[mid]; }
-      const np = { ...prev, gold: (prev.gold || 0) - (r.gold || 0), materials: nm, classWeaponInventory: [...(prev.classWeaponInventory || []), id] };
-      if (!prev.classWeapon) { np.classWeapon = id; np.weapon = null; }
-      return recomputePlayer(np);
-    });
-    toast(`Forjado: ${w.name}`, "item");
-    pushLog(`Forjas ${w.name} en ${tier.label}.`);
-  };
-  const upgradeWeapon = (id) => {
-    const w = CLASS_WEAPONS[id]; if (!w || w.relic) { toast("Las reliquias no se mejoran como armas comunes", "info"); return; }
-    const tier = getSmithTierById(smithTier);
-    const lvl = playerRef.current?.weaponUpgrades?.[id] || 0;
-    const tierMax = Math.min(WEAPON_MAX_UPGRADE, tier.maxUpgrade);
-    if (lvl >= tierMax) { toast(`Esta forja solo permite mejorar hasta +${tierMax}`, "info"); return; }
-    const upGold = 12 + lvl * 12;
-    const upMat = Object.keys(w.recipe?.materials || {})[0] || null;
-    const upNeed = upMat ? 1 + lvl : 0;
-    const p = playerRef.current;
-    if ((p?.gold || 0) < upGold) { toast("No tienes oro suficiente", "info"); return; }
-    if (upMat && (p?.materials?.[upMat] || 0) < upNeed) { toast("Faltan materiales para mejorar", "info"); return; }
-    setPlayer(prev => {
-      const nm = { ...(prev.materials || {}) };
-      if (upMat) { nm[upMat] = (nm[upMat] || 0) - upNeed; if (nm[upMat] <= 0) delete nm[upMat]; }
-      const wu = { ...(prev.weaponUpgrades || {}) };
-      wu[id] = (wu[id] || 0) + 1;
-      return recomputePlayer({ ...prev, gold: (prev.gold || 0) - upGold, materials: nm, weaponUpgrades: wu });
-    });
-    toast(`Mejorado: ${w.name} +${lvl + 1}`, "equip");
-  };
+  const { forgeEquipment, upgradeEquipment, craftWeapon, upgradeWeapon } = createAtlasSmithActions({
+    playerRef, setPlayer, smithTier, region, worldFlagsRef, toast, pushLog,
+  });
   const equipArmor = (id) => { const was = playerRef.current?.armor === id; setPlayer(p => recomputePlayer({ ...p, armor: p.armor === id ? null : id })); toast(was ? "Armadura desequipada" : `Equipado: ${ARMORS[id]?.name || ""}`, "equip"); };
   const sellWeapon = (uid) => {
     const inv = playerRef.current?.weaponInventory || [];
@@ -1870,7 +1840,7 @@ export default function useAtlasSession() {
     toast(`Usas ${pot.name}`, "heal");
   };
 
-  const { handleAttack, handleSkill, usePotion, triggerEnemyTurn, tickPlayerStatusTurn } = createAtlasCombatActions({
+  const { handleAttack, handleSkill, useCombatConsumable, triggerEnemyTurn, tickPlayerStatusTurn } = createAtlasCombatActions({
     enemy,
     player,
     diceAnim,
@@ -1914,6 +1884,7 @@ export default function useAtlasSession() {
     combatRef.current.playerStatuses = {};
     setPlayerStatuses({});
     if (!info) return;
+    if (deadEnemy?.worldEnemyId) markEnemyDefeated(deadEnemy.worldEnemyId);
     // Mini jefe de dungeon: combate clásico — recompensa y salida libre.
     if (dungeonBossContextRef.current) {
       dungeonBossContextRef.current = null;
@@ -2049,10 +2020,8 @@ export default function useAtlasSession() {
     });
     if (r.xp) gainXp(KILL_XP[regionIndex] * r.xp);
 
-    // Encadena automáticamente el siguiente encargo disponible para evitar
-    // que la campaña se estanque tras reclamar una misión puente.
+    // La siguiente misión queda disponible en su NPC, pero nunca se acepta sola.
     let chainedMissions = completedMissions;
-    const activeAfterClaim = Object.values(chainedMissions).filter(m => m.active && m.status !== "done").length;
     const orderedDefs = Object.values(missionDefMap).sort((a, b) => {
       const actDiff = (a.act || 0) - (b.act || 0);
       return actDiff !== 0 ? actDiff : String(a.id).localeCompare(String(b.id));
@@ -2064,24 +2033,14 @@ export default function useAtlasSession() {
       return !missionLockReason(def2, chainedMissions, worldFlagsRef.current, threat);
     });
     if (nextUnlocked) {
-      const autoActive = activeAfterClaim < 3;
       chainedMissions = {
         ...chainedMissions,
-        [nextUnlocked.id]: {
-          ...normalizeMissionState(nextUnlocked, chainedMissions[nextUnlocked.id]),
-          accepted: true,
-          active: autoActive,
-        },
+        [nextUnlocked.id]: { ...normalizeMissionState(nextUnlocked, chainedMissions[nextUnlocked.id]), discovered: true, accepted: false, active: false },
       };
       missionsRef.current = chainedMissions;
       setMissions(chainedMissions);
-      if (nextUnlocked.onAccept) applyMissionEffects(nextUnlocked.onAccept, "accept");
-      setPriorityMissionId(nextUnlocked.id);
-      toast(`Nueva misión: ${nextUnlocked.name}`, "mission");
-      pushLog(`▶ Nueva misión disponible: ${nextUnlocked.name}.`);
-      if (autoActive && nextUnlocked.objectives?.[0]?.type === "enter_sector" && nextUnlocked.objectives[0].sectorId === currentSectorId) {
-        advanceMissionEvent({ type: "enter_sector", sectorId: currentSectorId });
-      }
+      toast(`Nuevo encargo disponible: ${nextUnlocked.name}`, "mission");
+      pushLog(`◆ ${nextUnlocked.name} está disponible. Habla con el NPC correspondiente para conocer la historia y aceptarla.`);
     }
 
     const done = Object.keys(missionDefMap).every(id2 => chainedMissions[id2]?.status === "done");
@@ -2115,6 +2074,13 @@ export default function useAtlasSession() {
     sellAccessory,
     discardAccessory,
   } = createAtlasEquipmentActions({ playerRef, setPlayer, toast });
+
+  const equipSmithEquipment = (kind, ref) => {
+    if (kind === "classWeapon") return equipClassWeapon(ref);
+    if (kind === "weapon") return equipWeapon(ref);
+    if (kind === "armor") return equipArmor(ref);
+    if (kind === "helmet") return equipHelmet(ref);
+  };
 
   const openChest = (chestInput) => {
     const chest = typeof chestInput === "object"
@@ -2202,8 +2168,8 @@ export default function useAtlasSession() {
   const markEnemyDefeated = (id) => setDefeatedEnemyIds(s => new Set([...s, id]));
 
   const respawnDaily = () => {
-    setDefeatedEnemyIds(new Set());
-    pushLog("Amanece. Los enemigos caídos han regresado al mundo.");
+    setDefeatedEnemyIds(prev => new Set([...prev].filter(id => String(id).startsWith("mission:"))));
+    pushLog("Amanece. Los enemigos ambientales han regresado al mundo.");
     toast("Nuevo día: los enemigos han reaparecido", "info");
   };
 
@@ -2326,7 +2292,7 @@ export default function useAtlasSession() {
     onOpenSettlementNpc: openSettlementNpc, closeSettlementNpc, onOpenFlavor: openFlavor, closeFlavor, flavorDialog, activeSettlementNpc,
     buyPotion, useConsumable, buyEquipment,
     equipWeapon, equipArmor, sellWeapon, sellArmor, sellMaterial,
-    equipClassWeapon, sellClassWeapon, craftWeapon, upgradeWeapon, showSmith, setShowSmith, smithTier, openSmith, repairEquipment, damageWeapon, restoreGreenRelic,
+    equipClassWeapon, sellClassWeapon, craftWeapon, upgradeWeapon, forgeEquipment, upgradeEquipment, equipSmithEquipment, showSmith, setShowSmith, smithTier, openSmith, repairEquipment, damageWeapon, restoreGreenRelic,
     lootReward, closeLootReward: () => setLootReward(null), destinyEvent, closeDestinyEvent: () => setDestinyEvent(null),
     showEquipment, setShowEquipment,
     showIntro, dismissIntro: () => setShowIntro(false),
@@ -2334,7 +2300,7 @@ export default function useAtlasSession() {
     onShrineCheck, onOpenShrine: openShrine, onActivateShrine: activateShrine, closeShrine, consumeShrineNotify, consumeRespawn, respawnAtShrine,
     activatedSanctuaries, unlockedSanctuaries, lastActivatedSanctuaryId, unlockedRegions, travelToSanctuary, regionLoading, regionError,
     onStartCombatThreat: startCombatThreat, onThreatEvent, onExploreThreat, onIdleThreat, onStrangerMeet,
-    skills, skillCosts: skills ? { classAbility: skills.classAbility?.cost, hybrid: skills.hybrid?.cost } : {}, onSkill: handleSkill, onItem: usePotion,
+    skills, skillCosts: skills ? { classAbility: skills.classAbility?.cost, hybrid: skills.hybrid?.cost } : {}, onSkill: handleSkill, onItem: useCombatConsumable,
     playerStatuses, respawnDaily,
     inDungeon, currentDungeonId, currentDungeon, enterDungeon, exitDungeon, descendDungeon, dungeonFloor, dungeonBossDefeated, startDungeonBossCombat, activateDungeonFinalSanctuary,
     onDungeonPlayerDamage, onDungeonSpendEnergy, onDungeonEnemyKilled,

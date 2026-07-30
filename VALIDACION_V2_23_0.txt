@@ -1,0 +1,43 @@
+PROYECTO ATLAS VISUAL v2.23.0
+REPORTE DE VALIDACIÓN
+
+1. npm run validate:syntax-imports
+   RESULTADO: APROBADO
+   - 292 archivos JS/JSX/MJS sin errores sintácticos.
+   - 661 imports locales resueltos.
+
+2. npm run validate:v2-23-core
+   RESULTADO: APROBADO
+   - 12 grupos específicos aprobados.
+   - Verificación de las 20 caras del D20.
+   - Reducción aplicada después del daño bruto.
+   - Contraataque del resultado 1 validado.
+   - Crítico del resultado 20 validado.
+   - Enemigos de misión estables.
+   - Forja y mejora regional validadas.
+   - Migración de guardado v6 validada.
+
+3. npm run validate:v2-22
+   RESULTADO: APROBADO
+   - Cadena heredada completa ejecutada sin regresiones.
+   - HUD, controles, fluidez, combate, misiones, arte maestro, regiones,
+     equipamiento y composición histórica conservados.
+
+4. npm run validate:v2-23
+   RESULTADO: APROBADO
+   - Integra sintaxis, suite específica v2.23 y cadena heredada v2.22.
+
+5. npm run typecheck
+   RESULTADO: NO CONCLUYENTE POR ENTORNO Y DEUDA PREEXISTENTE
+   - Dependencias de React y otras librerías no estaban instaladas.
+   - También aparecen diagnósticos históricos ajenos a esta actualización.
+
+6. npm ci / npm run lint / npm run build
+   RESULTADO: BLOQUEADO POR REGISTRO DE PAQUETES DEL ENTORNO
+   - El registro disponible devuelve 404 para zwitch@2.0.4.
+   - Sin instalación completa no existen los binarios locales eslint y vite.
+
+CONCLUSIÓN
+La fuente de Atlas v2.23.0 supera la validación sintáctica, la suite funcional
+nueva y toda la cadena de regresión v2.22. El empaquetado de producción Vite
+debe ejecutarse en el PC del proyecto con acceso normal al registro npm.
