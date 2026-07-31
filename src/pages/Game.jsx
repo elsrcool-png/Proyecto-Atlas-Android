@@ -236,6 +236,7 @@ export default function Game() {
     onSellWeapon: s.sellWeapon, onSellArmor: s.sellArmor, onSellHelmet: s.sellHelmet, onSellAccessory: s.sellAccessory, onSellMaterial: s.sellMaterial,
     onEquipClassWeapon: s.equipClassWeapon, onSellClassWeapon: s.sellClassWeapon,
     onOpenSmith: s.openSmith, onCloseSmith: () => s.setShowSmith(false), onCraftWeapon: s.craftWeapon, onUpgradeWeapon: s.upgradeWeapon, showSmith: s.showSmith,
+    forgeEquipment: s.forgeEquipment, upgradeEquipment: s.upgradeEquipment, equipSmithEquipment: s.equipSmithEquipment,
     smithTier: s.smithTier, onRepairEquipment: s.repairEquipment, onRestoreGreenRelic: s.restoreGreenRelic, worldFlags: s.worldFlags,
     onUpdateSettings: updateSettings,
     shrines: s.shrines, onShrineCheck: s.onShrineCheck, onOpenShrine: s.onOpenShrine, onActivateShrine: s.onActivateShrine,

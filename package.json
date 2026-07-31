@@ -1,7 +1,7 @@
 {
   "name": "base44-app",
   "private": true,
-  "version": "2.23.2",
+  "version": "2.23.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -59,7 +59,11 @@
     "validate:v2-23-1-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23-1.mjs",
     "validate:v2-23-1": "npm run validate:syntax-imports && npm run validate:v2-23-1-core && npm run validate:v2-23",
     "validate:v2-23-2-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23-2.mjs",
-    "validate:v2-23-2": "npm run validate:syntax-imports && npm run validate:v2-23-2-core && npm run validate:v2-23-1"
+    "validate:v2-23-2": "npm run validate:syntax-imports && npm run validate:v2-23-2-core && npm run validate:v2-23-1",
+    "validate:v2-23-3-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23-3.mjs",
+    "validate:v2-23-3": "npm run validate:syntax-imports && npm run validate:v2-23-3-core && npm run validate:v2-23-2",
+    "validate:v2-23-4-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23-4.mjs",
+    "validate:v2-23-4": "npm run validate:syntax-imports && npm run validate:v2-23-4-core && npm run validate:v2-23-3"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.39",

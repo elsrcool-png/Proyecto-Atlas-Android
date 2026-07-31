@@ -1,0 +1,1074 @@
+
+> base44-app@2.23.3 validate:v2-23-3
+> npm run validate:syntax-imports && npm run validate:v2-23-3-core && npm run validate:v2-23-2
+
+
+> base44-app@2.23.3 validate:syntax-imports
+> node scripts/validate-syntax-imports-v2-19-7.mjs
+
+✓ 292 archivos JS/JSX/MJS sin errores sintácticos
+✓ 661 imports locales resueltos
+VALIDACIÓN DE SINTAXIS E IMPORTS v2.19.7 CORRECTA
+
+> base44-app@2.23.3 validate:v2-23-3-core
+> node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23-3.mjs
+
+(node:5126) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/atlas-alias-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Versión Atlas v2.23.3 sincronizada
+✓ La herrería recibe las tres acciones desde Game hasta el modal
+✓ Forjar y mejorar ejecutan cambios reales de inventario, oro y materiales
+✓ Los herreros conservan catálogos regionales distintos
+✓ La reliquia ártica se registra y migra en partidas anteriores
+✓ La región, no solo el nivel, aumenta HP, ataque y defensas
+✓ Ártica y Árida incorporan habilidades y equipamiento regional
+✓ Aurel mantiene presión de jefe sobre un pícaro equipado
+✓ Las habilidades regionales no multiplican el ATK hasta volverlo letal por defecto
+✓ Las habilidades mágicas atacan la defensa mágica
+✓ El selector de consumibles no queda tapado por la descripción enemiga
+
+VALIDACIÓN ATLAS v2.23.3 CORRECTA — 11 grupos aprobados
+
+> base44-app@2.23.3 validate:v2-23-2
+> npm run validate:syntax-imports && npm run validate:v2-23-2-core && npm run validate:v2-23-1
+
+
+> base44-app@2.23.3 validate:syntax-imports
+> node scripts/validate-syntax-imports-v2-19-7.mjs
+
+✓ 292 archivos JS/JSX/MJS sin errores sintácticos
+✓ 661 imports locales resueltos
+VALIDACIÓN DE SINTAXIS E IMPORTS v2.19.7 CORRECTA
+
+> base44-app@2.23.3 validate:v2-23-2-core
+> node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23-2.mjs
+
+(node:5185) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/atlas-alias-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Versión Atlas v2.23.2 o posterior de la familia
+✓ La mitad o más de los dados en 1 produce fallo crítico
+✓ Menos de la mitad de dados en 1 no falla críticamente
+✓ 1d20 mantiene el 1 natural como fallo crítico
+✓ El fallo compuesto domina la suma, el crítico y las mejoras
+✓ Sin fallo compuesto, la suma sigue usando la tabla universal
+✓ Todas las ofensivas del jugador transmiten la regla al resolver daño
+✓ El evento conserva las caras, cantidad de unos y umbral
+
+VALIDACIÓN ATLAS v2.23.2 CORRECTA — 8 grupos aprobados
+
+> base44-app@2.23.3 validate:v2-23-1
+> npm run validate:syntax-imports && npm run validate:v2-23-1-core && npm run validate:v2-23
+
+
+> base44-app@2.23.3 validate:syntax-imports
+> node scripts/validate-syntax-imports-v2-19-7.mjs
+
+✓ 292 archivos JS/JSX/MJS sin errores sintácticos
+✓ 661 imports locales resueltos
+VALIDACIÓN DE SINTAXIS E IMPORTS v2.19.7 CORRECTA
+
+> base44-app@2.23.3 validate:v2-23-1-core
+> node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23-1.mjs
+
+(node:5244) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/atlas-alias-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Versión Atlas v2.23.1 o posterior de la familia
+✓ Todos los grupos ofensivos alcanzan un máximo de 20
+✓ La tabla universal resuelve cualquier suma entre 1 y 20
+✓ Técnica, Fuerza y Versátil usan sus totales reales en la tabla
+✓ La reducción establecida se aplica después de la tabla universal
+✓ Las mejoras de calidad permanecen dentro de la misma tabla
+✓ Todas las habilidades clásicas entregan un total efectivo a resolveAttack
+✓ El registro identifica correctamente cada grupo de dados
+
+VALIDACIÓN ATLAS v2.23.1 CORRECTA — 8 grupos aprobados
+
+> base44-app@2.23.3 validate:v2-23
+> npm run validate:syntax-imports && npm run validate:v2-23-core && npm run validate:v2-22
+
+
+> base44-app@2.23.3 validate:syntax-imports
+> node scripts/validate-syntax-imports-v2-19-7.mjs
+
+✓ 292 archivos JS/JSX/MJS sin errores sintácticos
+✓ 661 imports locales resueltos
+VALIDACIÓN DE SINTAXIS E IMPORTS v2.19.7 CORRECTA
+
+> base44-app@2.23.3 validate:v2-23-core
+> node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-23.mjs
+
+(node:5303) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/atlas-alias-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Versión Atlas de la familia v2.23
+✓ Las 20 caras del D20 usan las bandas aprobadas
+✓ La reducción existente se aplica después del daño bruto
+✓ El 1 activa contraataque y conserva reducción
+✓ El 20 inflige ATK e ignora DEF
+✓ Los enemigos de misión tienen IDs estables y no dependen del respawn
+✓ La forja regional muestra y consume todos los requisitos
+✓ Armas regionales y armaduras poseen ruta de mejora
+✓ UI integra Consumible y herrería regional completa
+✓ Guardado v6 migra mapas de mejora
+✓ Exploración prioriza misión y derrota solo tras victoria
+✓ Misiones se descubren sin aceptación automática
+
+VALIDACIÓN ATLAS v2.23.x CORRECTA — 12 grupos aprobados
+
+> base44-app@2.23.3 validate:v2-22
+> npm run validate:hud-adaptive-v2-22-9 && npm run validate:hud-menu-v2-22-8 && npm run validate:fluidez-v2-22-7 && npm run validate:action-a-v2-22-6 && npm run validate:ui-v2-22-4 && npm run validate:menu-v2-22-1 && npm run validate:prepared-v2-21
+
+
+> base44-app@2.23.3 validate:hud-adaptive-v2-22-9
+> node scripts/validate-hud-adaptive-v2-22-9.mjs
+
+✓ versión 2.22.9 o posterior
+✓ validación adaptativa incluida en cadena acumulativa
+✓ cabecera adaptativa real
+✓ botón A contextual y discreto cuando no se usa
+✓ menú rápido reemplaza la fila saturada de accesos
+✓ orientación accesible desde menú rápido
+✓ composiciones independientes para vertical y horizontal
+✓ áreas seguras y altura dinámica respetadas
+✓ cuatro perfiles del HUD Maestro
+✓ perfiles disponibles desde todos los ajustes
+✓ densidad adaptativa disponible
+✓ editor controla cabecera y conserva guardar/cancelar
+✓ controles siguen siendo arrastrables por orientación
+✓ migración segura de ajustes anteriores
+✓ perfil activo conectado a exploración
+✓ menú rápido conectado con hoja y ajustes reales
+
+Validación v2.22.9 correcta: HUD Maestro Adaptativo integrado.
+
+> base44-app@2.23.3 validate:hud-menu-v2-22-8
+> node scripts/validate-hud-menu-v2-22-8.mjs
+
+✓ versión 2.22.8 o posterior
+✓ CSS no fuerza la posición del joystick sobre el perfil guardado
+✓ editor del HUD táctil disponible
+✓ editor accesible desde ambos ajustes
+✓ pausa incluye retorno seguro al menú principal
+✓ pausa abre el editor del HUD
+✓ ExploreMode conecta retorno al menú
+✓ retorno guarda y vuelve al menú sin borrar ranura
+
+Validación v2.22.8 correcta: HUD táctil personalizable y retorno seguro al menú principal.
+
+> base44-app@2.23.3 validate:fluidez-v2-22-7
+> node scripts/validate-fluidez-v2-22-7.mjs
+
+✓ versión 2.22.7 o posterior
+✓ validación de fluidez incluida en la cadena acumulativa
+✓ simulación de paso fijo a 60 Hz
+✓ velocidad expresada por segundo
+✓ acumulador temporal de simulación
+✓ compensación de fotogramas perdidos
+✓ protección contra espiral de actualización
+✓ cámara independiente de FPS
+✓ IA separada del render
+✓ proximidad limitada a 15 Hz
+✓ RAF detenido en pausa y combate
+✓ RAF suspendido al ocultar la app
+✓ sprite direccional cacheado
+✓ sin querySelector por actualización de IA
+✓ movimiento acelerado mediante translate3d
+✓ imágenes del mundo con decodificación asíncrona
+✓ sin decodificación síncrona en el mundo
+✓ carga diferida de objetos no críticos
+✓ precarga limitada a activos críticos
+✓ caché de precarga acotada
+✓ joystick mide geometría una sola vez por gesto
+✓ pointermove agrupado por fotograma
+✓ joystick sin retraso mientras se arrastra
+✓ retorno suave solo al soltar
+✓ selector real de Región Verde conectado
+✓ interpolación visual para actores a menor frecuencia
+✓ perfil de rendimiento automático para móvil táctil
+✓ filtros redundantes desactivados en Región Verde
+✓ velocidad estable a 30/60/90/120 FPS
+
+Validación v2.22.7 correcta: Fase 0 y Fase 1 de fluidez integradas.
+
+> base44-app@2.23.3 validate:action-a-v2-22-6
+> node scripts/validate-action-a-v2-22-6.mjs
+
+✓ A conserva activación inmediata
+✓ A usa pointerdown
+✓ existe bloqueo de click fantasma
+✓ bloqueo opera en captura global
+✓ bloqueo temporal acotado
+✓ bloqueo limitado a la coordenada del toque
+✓ click de compatibilidad no atraviesa al modal
+✓ toque directo cancela compatibilidad nativa
+✓ toque directo no burbujea
+✓ sin captura de puntero problemática
+✓ src/components/atlas/NPCDialog.jsx cierra solo con un pointerdown real sobre el fondo
+✓ src/components/atlas/NpcInteractionMenu.jsx cierra solo con un pointerdown real sobre el fondo
+✓ src/components/atlas/FlavorDialog.jsx cierra solo con un pointerdown real sobre el fondo
+✓ src/components/atlas/RecruitDialog.jsx cierra solo con un pointerdown real sobre el fondo
+✓ src/components/atlas/ChestRewardModal.jsx cierra solo con un pointerdown real sobre el fondo
+✓ src/components/atlas/LootRewardModal.jsx cierra solo con un pointerdown real sobre el fondo
+✓ src/components/atlas/ShopModal.jsx cierra solo con un pointerdown real sobre el fondo
+✓ src/components/atlas/DestinyEventModal.jsx cierra solo con un pointerdown real sobre el fondo
+✓ versión 2.22.6 o posterior
+✓ validación acumulativa usa la corrección nueva
+
+Validación v2.22.6 correcta: el toque A no puede abrir y cerrar el diálogo con el mismo gesto.
+
+> base44-app@2.23.3 validate:ui-v2-22-4
+> node scripts/validate-ui-classic-v2-22-4.mjs
+
+✓ UI v3 desactivada por defecto
+✓ fallback clásico conservado
+✓ Centro de Atlas usa menú clásico
+✓ Centro de Atlas sin pestañas
+✓ Centro abre en menú de secciones
+✓ cada sección tiene regreso explícito
+✓ Mochila sin pestañas
+✓ Mochila sin corte interno de 50vh
+✓ Mochila con una sola zona desplazable
+✓ botón admite activación al soltar
+✓ toque Android sin captura invasiva
+✓ botón A responde al primer contacto
+✓ adaptación horizontal y áreas seguras
+✓ base clásica v2.22.4 o correcciones posteriores
+
+Validación de interfaz clásica correcta: mochila completa y acción A inmediata.
+
+> base44-app@2.23.3 validate:menu-v2-22-1
+> node scripts/validate-menu-input-v2-22-1.mjs
+
+OK v2.22.4: menú clásico estable y acción táctil por pulsación breve.
+
+> base44-app@2.23.3 validate:prepared-v2-21
+> npm run validate:modular-v2-21 && npm run validate:v2-21
+
+
+> base44-app@2.23.3 validate:modular-v2-21
+> node scripts/validate-modular-integration-v2-21.mjs
+
+PASS MODULAR INTEGRATION V2.21
+3 rigs · sockets completos en rig-space · 16 universales · 13 familias · 65 clips · 56 armas · 164 objetos
+ART PENDING: renderer permanece apagado y usa maestro_v1.
+
+> base44-app@2.23.3 validate:v2-21
+> npm run validate:equipment-v2-21 && npm run validate:v2-20
+
+
+> base44-app@2.23.3 validate:equipment-v2-21
+> node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-equipment-v2-21.mjs
+
+(node:5524) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/atlas-alias-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ 99 objetos comerciales únicos
+✓ 39 objetos de botín independientes
+✓ 24 cascos catalogados
+✓ Niveles regionales encadenados: Verde 1-8, Ártica 9-16, Árida 17-25
+✓ Potencia comercial creciente en Campamento, Pueblo y Ciudad
+✓ Armas, armaduras y cascos comerciales cubren las tres clases
+✓ Desbloqueos: Casco tras jefe Verde, Accesorio II tras jefe Ártico
+VALIDACIÓN DE EQUIPAMIENTO REGIONAL V2.21 CORRECTA
+
+> base44-app@2.23.3 validate:v2-20
+> npm run validate:syntax-imports && npm run validate:v2-20-core && npm run validate:v2-19-7
+
+
+> base44-app@2.23.3 validate:syntax-imports
+> node scripts/validate-syntax-imports-v2-19-7.mjs
+
+✓ 292 archivos JS/JSX/MJS sin errores sintácticos
+✓ 661 imports locales resueltos
+VALIDACIÓN DE SINTAXIS E IMPORTS v2.19.7 CORRECTA
+
+> base44-app@2.23.3 validate:v2-20-core
+> node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-20.mjs
+
+(node:5583) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("./scripts/atlas-alias-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Versión compatible con Atlas v2.20 o superior
+✓ Perfiles vertical y horizontal con cuatro controles
+✓ Botones Pointer Events y joystick con pointerId independiente
+✓ Selección accidental desactivada solo en superficies jugables
+✓ Editor de controles con arrastre, tamaño, opacidad y presets
+✓ Botón de orientación disponible en exploración, combate y dungeon
+✓ Respuesta háptica configurable y sincronizada con impactos
+✓ Iconos de estado visibles en habilidades de combate y dungeon
+✓ Parálisis de un turno consume exactamente una acción
+✓ Congelación de dos turnos consume dos acciones
+✓ Acción bloqueada no gasta durabilidad, energía ni consumibles
+✓ Intro de combate conserva título y elimina barra de carga
+✓ Objeto C2 Verde separado del altar de teletransporte
+✓ Marcadores de misión dominan el orden visual
+✓ Todos los encargos y objetivos de diálogo conservan su NPC accesible
+✓ Todos los objetivos interactivos de campaña conservan marcador físico
+✓ Los 27 sectores son caminables y sin superposiciones interactivas
+
+VALIDACIÓN ATLAS v2.20 CORRECTA — 17 grupos aprobados
+
+> base44-app@2.23.3 validate:v2-19-7
+> npm run validate:syntax-imports && npm run validate:arctic-npc-complete && npm run validate:v2-19-6
+
+
+> base44-app@2.23.3 validate:syntax-imports
+> node scripts/validate-syntax-imports-v2-19-7.mjs
+
+✓ 292 archivos JS/JSX/MJS sin errores sintácticos
+✓ 661 imports locales resueltos
+VALIDACIÓN DE SINTAXIS E IMPORTS v2.19.7 CORRECTA
+
+> base44-app@2.23.3 validate:arctic-npc-complete
+> node scripts/validate-arctic-npc-complete-v2-19-7.mjs
+
+✓ Versión compatible con Atlas v2.19.7 o superior — actual=2.23.3
+✓ Script agregado a package.json
+✓ Borin conectado al catálogo maestro
+✓ Einar conectado al catálogo maestro
+✓ Auditoría declara 18 NPC árticos
+✓ Borin y Einar dejaron de ser fallback procedural
+✓ fria_astra/down usa lienzo 72×96 — 72×96
+✓ fria_astra/down contiene arte visible — 10130 bytes
+✓ fria_astra/up usa lienzo 72×96 — 72×96
+✓ fria_astra/up contiene arte visible — 9854 bytes
+✓ fria_astra/left usa lienzo 72×96 — 72×96
+✓ fria_astra/left contiene arte visible — 10166 bytes
+✓ fria_astra/right usa lienzo 72×96 — 72×96
+✓ fria_astra/right contiene arte visible — 10098 bytes
+✓ fria_boreas/down usa lienzo 72×96 — 72×96
+✓ fria_boreas/down contiene arte visible — 8382 bytes
+✓ fria_boreas/up usa lienzo 72×96 — 72×96
+✓ fria_boreas/up contiene arte visible — 7942 bytes
+✓ fria_boreas/left usa lienzo 72×96 — 72×96
+✓ fria_boreas/left contiene arte visible — 8686 bytes
+✓ fria_boreas/right usa lienzo 72×96 — 72×96
+✓ fria_boreas/right contiene arte visible — 8860 bytes
+✓ fria_borin/down usa lienzo 72×96 — 72×96
+✓ fria_borin/down contiene arte visible — 10778 bytes
+✓ fria_borin/up usa lienzo 72×96 — 72×96
+✓ fria_borin/up contiene arte visible — 9878 bytes
+✓ fria_borin/left usa lienzo 72×96 — 72×96
+✓ fria_borin/left contiene arte visible — 9920 bytes
+✓ fria_borin/right usa lienzo 72×96 — 72×96
+✓ fria_borin/right contiene arte visible — 9414 bytes
+✓ fria_captain/down usa lienzo 72×96 — 72×96
+✓ fria_captain/down contiene arte visible — 8910 bytes
+✓ fria_captain/up usa lienzo 72×96 — 72×96
+✓ fria_captain/up contiene arte visible — 7968 bytes
+✓ fria_captain/left usa lienzo 72×96 — 72×96
+✓ fria_captain/left contiene arte visible — 9164 bytes
+✓ fria_captain/right usa lienzo 72×96 — 72×96
+✓ fria_captain/right contiene arte visible — 8352 bytes
+✓ fria_dvalin/down usa lienzo 72×96 — 72×96
+✓ fria_dvalin/down contiene arte visible — 9610 bytes
+✓ fria_dvalin/up usa lienzo 72×96 — 72×96
+✓ fria_dvalin/up contiene arte visible — 8720 bytes
+✓ fria_dvalin/left usa lienzo 72×96 — 72×96
+✓ fria_dvalin/left contiene arte visible — 9794 bytes
+✓ fria_dvalin/right usa lienzo 72×96 — 72×96
+✓ fria_dvalin/right contiene arte visible — 9396 bytes
+✓ fria_einar/down usa lienzo 72×96 — 72×96
+✓ fria_einar/down contiene arte visible — 10898 bytes
+✓ fria_einar/up usa lienzo 72×96 — 72×96
+✓ fria_einar/up contiene arte visible — 9738 bytes
+✓ fria_einar/left usa lienzo 72×96 — 72×96
+✓ fria_einar/left contiene arte visible — 10142 bytes
+✓ fria_einar/right usa lienzo 72×96 — 72×96
+✓ fria_einar/right contiene arte visible — 10082 bytes
+✓ fria_freya/down usa lienzo 72×96 — 72×96
+✓ fria_freya/down contiene arte visible — 9362 bytes
+✓ fria_freya/up usa lienzo 72×96 — 72×96
+✓ fria_freya/up contiene arte visible — 8154 bytes
+✓ fria_freya/left usa lienzo 72×96 — 72×96
+✓ fria_freya/left contiene arte visible — 9188 bytes
+✓ fria_freya/right usa lienzo 72×96 — 72×96
+✓ fria_freya/right contiene arte visible — 9184 bytes
+✓ fria_helga/down usa lienzo 72×96 — 72×96
+✓ fria_helga/down contiene arte visible — 10490 bytes
+✓ fria_helga/up usa lienzo 72×96 — 72×96
+✓ fria_helga/up contiene arte visible — 9660 bytes
+✓ fria_helga/left usa lienzo 72×96 — 72×96
+✓ fria_helga/left contiene arte visible — 10632 bytes
+✓ fria_helga/right usa lienzo 72×96 — 72×96
+✓ fria_helga/right contiene arte visible — 9856 bytes
+✓ fria_hostelera/down usa lienzo 72×96 — 72×96
+✓ fria_hostelera/down contiene arte visible — 7370 bytes
+✓ fria_hostelera/up usa lienzo 72×96 — 72×96
+✓ fria_hostelera/up contiene arte visible — 6744 bytes
+✓ fria_hostelera/left usa lienzo 72×96 — 72×96
+✓ fria_hostelera/left contiene arte visible — 8030 bytes
+✓ fria_hostelera/right usa lienzo 72×96 — 72×96
+✓ fria_hostelera/right contiene arte visible — 7252 bytes
+✓ fria_kael_forger/down usa lienzo 72×96 — 72×96
+✓ fria_kael_forger/down contiene arte visible — 9148 bytes
+✓ fria_kael_forger/up usa lienzo 72×96 — 72×96
+✓ fria_kael_forger/up contiene arte visible — 8630 bytes
+✓ fria_kael_forger/left usa lienzo 72×96 — 72×96
+✓ fria_kael_forger/left contiene arte visible — 9362 bytes
+✓ fria_kael_forger/right usa lienzo 72×96 — 72×96
+✓ fria_kael_forger/right contiene arte visible — 9004 bytes
+✓ fria_lyra_cartographer/down usa lienzo 72×96 — 72×96
+✓ fria_lyra_cartographer/down contiene arte visible — 9230 bytes
+✓ fria_lyra_cartographer/up usa lienzo 72×96 — 72×96
+✓ fria_lyra_cartographer/up contiene arte visible — 8342 bytes
+✓ fria_lyra_cartographer/left usa lienzo 72×96 — 72×96
+✓ fria_lyra_cartographer/left contiene arte visible — 9372 bytes
+✓ fria_lyra_cartographer/right usa lienzo 72×96 — 72×96
+✓ fria_lyra_cartographer/right contiene arte visible — 8960 bytes
+✓ fria_lyra_researcher/down usa lienzo 72×96 — 72×96
+✓ fria_lyra_researcher/down contiene arte visible — 9920 bytes
+✓ fria_lyra_researcher/up usa lienzo 72×96 — 72×96
+✓ fria_lyra_researcher/up contiene arte visible — 9310 bytes
+✓ fria_lyra_researcher/left usa lienzo 72×96 — 72×96
+✓ fria_lyra_researcher/left contiene arte visible — 10074 bytes
+✓ fria_lyra_researcher/right usa lienzo 72×96 — 72×96
+✓ fria_lyra_researcher/right contiene arte visible — 9798 bytes
+✓ fria_merchant_camp/down usa lienzo 72×96 — 72×96
+✓ fria_merchant_camp/down contiene arte visible — 9662 bytes
+✓ fria_merchant_camp/up usa lienzo 72×96 — 72×96
+✓ fria_merchant_camp/up contiene arte visible — 9394 bytes
+✓ fria_merchant_camp/left usa lienzo 72×96 — 72×96
+✓ fria_merchant_camp/left contiene arte visible — 9444 bytes
+✓ fria_merchant_camp/right usa lienzo 72×96 — 72×96
+✓ fria_merchant_camp/right contiene arte visible — 9368 bytes
+✓ fria_merchant_glacial/down usa lienzo 72×96 — 72×96
+✓ fria_merchant_glacial/down contiene arte visible — 9650 bytes
+✓ fria_merchant_glacial/up usa lienzo 72×96 — 72×96
+✓ fria_merchant_glacial/up contiene arte visible — 9604 bytes
+✓ fria_merchant_glacial/left usa lienzo 72×96 — 72×96
+✓ fria_merchant_glacial/left contiene arte visible — 9712 bytes
+✓ fria_merchant_glacial/right usa lienzo 72×96 — 72×96
+✓ fria_merchant_glacial/right contiene arte visible — 9280 bytes
+✓ fria_merchant_royal/down usa lienzo 72×96 — 72×96
+✓ fria_merchant_royal/down contiene arte visible — 8758 bytes
+✓ fria_merchant_royal/up usa lienzo 72×96 — 72×96
+✓ fria_merchant_royal/up contiene arte visible — 7792 bytes
+✓ fria_merchant_royal/left usa lienzo 72×96 — 72×96
+✓ fria_merchant_royal/left contiene arte visible — 8866 bytes
+✓ fria_merchant_royal/right usa lienzo 72×96 — 72×96
+✓ fria_merchant_royal/right contiene arte visible — 8462 bytes
+✓ fria_queen/down usa lienzo 72×96 — 72×96
+✓ fria_queen/down contiene arte visible — 8306 bytes
+✓ fria_queen/up usa lienzo 72×96 — 72×96
+✓ fria_queen/up contiene arte visible — 8108 bytes
+✓ fria_queen/left usa lienzo 72×96 — 72×96
+✓ fria_queen/left contiene arte visible — 7882 bytes
+✓ fria_queen/right usa lienzo 72×96 — 72×96
+✓ fria_queen/right contiene arte visible — 7912 bytes
+✓ fria_refuge_keeper/down usa lienzo 72×96 — 72×96
+✓ fria_refuge_keeper/down contiene arte visible — 10038 bytes
+✓ fria_refuge_keeper/up usa lienzo 72×96 — 72×96
+✓ fria_refuge_keeper/up contiene arte visible — 8670 bytes
+✓ fria_refuge_keeper/left usa lienzo 72×96 — 72×96
+✓ fria_refuge_keeper/left contiene arte visible — 9258 bytes
+✓ fria_refuge_keeper/right usa lienzo 72×96 — 72×96
+✓ fria_refuge_keeper/right contiene arte visible — 9620 bytes
+✓ fria_shaman/down usa lienzo 72×96 — 72×96
+✓ fria_shaman/down contiene arte visible — 10114 bytes
+✓ fria_shaman/up usa lienzo 72×96 — 72×96
+✓ fria_shaman/up contiene arte visible — 9578 bytes
+✓ fria_shaman/left usa lienzo 72×96 — 72×96
+✓ fria_shaman/left contiene arte visible — 11310 bytes
+✓ fria_shaman/right usa lienzo 72×96 — 72×96
+✓ fria_shaman/right contiene arte visible — 11018 bytes
+✓ 18 NPC × 4 direcciones presentes — 72/72
+✓ fria_borin diferencia izquierda y derecha
+✓ fria_borin diferencia frente y espalda
+✓ fria_einar diferencia izquierda y derecha
+✓ fria_einar diferencia frente y espalda
+✓ Fuente maestra de Borin conservada
+✓ Fuente maestra de Einar conservada
+✓ Preview de los 18 NPC disponible
+✓ Herrero Borin usa la variante maestra
+✓ Einar usa la variante maestra
+✓ Puntos narrativos admiten sprite maestro
+✓ Einar aparece visualmente herido y recuperado
+✓ StoryPointMarker carga EntitySprite
+✓ StoryPointMarker renderiza NPC narrativo
+
+164/164 controles aprobados.
+
+> base44-app@2.23.3 validate:v2-19-6
+> npm run validate:kael-mission && npm run validate:v2-19-5
+
+
+> base44-app@2.23.3 validate:kael-mission
+> node scripts/validate-kael-mission-v2-19-6.mjs
+
+✓ Versión 2.19.6 o superior — actual=2.23.3
+✓ Objetivo pide_forjador existe
+✓ Objetivo apunta a Ciudadela B2
+✓ Forjador Kael existe en catálogo
+✓ Layout de ciudad incluye forger
+✓ B2 tiene anclaje explícito de Kael
+✓ Kael no usa el fallback del portal
+✓ Diario distingue Encargo
+✓ Diario muestra Destino actual
+✓ Diario resuelve objetivo actual
+✓ Diario resuelve nombre del sector
+✓ Asset maestro de Kael registrado
+✓ Kael runtime down
+✓ Kael runtime up
+✓ Kael runtime left
+✓ Kael runtime right
+✓ Kael separado del portal — 380.0 px
+✓ Kael dentro del área jugable
+
+VALIDACIÓN KAEL v2.19.6 APROBADA — 18 controles
+
+> base44-app@2.23.3 validate:v2-19-5
+> npm run validate:facing-motion && npm run validate:v2-19-4
+
+
+> base44-app@2.23.3 validate:facing-motion
+> node scripts/validate-facing-motion-v2-19-5.mjs
+
+✓ Versión compatible con 2.19.5 o superior — actual=2.23.3
+✓ Sintaxis src/components/atlas/CombatView.jsx
+✓ Sintaxis src/components/atlas/EntitySprite.jsx
+✓ Sintaxis src/components/atlas/ExploreMode.jsx
+✓ Sintaxis src/lib/atlasCombatFacing.js
+✓ Sintaxis src/lib/atlasNpcAssetSprites.js
+✓ Sintaxis src/lib/atlasHeroAssetSprites.js
+✓ Jugador conserva lado derecho y mira a la izquierda
+✓ Enemigo conserva lado izquierdo y mira a la derecha
+✓ Jugador de combate ampliado
+✓ Jefe de combate ampliado
+✓ Caminata de combate jugador
+✓ Caminata de combate enemigo
+✓ Respiración anclada sin bob vertical
+✓ Sombras reactivas de combate
+✓ Arena de combate usa más espacio
+✓ Ciclo libre de cuatro fases
+✓ Facing de mobs según desplazamiento
+✓ Facing de mob aplicado sin rerender
+✓ Villagers reciben orientación lateral
+✓ Villagers activan pasos y sombra
+✓ Jugador tiene sombra de contacto dinámica
+✓ Mobs libres precargan cuatro direcciones
+✓ Contenedor direccional manipulable
+✓ Frames direccionales con paths reales
+✓ Facing unificado sin doble espejo
+✓ Paso anclado de máximo 1px
+✓ Sombra de contacto camina
+✓ Actor direccional muestra solo facing activo
+✓ Héroe humano_guerrero/down
+✓ Héroe humano_guerrero/up
+✓ Héroe humano_guerrero/left
+✓ Héroe humano_guerrero/right
+✓ Héroe humano_mago/down
+✓ Héroe humano_mago/up
+✓ Héroe humano_mago/left
+✓ Héroe humano_mago/right
+✓ Héroe humano_picaro/down
+✓ Héroe humano_picaro/up
+✓ Héroe humano_picaro/left
+✓ Héroe humano_picaro/right
+✓ Héroe enano_guerrero/down
+✓ Héroe enano_guerrero/up
+✓ Héroe enano_guerrero/left
+✓ Héroe enano_guerrero/right
+✓ Héroe enano_mago/down
+✓ Héroe enano_mago/up
+✓ Héroe enano_mago/left
+✓ Héroe enano_mago/right
+✓ Héroe enano_picaro/down
+✓ Héroe enano_picaro/up
+✓ Héroe enano_picaro/left
+✓ Héroe enano_picaro/right
+✓ Héroe elfo_guerrero/down
+✓ Héroe elfo_guerrero/up
+✓ Héroe elfo_guerrero/left
+✓ Héroe elfo_guerrero/right
+✓ Héroe elfo_mago/down
+✓ Héroe elfo_mago/up
+✓ Héroe elfo_mago/left
+✓ Héroe elfo_mago/right
+✓ Héroe elfo_picaro/down
+✓ Héroe elfo_picaro/up
+✓ Héroe elfo_picaro/left
+✓ Héroe elfo_picaro/right
+✓ Enemigo asesino_esqueletico/down
+✓ Enemigo asesino_esqueletico/up
+✓ Enemigo asesino_esqueletico/left
+✓ Enemigo asesino_esqueletico/right
+✓ Enemigo asesino_orco/down
+✓ Enemigo asesino_orco/up
+✓ Enemigo asesino_orco/left
+✓ Enemigo asesino_orco/right
+✓ Enemigo aurel_ultimo_portador/down
+✓ Enemigo aurel_ultimo_portador/up
+✓ Enemigo aurel_ultimo_portador/left
+✓ Enemigo aurel_ultimo_portador/right
+✓ Enemigo brujo_feral/down
+✓ Enemigo brujo_feral/up
+✓ Enemigo brujo_feral/left
+✓ Enemigo brujo_feral/right
+✓ Enemigo chaman_orco/down
+✓ Enemigo chaman_orco/up
+✓ Enemigo chaman_orco/left
+✓ Enemigo chaman_orco/right
+✓ Enemigo guardian_verde/down
+✓ Enemigo guardian_verde/up
+✓ Enemigo guardian_verde/left
+✓ Enemigo guardian_verde/right
+✓ Enemigo guerrero_esqueletico/down
+✓ Enemigo guerrero_esqueletico/up
+✓ Enemigo guerrero_esqueletico/left
+✓ Enemigo guerrero_esqueletico/right
+✓ Enemigo lobo_salvaje/down
+✓ Enemigo lobo_salvaje/up
+✓ Enemigo lobo_salvaje/left
+✓ Enemigo lobo_salvaje/right
+✓ Enemigo necromante/down
+✓ Enemigo necromante/up
+✓ Enemigo necromante/left
+✓ Enemigo necromante/right
+✓ Enemigo orco_bruto/down
+✓ Enemigo orco_bruto/up
+✓ Enemigo orco_bruto/left
+✓ Enemigo orco_bruto/right
+✓ Enemigo pantera_sombria/down
+✓ Enemigo pantera_sombria/up
+✓ Enemigo pantera_sombria/left
+✓ Enemigo pantera_sombria/right
+✓ NPC ártico fria_astra/down
+✓ NPC ártico fria_astra/up
+✓ NPC ártico fria_astra/left
+✓ NPC ártico fria_astra/right
+✓ NPC ártico fria_boreas/down
+✓ NPC ártico fria_boreas/up
+✓ NPC ártico fria_boreas/left
+✓ NPC ártico fria_boreas/right
+✓ NPC ártico fria_captain/down
+✓ NPC ártico fria_captain/up
+✓ NPC ártico fria_captain/left
+✓ NPC ártico fria_captain/right
+✓ NPC ártico fria_dvalin/down
+✓ NPC ártico fria_dvalin/up
+✓ NPC ártico fria_dvalin/left
+✓ NPC ártico fria_dvalin/right
+✓ NPC ártico fria_freya/down
+✓ NPC ártico fria_freya/up
+✓ NPC ártico fria_freya/left
+✓ NPC ártico fria_freya/right
+✓ NPC ártico fria_helga/down
+✓ NPC ártico fria_helga/up
+✓ NPC ártico fria_helga/left
+✓ NPC ártico fria_helga/right
+✓ NPC ártico fria_hostelera/down
+✓ NPC ártico fria_hostelera/up
+✓ NPC ártico fria_hostelera/left
+✓ NPC ártico fria_hostelera/right
+✓ NPC ártico fria_kael_forger/down
+✓ NPC ártico fria_kael_forger/up
+✓ NPC ártico fria_kael_forger/left
+✓ NPC ártico fria_kael_forger/right
+✓ NPC ártico fria_lyra_cartographer/down
+✓ NPC ártico fria_lyra_cartographer/up
+✓ NPC ártico fria_lyra_cartographer/left
+✓ NPC ártico fria_lyra_cartographer/right
+✓ NPC ártico fria_lyra_researcher/down
+✓ NPC ártico fria_lyra_researcher/up
+✓ NPC ártico fria_lyra_researcher/left
+✓ NPC ártico fria_lyra_researcher/right
+✓ NPC ártico fria_merchant_camp/down
+✓ NPC ártico fria_merchant_camp/up
+✓ NPC ártico fria_merchant_camp/left
+✓ NPC ártico fria_merchant_camp/right
+✓ NPC ártico fria_merchant_glacial/down
+✓ NPC ártico fria_merchant_glacial/up
+✓ NPC ártico fria_merchant_glacial/left
+✓ NPC ártico fria_merchant_glacial/right
+✓ NPC ártico fria_merchant_royal/down
+✓ NPC ártico fria_merchant_royal/up
+✓ NPC ártico fria_merchant_royal/left
+✓ NPC ártico fria_merchant_royal/right
+✓ NPC ártico fria_queen/down
+✓ NPC ártico fria_queen/up
+✓ NPC ártico fria_queen/left
+✓ NPC ártico fria_queen/right
+✓ NPC ártico fria_refuge_keeper/down
+✓ NPC ártico fria_refuge_keeper/up
+✓ NPC ártico fria_refuge_keeper/left
+✓ NPC ártico fria_refuge_keeper/right
+✓ NPC ártico fria_shaman/down
+✓ NPC ártico fria_shaman/up
+✓ NPC ártico fria_shaman/left
+✓ NPC ártico fria_shaman/right
+✓ Mapa de NPC árticos integrado
+✓ Manifiesto de normalización
+
+175/175 controles aprobados.
+
+> base44-app@2.23.3 validate:v2-19-4
+> npm run validate:guardian-audio && npm run validate:v2-19-3
+
+
+> base44-app@2.23.3 validate:guardian-audio
+> node scripts/validate-guardian-audio-v2-19-4.mjs
+
+✓ Versión compatible con v2.19.4 o superior — 2.23.3
+✓ Existe validate:v2-19-4
+✓ Archivo presente: src/lib/atlasCombatScenes.js
+✓ Archivo presente: public/assets/atlas/combat/backgrounds/v1/region_verde_guardian.webp
+✓ Archivo presente: docs/combate-fondos-maestro-v1/referencias/region_verde_guardian_anotada.png
+✓ Archivo presente: scripts/lib/ogg-vorbis-duration.mjs
+✓ Archivo presente: scripts/validate-audio-green-v2-19.mjs
+✓ Fondo del Guardián mide 1280×720 — 1280×720
+✓ Fondo del Guardián contiene detalle suficiente — 177760 bytes
+✓ Catálogo contiene escena verde_guardian
+✓ Escena usa el fondo del Guardián
+✓ Guardián Verde selecciona su arena exclusiva
+✓ La escena del jefe tiene prioridad sobre el bosque genérico
+✓ Validador de audio usa lector Ogg/Vorbis interno
+✓ Validador no depende de ffprobe
+✓ Mensajes de error ya no culpan falsamente al audio
+✓ OGG válido sin ffprobe: atlas_theme_prototype.ogg — 24.000 s · 44100 Hz
+✓ OGG válido sin ffprobe: camp_green_loop.ogg — 24.000 s · 44100 Hz
+✓ OGG válido sin ffprobe: explore_green_loop.ogg — 24.000 s · 44100 Hz
+✓ OGG válido sin ffprobe: corruption_green_loop.ogg — 24.000 s · 44100 Hz
+✓ OGG válido sin ffprobe: combat_green_loop.ogg — 24.000 s · 44100 Hz
+✓ OGG válido sin ffprobe: guardian_green_loop.ogg — 24.000 s · 44100 Hz
+
+Controles aprobados: 22
+Atlas v2.19.4: escena del Guardián y validación de audio portátil correctas.
+
+> base44-app@2.23.3 validate:v2-19-3
+> npm run validate:visual-integration && npm run validate:v2-19-2
+
+
+> base44-app@2.23.3 validate:visual-integration
+> node scripts/validate-visual-integration-v2-19-3.mjs
+
+✓ Existe el conector de NPC maestros
+✓ Existe el catálogo de escenas de combate
+✓ Existe EntitySprite
+✓ Existe CombatView
+✓ El runtime contiene exactamente 80 sprites NPC — 80/80
+✓ Están los 20 NPC canónicos — 20/20
+✓ Cada NPC tiene down/up/left/right — 80/80
+✓ Todos los sprites NPC miden 72×96
+✓ Se conserva el inventario original de NPC
+✓ Los 80 sprites coinciden con los SHA-256 del paquete maestro — 80/80 inventariados
+✓ NPC mapeado: capitan_roland
+✓ NPC mapeado: bren
+✓ NPC mapeado: elia
+✓ NPC mapeado: cedric
+✓ NPC mapeado: mercader_bryn
+✓ NPC mapeado: guardian_refugio
+✓ NPC mapeado: aldeano_kael
+✓ NPC mapeado: darian
+✓ NPC mapeado: alcalde_tomas
+✓ NPC mapeado: mercader_aldric
+✓ NPC mapeado: posadero_oleg
+✓ NPC mapeado: forjador_orin
+✓ NPC mapeado: aldeana_ira
+✓ NPC mapeado: viajero_inn
+✓ NPC mapeado: cartografo
+✓ NPC mapeado: capitan_real
+✓ NPC mapeado: mercader_real_senn
+✓ NPC mapeado: hostelera_senna
+✓ NPC mapeado: herrero_brun
+✓ NPC mapeado: guardia_rurik
+✓ Alias de Bren en entrada de dungeon conectado
+✓ Alias de Roland vigilante conectado
+✓ Vera conserva fallback procedural explícito
+✓ Precarga deduplicada por NPC canónico
+✓ EntitySprite importa el catálogo NPC
+✓ EntitySprite detecta NPC con arte maestro
+✓ EntitySprite selecciona dirección del NPC
+✓ EntitySprite conserva proporción 72×96
+✓ NPC comparte ruta directa robusta con héroes y enemigos
+✓ Fondo runtime presente: region_verde_bosque.webp
+✓ Fondo 1280×720: region_verde_bosque.webp — 1280×720
+✓ Fondo runtime presente: region_artica_tundra.webp
+✓ Fondo 1280×720: region_artica_tundra.webp — 1280×720
+✓ Fondo runtime presente: region_artica_aurel.webp
+✓ Fondo 1280×720: region_artica_aurel.webp — 1280×720
+✓ Referencia anotada archivada: region_verde_bosque_anotada.png
+✓ Referencia anotada archivada: region_artica_tundra_anotada.png
+✓ Referencia anotada archivada: region_artica_aurel_anotada.png
+✓ Escena verde usa fondo maestro
+✓ Escena ártica usa fondo tundra
+✓ Aurel usa arena de jefe
+✓ Se reconocen ambos identificadores de Aurel
+✓ Escenas declaran jugador derecha y enemigo izquierda
+✓ Jugador mira hacia la izquierda
+✓ Enemigo mira hacia la derecha
+✓ Distancia cuerpo a cuerpo calculada para formación invertida
+✓ Actor del jugador está a la derecha
+✓ Actor enemigo está a la izquierda
+✓ CombatView marca la escena runtime activa
+✓ CombatView renderiza el fondo maestro
+✓ Los props procedurales se desactivan con fondo maestro
+✓ VFX del jugador usan anclajes reales
+✓ VFX enemigos usan anclajes reales
+✓ Fallback de daño flotante respeta los nuevos lados
+✓ No se empaquetan respaldos temporales de integración
+
+Controles aprobados: 65
+Integración visual Atlas v2.19.3 validada.
+
+> base44-app@2.23.3 validate:v2-19-2
+> npm run validate:combat-facing && npm run validate:v2-19-1
+
+
+> base44-app@2.23.3 validate:combat-facing
+> node scripts/validate-combat-facing-v2-19-2.mjs
+
+✓ Existe auditoría de orientación por asset
+✓ Los tres enanos corrigen left/right invertido
+✓ Pantera Sombría usa toma izquierda real
+✓ Guardián Verde corrige exportación invertida
+✓ Asesino esquelético y necromante se reflejan desde toma canónica
+✓ EntitySprite posee modo de combate normalizado
+✓ El reflejo horizontal no depende del nombre left/right
+✓ Jugador y enemigo activan combatMode en la arena
+✓ La arena mide posiciones reales de ambos actores
+✓ El avance cuerpo a cuerpo se limita por la distancia real
+✓ Los VFX se renderizan sobre la arena, no dentro del monstruo
+✓ Cada acción captura origen y objetivo antes de moverse
+✓ Los números de daño usan el anclaje del objetivo
+✓ CombatVfx usa vectores entre origen y objetivo
+✓ Proyectiles nacen en el atacante y viajan al objetivo
+✓ Bola de Fuego posee carga en origen e impacto en objetivo
+✓ No quedan coordenadas fijas PX/EX del sistema anterior
+✓ Los flotantes viven dentro de la arena de combate
+✓ Asset presente: Enano Guerrero canónico
+✓ Asset presente: Enano Mago canónico
+✓ Asset presente: Enano Pícaro canónico
+✓ Asset presente: Pantera Sombría canónica
+✓ Asset presente: Guardián Verde canónico
+✓ Sintaxis válida: src/lib/atlasCombatFacing.js
+✓ Sintaxis válida: src/components/atlas/EntitySprite.jsx
+✓ Sintaxis válida: src/components/atlas/CombatView.jsx
+✓ Sintaxis válida: src/components/atlas/CombatVfx.jsx
+
+Atlas v2.19.2: orientación y anclaje de combate validados (27 controles).
+
+> base44-app@2.23.3 validate:v2-19-1
+> npm run validate:combat-stability && npm run validate:combat-dynamic && npm run validate:audio-green && npm run validate:v2-17-fixes && npm run validate:hero-master && npm run validate:enemy-master && npm run validate:arctic-master && npm run validate:green-composition && npm run validate:portals && npm run validate:horizontal-balance
+
+
+> base44-app@2.23.3 validate:combat-stability
+> node scripts/validate-combat-stability-v2-19-1.mjs
+
+✓ Cada acción recibe actionId monotónico
+✓ Resultados guardan instantáneas before/after
+✓ Vista reproduce por actionId
+✓ Vista no reinicia por HP, enemigo o skills
+✓ La barra usa snapshots, no HP reconstruido
+✓ Daño al escudo se separa del daño a HP
+✓ Golpe absorbido sigue contando como impacto
+✓ Derrota del jugador se difiere
+✓ Derrota del enemigo se difiere
+✓ Todos los temporizadores se limpian
+✓ Audio desactivado elimina la intro y el bloqueo
+✓ Teclado respeta intro y bloqueo global
+✓ Audio de resultado se deduplica por actionId
+✓ Multigolpes usan el mismo reloj que el daño
+✓ No queda el patrón viejo de daño de estado del jugador
+✓ No queda el patrón viejo de contraataque sobre enemigo obsoleto
+✓ Pasivas se extrajeron del hook monolítico
+✓ Runtime de combate se extrajo del hook monolítico
+✓ Acciones del jugador se extrajeron del hook monolítico
+✓ useAtlasSession bajó de 2.684 a menos de 2.350 líneas
+✓ Ganancia de energía actualiza playerRef inmediatamente
+✓ Daño enemigo conserva energía ganada por pasivas
+✓ skills está memoizado
+✓ Sintaxis válida: src/hooks/useAtlasSession.js
+✓ Sintaxis válida: src/components/atlas/CombatView.jsx
+✓ Sintaxis válida: src/hooks/useAtlasAudio.js
+✓ Sintaxis válida: src/hooks/useAtlasCombatRuntime.js
+✓ Sintaxis válida: src/hooks/useAtlasCombatPassives.js
+✓ Sintaxis válida: src/lib/atlasCombatTransactions.js
+✓ Sintaxis válida: src/lib/atlasCombatDirector.js
+✓ Sintaxis válida: src/components/atlas/ExploreMode.jsx
+✓ Sintaxis válida: src/lib/createAtlasCombatActions.js
+✓ Escudo absorbe antes de HP
+✓ Transacción conserva acción y snapshots
+✓ Escudo total no se representa como fallo
+
+Atlas v2.19.1: estabilidad de combate validada (35 controles).
+
+> base44-app@2.23.3 validate:combat-dynamic
+> node scripts/validate-combat-dynamic-v2-18.mjs
+
+✓ Director temporal presente
+✓ Corte Múltiple tiene perfil
+✓ Bola de Fuego usa secuencia
+✓ Estocada Sombría tiene perfil
+✓ Combate bloquea controles durante secuencia
+✓ VFX recibe cantidad de impactos
+✓ Barras de vida esperan al impacto
+✓ Catálogo activo sigue siendo atlasSkillDesign
+✓ Sesión importa catálogo activo
+✓ Turno enemigo queda temporizado y bloqueado
+✓ No quedan turnos enemigos fuera del programador
+✓ Derrota diferida usa temporizador cancelable
+✓ Bastonazo usa proyectil arcano
+✓ Empujón de Viento se trata como magia
+✓ Reparto multigolpe conserva daño total
+✓ Reparto progresivo no invierte la cadena
+✓ Corte Múltiple escala 2/3/4 impactos
+✓ Corte Múltiple mantiene cada total
+✓ Estocada Sombría alta remata con crítico
+✓ Bola de Fuego sincroniza impacto y estado
+✓ Turno enemigo espera el cierre visual
+✓ Fallo crítico contiene contraataque
+
+Combate dinámico Fase 1 validado (22 controles).
+
+> base44-app@2.23.3 validate:audio-green
+> node scripts/validate-audio-green-v2-19.mjs
+
+VALIDACIÓN AUDIO VERDE v2.19 CORRECTA
+ - 32 recursos OGG originales y decodificables
+ - 6 músicas en loop: menú, campamento, exploración, corrupción, combate y Guardián
+ - ambiente de bosque y campamento
+ - intros sonoras para 6 mobs verdes + Guardián Verde
+ - transición musical, dados, ataques, impactos, muerte, victoria y portal
+ - controles separados: maestro, música, ambiente y efectos
+
+> base44-app@2.23.3 validate:v2-17-fixes
+> node scripts/validate-gameplay-fixes-v2-17.mjs
+
+VALIDACIÓN ATLAS v2.17 CORRECTA
+ - Elfo Mago: izquierda y derecha diferenciadas
+ - Formación v2.19.3: enemigo a la izquierda y jugador a la derecha, ambos enfrentados
+ - 44/44 sprites enemigos runtime conectables como imágenes directas
+ - Región Verde inicia solo con A2
+ - sectores reconstruidos según aceptación, objetivos y cierre de misiones
+ - viaje entre regiones conserva el progreso de desbloqueo
+ - portal ordenado por plataforma, personaje visible delante al interactuar
+
+> base44-app@2.23.3 validate:hero-master
+> node scripts/validate-hero-visuals-v2-15.mjs
+
+VALIDACIÓN PERSONAJES v2.15 CORRECTA
+ - 9/9 combinaciones raza-clase conectadas
+ - 36/36 sprites runtime presentes
+ - 36/36 sprites maestros presentes
+ - 72/72 checksums SHA-256 correctos
+ - selección, mundo libre y combate usan el mismo arte maestro
+ - respaldo procedural conservado
+
+> base44-app@2.23.3 validate:enemy-master
+> node scripts/validate-enemy-visuals-v2-16.mjs
+
+VALIDACIÓN MOBS Y JEFES v2.16 CORRECTA
+ - 11/11 entidades conectadas hasta Región Ártica
+ - 44/44 sprites runtime presentes
+ - 44/44 sprites maestros presentes
+ - 88/88 checksums SHA-256 correctos
+ - mundo libre, dungeons y combate usan el arte maestro
+ - alias aurel_portador → aurel_ultimo_portador activo
+ - proporciones, transparencia y anclaje inferior conservados
+ - respaldo procedural conservado
+
+> base44-app@2.23.3 validate:arctic-master
+> node scripts/validate-region-artica-maestro-v1.mjs
+
+✓ versión 2.23.3 compatible con Región Ártica Maestro
+✓ catálogo maestro conectado
+✓ anclaje de contacto con suelo 968/1024 activo
+✓ sin referencias activas al catálogo heredado
+✓ 27 recursos declarados en checksums
+✓ 27/27 assets coinciden con el paquete aprobado
+✓ 9/9 terrenos presentes
+✓ 9/9 escenas árticas registradas
+✓ 114/114 colocaciones conservadas
+✓ todos los objetos conservan proporción cuadrada
+✓ todos los objetos usan el contacto visible con el suelo
+✓ Y-sort correcto: norte detrás, sur delante
+
+VALIDACIÓN REGIÓN ÁRTICA MAESTRO v1.0 CORRECTA
+
+> base44-app@2.23.3 validate:green-composition
+> node scripts/validate-green-composition-v2-12.mjs
+
+VALIDACIÓN COMPOSICIÓN REGIÓN VERDE v2.12 CORRECTA
+ - escalas maestras conservan proporción 1:1
+ - orden de profundidad por feet-y activo
+ - NPC fuera de colisiones y siluetas de edificios
+ - rutas principales libres de árboles, fogatas, props y edificios sensibles
+ - árboles fuera de zonas de agua declaradas
+ - A1: 17 objetos, 0 NPC anclados, 2 rutas protegidas
+ - B1: 16 objetos, 0 NPC anclados, 2 rutas protegidas
+ - C1: 16 objetos, 0 NPC anclados, 2 rutas protegidas
+ - A2: 30 objetos, 8 NPC anclados, 2 rutas protegidas
+ - B2: 15 objetos, 5 NPC anclados, 2 rutas protegidas
+ - C2: 20 objetos, 8 NPC anclados, 2 rutas protegidas
+ - A3: 18 objetos, 0 NPC anclados, 3 rutas protegidas
+ - B3: 16 objetos, 0 NPC anclados, 1 rutas protegidas
+ - C3: 16 objetos, 0 NPC anclados, 1 rutas protegidas
+
+> base44-app@2.23.3 validate:portals
+> node scripts/validate-portals-v2-12-1.mjs
+
+✓ versión 2.23.3 compatible con portales v2.12.1
+✓ plataformas verdes A2, B2 y C2 definidas
+✓ zona de interacción propagada al mundo jugable
+✓ portales visuales y plataformas alineados
+✓ botón A se habilita únicamente sobre la plataforma
+✓ portal activo abre menú sin curación automática
+✓ prueba geométrica de las tres plataformas superada
+
+VALIDACIÓN DE PORTALES v2.12.1 CORRECTA
+- subir a la plataforma habilita A
+- acercarse por un costado no habilita A
+- portal inactivo muestra Activar Portal
+- portal activo abre destinos sin reactivarse
+
+> base44-app@2.23.3 validate:horizontal-balance
+> node scripts/validate-horizontal-ui-balance-v2-13.mjs
+
+✓ versión 2.23.3 conserva horizontal, HUD y balance v2.13
+✓ horizontal es la orientación predeterminada
+✓ HUD adaptativo o limpio es el modo predeterminado
+✓ ajustes anteriores migran una vez al HUD adaptativo
+✓ existe bloqueo de orientación con fallback
+✓ inicio y carga solicitan horizontal desde gesto del usuario
+✓ PWA declara orientación landscape
+✓ el layout horizontal depende de la orientación real del dispositivo
+✓ escala de mapa horizontal conserva legibilidad
+✓ ExploreMode reconoce HUD limpio
+✓ brújula usa clase adaptable
+✓ HUD superior usa clase adaptable
+✓ joystick usa área segura adaptable
+✓ Ajustes permite HUD limpio
+✓ hay reglas para móviles horizontales bajos
+✓ los controles respetan recortes y bordes del teléfono
+✓ diálogos largos permiten desplazamiento horizontal legible
+✓ combate dispone de layout horizontal compacto
+✓ HUD limpio limita avisos visibles a uno
+✓ avisos repetidos se deduplican
+✓ cola interna de avisos queda limitada
+✓ nombres ambientales se reducen en HUD limpio
+✓ prepareEnemy usa balance base del jugador
+✓ enemigos comunes registran anclaje al jugador
+✓ encuentros del mapa normalizan enemigos antiguos
+✓ combates reciben estadísticas actuales del jugador
+✓ HP inicial cercano al jugador base: 12
+✓ ATK inicial cercano al jugador base: 3
+✓ DEF física inicial razonable: 2
+✓ enemigo común A2 queda anclado
+✓ HP contra Erudito evita muro artificial: 8
+✓ ATK contra Erudito conserva paridad: 4
+✓ DEF mágica mantiene identidad sin exceso: 2
+✓ C3 progresa suavemente sobre A2
+✓ progresión de HP permanece controlada: 18
+✓ progresión de ATK permanece controlada: 7
+✓ jefes reciben anclaje y presión especial sin perder su escala
+
+VALIDACIÓN HORIZONTAL, HUD Y BALANCE v2.13 CORRECTA
+- horizontal predeterminado con fallback legible
+- HUD adaptativo, avisos cercanos y cola reducida
+- controles y combate adaptados a pantalla baja
+- mobs comunes parten cerca de las estadísticas base del jugador
+- equipo del jugador se considera en el reto y los jefes reciben presión especial

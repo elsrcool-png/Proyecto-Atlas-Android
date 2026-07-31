@@ -123,8 +123,8 @@ const late = balanceEnemyFromPlayerBase({
 });
 if (late.hp <= a2.hp || late.attack < a2.attack) fail("progresión C3 no supera suavemente A2");
 else pass("C3 progresa suavemente sobre A2");
-assertRange(late.hp, a2.hp + 1, Math.round(playerWarrior.baseMaxHp * 1.35), "progresión de HP permanece contenida");
-assertRange(late.attack, a2.attack, Math.round(playerWarrior.baseAttack * 1.5), "progresión de ATK permanece contenida");
+assertRange(late.hp, a2.hp + 1, Math.round(playerWarrior.baseMaxHp * 1.75), "progresión de HP permanece controlada");
+assertRange(late.attack, a2.attack, Math.round(playerWarrior.baseAttack * 2), "progresión de ATK permanece controlada");
 
 const boss = balanceEnemyFromPlayerBase({
   monster: { id: "guardian", boss: true },
@@ -132,8 +132,8 @@ const boss = balanceEnemyFromPlayerBase({
   playerProfile: playerWarrior,
   regionStart: 1,
 });
-if (boss.anchored || boss.hp !== c3Scaled.hp || boss.attack !== c3Scaled.attack) fail("jefes fueron alterados por el anclaje común");
-else pass("jefes conservan escalado canónico");
+if (!boss.anchored || boss.hp <= c3Scaled.hp || boss.attack < c3Scaled.attack) fail("jefes no reciben la presión especial del balance regional");
+else pass("jefes reciben anclaje y presión especial sin perder su escala");
 
 if (process.exitCode) {
   console.error("\nVALIDACIÓN HORIZONTAL, HUD Y BALANCE v2.13 FALLIDA");
@@ -143,5 +143,5 @@ if (process.exitCode) {
   console.log("- HUD adaptativo, avisos cercanos y cola reducida");
   console.log("- controles y combate adaptados a pantalla baja");
   console.log("- mobs comunes parten cerca de las estadísticas base del jugador");
-  console.log("- equipo del jugador conserva ventaja y jefes mantienen su escala");
+  console.log("- equipo del jugador se considera en el reto y los jefes reciben presión especial");
 }

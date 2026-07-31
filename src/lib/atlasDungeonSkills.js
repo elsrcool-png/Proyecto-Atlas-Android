@@ -121,14 +121,14 @@ export function resolveSkillHit(skill, player, target, opts = {}) {
 
   const hitRoll = Math.random();
   const hit = hitRoll < acc;
-  if (!hit) return { hit: false, crit: false, dmg: 0, acc, crit };
+  if (!hit) return { hit: false, crit: false, dmg: 0, acc, critChance: crit };
 
   const critRoll = Math.random();
   const isCrit = critRoll < crit;
 
   let dmg = Math.max(1, Math.round(skill.damage(player)) - (target?.defense || 0));
   if (isCrit) dmg = Math.round(dmg * critMult);
-  return { hit: true, crit: isCrit, dmg, acc, crit };
+  return { hit: true, crit: isCrit, dmg, acc, critChance: crit };
 }
 
 // Manhattan (4-dir) y Chebyshev (8-dir)

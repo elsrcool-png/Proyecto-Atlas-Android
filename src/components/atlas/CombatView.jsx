@@ -458,6 +458,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
               <div className="text-[11px] text-white/85 mb-0.5">❤️ <span className="font-mono text-white">{displayEnemyHp}/{enemy.maxHp}</span></div>
               <Bar value={displayEnemyHp} max={enemy.maxHp} color="bg-red-500" />
               <div className="mt-1.5 text-[11px] text-white/85 flex items-center gap-2.5"><span>{eAtkType === "magico" ? "✨" : "⚔️"} <span className="font-mono text-white">{eAtkValue}</span></span><span>🛡️ <span className="font-mono text-white">{enemy.physicalDefense ?? enemy.defense}</span></span><span>🔷 <span className="font-mono text-white">{enemy.magicalDefense ?? enemy.defense}</span></span></div>
+              {enemy.regionalEquipment && <div className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full border border-amber-300/30 bg-slate-950/45 px-1.5 py-0.5 text-[8px] text-amber-100"><span>⚒</span><span className="truncate">{enemy.regionalEquipment.name}</span></div>}
               {enemy.statuses && Object.keys(enemy.statuses).length > 0 && (
                 <div className="flex gap-1 mt-1.5 flex-wrap">
                   {Object.entries(enemy.statuses).map(([type, s]) => {
@@ -513,7 +514,7 @@ export default function CombatView({ player, enemy, region, lastResult, busy, on
             {banner && !dying && (<motion.div key={banner.id} initial={{ opacity: 0, y: -10, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} className={`absolute z-20 left-1/2 -translate-x-1/2 top-1/3 px-4 py-1.5 rounded-full text-sm font-bold ${bannerColor}`}>{bannerLabel}</motion.div>)}
           </AnimatePresence>
         </motion.div>
-        {enemy.skill && !dying && !landscape && (<div className="absolute z-20 bottom-2 left-3 sm:left-6 max-w-[220px]"><div className="text-[10px] text-red-100 bg-red-950/80 border border-red-700/50 rounded-lg px-2.5 py-1.5 text-center leading-snug shadow-lg">{enemy.skill}</div></div>)}
+        {enemy.skill && !dying && !landscape && !showConsumables && (<div className="absolute z-20 bottom-2 left-3 sm:left-6 max-w-[220px]"><div className="text-[10px] text-red-100 bg-red-950/80 border border-red-700/50 rounded-lg px-2.5 py-1.5 text-center leading-snug shadow-lg">{enemy.skill}</div></div>)}
       </div>
 
       <div className={`atlas-combat-actions relative z-10 bg-slate-950/85 border-t border-slate-800/80 backdrop-blur ${landscape ? "p-1.5" : "p-3"}`}>

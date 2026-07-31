@@ -21,6 +21,22 @@ const QUEST_ITEM_NAMES = {
   sello_consejo_verde: "Sello del Consejo Verde",
   llave_santuario_verde: "Llave del Santuario Verde",
   reliquia_equilibrio_verde: "Reliquia de Equilibrio Verde",
+  fragmento_nucleo_artico: "Fragmento del Núcleo Ártico",
+  nucleo_solar_antiguo: "Núcleo Solar Antiguo",
+  mensaje_ultimo_mensajero: "Mensaje del último mensajero",
+  mapa_ruta_boreal: "Mapa de la ruta boreal",
+  muestra_cristal_bestia: "Muestra de cristal de bestia",
+  diario_einar: "Diario de Einar",
+  orden_expedicion_final: "Orden de expedición final",
+  cristal_susurro: "Cristal del Susurro",
+  simbolos_lago_congelado: "Símbolos del lago congelado",
+  memoria_portadores: "Memoria de los Portadores",
+  corazon_cristal_recompuesto: "Corazón de cristal recompuesto",
+  sello_nivalis: "Sello de Nivalis",
+  nucleo_cristal_negro: "Núcleo de cristal negro",
+  runa_puerta_sellada: "Runa de la puerta sellada",
+  medalla_defensa_ciudadela: "Medalla de la defensa de la Ciudadela",
+  llave_nucleo_glacial: "Llave del Núcleo Glacial",
 };
 
 function SectionTitle({ icon: Icon, children, className = "text-slate-300" }) {
@@ -113,8 +129,10 @@ export default function BackpackModal({ player, onEquip, onDiscard, onUseConsuma
                   <div className="grid gap-2 sm:grid-cols-2">
                     {relics.map((relic, index) => (
                       <div key={`${relic.name || "reliquia"}-${index}`} className="rounded-lg border border-emerald-800/60 bg-emerald-950/20 px-3 py-2">
-                        <p className="text-[11px] text-emerald-100">{relic.name || "Reliquia desconocida"}</p>
-                        <p className="mt-0.5 text-[9px] uppercase tracking-wider text-emerald-400">{relic.state || "obtenida"}</p>
+                        <div className="flex items-start justify-between gap-2"><p className="text-[11px] font-medium text-emerald-100">{relic.name || "Reliquia desconocida"}</p><span className="shrink-0 rounded-full border border-emerald-700/50 bg-emerald-950/40 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-emerald-300">Reliquia</span></div>
+                        <p className="mt-0.5 text-[9px] uppercase tracking-wider text-emerald-400">{relic.state || "obtenida"}{relic.form ? ` · ${relic.form}` : ""}</p>
+                        {relic.desc && <p className="mt-1 text-[10px] leading-snug text-slate-400">{relic.desc}</p>}
+                        {relic.source && <p className="mt-1 text-[9px] text-emerald-500/80">Origen: {relic.source}</p>}
                       </div>
                     ))}
                   </div>

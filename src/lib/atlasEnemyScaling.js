@@ -82,5 +82,6 @@ export function scaleMonsterStats(monster, {
     sectorId,
     _atlasScaled: true,
     _atlasBaseLevel: baseLevel,
+    _atlasRegionId: regionId,
   };
 }

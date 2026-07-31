@@ -47,6 +47,9 @@ export const ENEMY_DEFS = {
   rey_orco: { personality: "aggressive", energy: 20, crit: 0.15, speed: 1, abilities: ["golpe_poderoso", "terremoto", "embestida"], hp: 24, attack: 6, defense: 5, xp: 100, lootBonus: 0.5 },
   dragon: { personality: "tactical", energy: 25, crit: 0.15, speed: 1, abilities: ["llamarada", "rayo", "terremoto"], hp: 28, attack: 6, defense: 4, xp: 150, lootBonus: 0.5 },
   lich: { personality: "magical", energy: 30, crit: 0.1, speed: 1, abilities: ["invocacion_sombras", "nube_toxica", "resurreccion", "congelacion"], hp: 22, attack: 5, defense: 3, xp: 200, lootBonus: 0.5 },
+  guardian_verde: { personality: "tactical", energy: 22, crit: 0.12, speed: 1, abilities: ["golpe_poderoso", "aullido", "invocar"], hp: 28, attack: 6, defense: 5, xp: 120, lootBonus: 0.5 },
+  aurel_portador: { personality: "tactical", energy: 28, crit: 0.16, speed: 1, abilities: ["golpe_poderoso", "escudo_hielo", "congelacion", "rayo"], hp: 35, attack: 7, defense: 5, xp: 180, lootBonus: 0.6 },
+  amon_solar: { personality: "tactical", energy: 32, crit: 0.18, speed: 1, abilities: ["golpe_poderoso", "llamarada", "terremoto", "rayo"], hp: 32, attack: 7, defense: 6, xp: 240, lootBonus: 0.7 },
 };
 
 export const REGION_POOLS = {
@@ -59,6 +62,59 @@ export const REGION_ABILITY_BONUSES = {
   fria: { congelacion: 0.3, escudo_hielo: 0.25, rafaga_helada: 0.25 },
   desierto: { llamarada: 0.3, nube_toxica: 0.2, terremoto: 0.15, invocacion_sombras: 0.2, rayo: 0.15 },
 };
+
+const REGION_ABILITY_POOLS = Object.freeze({
+  fria: Object.freeze(["congelacion", "escudo_hielo", "rafaga_helada"]),
+  desierto: Object.freeze(["llamarada", "nube_toxica", "terremoto", "invocacion_sombras", "rayo"]),
+});
+
+const EQUIPPABLE_ENEMIES = new Set([
+  "orco_bruto", "chaman_orco", "asesino_orco", "guerrero_esqueletico",
+  "necromante", "asesino_esqueletico", "rey_orco", "lich",
+  "guardian_verde", "aurel_portador", "amon_solar",
+]);
+
+const REGION_ENEMY_EQUIPMENT = Object.freeze({
+  fria: Object.freeze({
+    fisico: Object.freeze({ id: "acero_boreal", name: "Acero boreal", attack: 1, physicalDefense: 1, magicalDefense: 0 }),
+    magico: Object.freeze({ id: "catalizador_glacial", name: "Catalizador glacial", attack: 1, physicalDefense: 0, magicalDefense: 2 }),
+  }),
+  desierto: Object.freeze({
+    fisico: Object.freeze({ id: "filo_obsidiana", name: "Filo de obsidiana", attack: 1, physicalDefense: 1, magicalDefense: 0 }),
+    magico: Object.freeze({ id: "foco_solar", name: "Foco solar", attack: 1, physicalDefense: 0, magicalDefense: 2 }),
+  }),
+});
+
+function stableIndex(value, length) {
+  if (!length) return 0;
+  let hash = 0;
+  for (const char of String(value || "enemy")) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return hash % length;
+}
+
+export function ensureRegionalAbilityLoadout(baseAbilities = [], regionId = "verde", enemyId = "enemy", boss = false) {
+  const pool = REGION_ABILITY_POOLS[regionId] || [];
+  if (!pool.length) return [...new Set(baseAbilities)];
+  const requiredRegional = boss ? 2 : regionId === "desierto" ? 2 : 1;
+  const regional = [];
+  const start = stableIndex(enemyId, pool.length);
+  for (let i = 0; i < pool.length && regional.length < requiredRegional; i++) {
+    const id = pool[(start + i) % pool.length];
+    if (!regional.includes(id)) regional.push(id);
+  }
+  const native = [...new Set(baseAbilities)].filter(id => !regional.includes(id));
+  const first = native.shift();
+  return [...(first ? [first] : []), ...regional, ...native];
+}
+
+export function resolveRegionalEnemyEquipment(monster = {}, regionId = "verde", basicAttackType = "fisico") {
+  if (!EQUIPPABLE_ENEMIES.has(monster.id)) return null;
+  if (monster.id === "aurel_portador") return { id: "armadura_portador", name: "Armadura del Portador", attack: 2, physicalDefense: 1, magicalDefense: 1 };
+  if (monster.id === "amon_solar") return { id: "armas_sol_eterno", name: "Armas del Sol Eterno", attack: 2, physicalDefense: 1, magicalDefense: 1 };
+  const set = REGION_ENEMY_EQUIPMENT[regionId];
+  const entry = set?.[basicAttackType];
+  return entry ? { ...entry } : null;
+}
 
 const REGION_BASE_LEVEL = { verde: 1, fria: 5, desierto: 10 };
 const REGION_BOSS_LEVEL = { verde: 5, fria: 10, desierto: 15 };
@@ -88,6 +144,9 @@ export const ENEMY_OFFENSE = {
   rey_orco: { basic: "fisico", phys: true, mag: false },
   dragon: { basic: "magico", phys: true, mag: true },
   lich: { basic: "magico", phys: false, mag: true },
+  guardian_verde: { basic: "fisico", phys: true, mag: true },
+  aurel_portador: { basic: "fisico", phys: true, mag: true },
+  amon_solar: { basic: "fisico", phys: true, mag: true },
 };
 
 export const ENEMY_DEFENSE_FOCUS = {
@@ -95,6 +154,7 @@ export const ENEMY_DEFENSE_FOCUS = {
   lobo_salvaje: "phys", brujo_feral: "mag", pantera_sombria: "balanced",
   guerrero_esqueletico: "phys", necromante: "mag", asesino_esqueletico: "balanced",
   rey_orco: "phys", dragon: "balanced", lich: "mag",
+  guardian_verde: "balanced", aurel_portador: "balanced", amon_solar: "balanced",
 };
 
 export function enemyDefenseMul(enemyId) {
@@ -104,13 +164,14 @@ export function enemyDefenseMul(enemyId) {
   return { phys: 1, mag: 1 };
 }
 
-export function balanceEnemyToPlayerBase(monster, scaled, playerProfile, regionStart = 1) {
+export function balanceEnemyToPlayerBase(monster, scaled, playerProfile, regionStart = 1, regionId = "verde") {
   const personality = ENEMY_DEFS[monster.id]?.personality || monster.personality || "aggressive";
   return balanceEnemyFromPlayerBase({
     monster,
     scaled,
     playerProfile,
     regionStart,
+    regionId,
     personality,
     focus: enemyDefenseMul(monster?.id),
   });
@@ -120,7 +181,9 @@ export function prepareEnemy(monster, regionMul, playerLevel, regionStart, regio
   const def = ENEMY_DEFS[monster.id] || {};
   const resolvedSector = sectorId || monster.sectorId || "A2";
   const baseRegionMul = { verde: 1, fria: 1.3, desierto: 1.6 }[regionId] || 1;
-  const encounterMul = Math.max(0.8, Math.min(1.65, (regionMul || baseRegionMul) / baseRegionMul));
+  // La región aporta presión real sin duplicar por completo el perfil regional.
+  const configuredMul = Number(regionMul) || baseRegionMul;
+  const encounterMul = Math.max(0.95, Math.min(1.12, 1 + (configuredMul - 1) * 0.18));
   const baseMonster = {
     ...monster,
     hp: def.hp || monster.hp || 10,
@@ -137,23 +200,26 @@ export function prepareEnemy(monster, regionMul, playerLevel, regionStart, regio
     elite: !!monster.elite,
   });
 
-  const balanced = balanceEnemyToPlayerBase(monster, scaled, playerProfile, regionStart || 1);
-  const hp = Math.max(1, Math.round(balanced.hp * encounterMul));
-  const baseAtk = Math.max(1, Math.round(balanced.attack * encounterMul));
-  const physicalDefense = Math.max(0, Math.round(balanced.physicalDefense * encounterMul));
-  const magicalDefense = Math.max(0, Math.round(balanced.magicalDefense * encounterMul));
-  const energy = Math.max(1, Math.round((scaled.maxMp || scaled.energy || 8) * Math.min(1.25, encounterMul)));
-
-  let abilities = [...(def.abilities || monster.abilities || [])];
-  const regionBonus = REGION_ABILITY_BONUSES[regionId] || {};
-  for (const [abilId, prob] of Object.entries(regionBonus)) {
-    if (ENEMY_ABILITIES[abilId] && Math.random() < prob && !abilities.includes(abilId)) abilities.push(abilId);
-  }
-
+  const balanced = balanceEnemyToPlayerBase(monster, scaled, playerProfile, regionStart || 1, regionId);
   const off = ENEMY_OFFENSE[monster.id] || { basic: "fisico", phys: true, mag: false };
+  const basicAttackType = off.basic;
+  const regionalEquipment = resolveRegionalEnemyEquipment(monster, regionId, basicAttackType);
+  const equipmentAtk = regionalEquipment?.attack || 0;
+  const hp = Math.max(1, Math.round(balanced.hp * encounterMul));
+  const baseAtk = Math.max(1, Math.round(balanced.attack * encounterMul) + equipmentAtk);
+  const physicalDefense = Math.max(0, Math.round(balanced.physicalDefense * encounterMul) + (regionalEquipment?.physicalDefense || 0));
+  const magicalDefense = Math.max(0, Math.round(balanced.magicalDefense * encounterMul) + (regionalEquipment?.magicalDefense || 0));
+  const energy = Math.max(1, Math.round((scaled.maxMp || scaled.energy || 8) * Math.min(1.35, encounterMul + (regionId === "desierto" ? 0.12 : regionId === "fria" ? 0.06 : 0))));
+
+  const abilities = ensureRegionalAbilityLoadout(
+    def.abilities || monster.abilities || [],
+    regionId,
+    monster.id,
+    !!monster.boss,
+  );
+
   const physicalAttack = off.phys ? baseAtk : 0;
   const magicalAttack = off.mag ? baseAtk : 0;
-  const basicAttackType = off.basic;
 
   return {
     ...monster,
@@ -175,7 +241,7 @@ export function prepareEnemy(monster, regionMul, playerLevel, regionStart, regio
     speed: def.speed || monster.speed || 1,
     personality: def.personality || monster.personality || "aggressive",
     abilities,
-    // La dificultad adaptativa nunca aumenta la experiencia.
+    regionalEquipment,
     xpReward: scaled.xpReward,
     lootBonus: def.lootBonus || monster.lootBonus || 0,
     shield: monster.shield || 0,
@@ -183,6 +249,7 @@ export function prepareEnemy(monster, regionMul, playerLevel, regionStart, regio
     _atlasPlayerAnchored: balanced.anchored,
     _atlasPlayerBase: balanced.anchor || null,
     _atlasBaseLevel: scaled._atlasBaseLevel,
+    _atlasRegionId: regionId,
   };
 }
 
@@ -248,7 +315,7 @@ export function decideEnemyAction(enemy, roll) {
   const personality = PERSONALITIES[enemy.personality] || PERSONALITIES.aggressive;
 
   const availableAbilities = (enemy.abilities || [])
-    .map((id, idx) => ({ ability: ENEMY_ABILITIES[id], idx }))
+    .map((id, idx) => ({ ability: ENEMY_ABILITIES[id] ? { ...ENEMY_ABILITIES[id], id } : null, idx }))
     .filter(a => a.ability && level >= (ENEMY_ABILITY_UNLOCK[a.idx] || 15) && (enemy.mp || 0) >= a.ability.cost)
     .map(a => a.ability);
 
@@ -289,25 +356,47 @@ export function decideEnemyAction(enemy, roll) {
   return { type: "basic" };
 }
 
+// Las habilidades ofensivas usan la tabla universal, pero su potencia no multiplica
+// de forma explosiva el ATK regional. Los factores menores que 1 reducen el ataque;
+// los mayores que 1 añaden una bonificación plana. Las habilidades defensivas con
+// damage: 0 no infligen el daño mínimo accidental del motor.
+export function computeEnemyAbilityAttack(sourceAttack, damageFactor = 1) {
+  const source = Math.max(0, Number(sourceAttack) || 0);
+  const factor = Math.max(0, Number(damageFactor) || 0);
+  if (factor <= 0) return 0;
+  if (factor < 1) return Math.max(0, Math.round(source * factor));
+  return Math.max(0, Math.round(source + Math.ceil((factor - 1) * 5)));
+}
+
 // Resolución canónica de la habilidad de un enemigo (Atlas Alpha 1.0).
-// El dado (1d20) determina la CALIDAD del impacto. El daño sigue la misma fórmula
-// que el jugador. Fallo crítico = 0 daño + contraataque. El ATK efectivo conserva
-// el multiplicador de la habilidad (datos intactos). Sanar/escudo son efectos
-// propios no dañinos y se aplican siempre; el estado solo si no hubo fallo.
+// El dado (1d20) determina la CALIDAD del impacto. Fallo crítico = 0 daño +
+// contraataque solo para habilidades ofensivas. Sanar y escudo no atacan.
 export function executeEnemyAbility(enemy, ability, player, roll) {
   const eff = ability.effect || {};
+  const abilityId = ability.id || Object.keys(ENEMY_ABILITIES).find(id => ENEMY_ABILITIES[id] === ability) || null;
+  const attackType = ABILITY_TYPE[abilityId] || "fisico";
   const quality = resolveD20Quality(roll);
-  const qId = quality.id; // Solo 20 natural es crítico en tiradas 1d20.
-  const effAtk = Math.max(0, Math.round((enemy.attack || 0) * (eff.damage || 1)));
-  const res = resolveAttack({
-    qualityId: qId,
-    atk: effAtk,
-    def: player.defense || 0,
-    opponentAtk: player.attack || 0,
-    opponentDef: enemy.defense || 0,
-    rollTotal: roll,
-    forceCritical: roll === 20,
-  });
+  const qId = quality.id;
+  const sourceAttack = attackType === "magico"
+    ? (enemy.magicalAttack ?? enemy.attack ?? 0)
+    : (enemy.physicalAttack ?? enemy.attack ?? 0);
+  const targetDefense = attackType === "magico"
+    ? (player.magicalDefense ?? player.defense ?? 0)
+    : (player.physicalDefense ?? player.defense ?? 0);
+  const effectiveDefense = Math.max(0, Math.round(targetDefense * (1 - Math.max(0, Math.min(1, eff.ignoreDef || 0)))));
+  const hasOffensiveDamage = Number(eff.damage) > 0;
+  const effAtk = computeEnemyAbilityAttack(sourceAttack, eff.damage);
+  const res = hasOffensiveDamage
+    ? resolveAttack({
+      qualityId: qId,
+      atk: effAtk,
+      def: effectiveDefense,
+      opponentAtk: player.attack || 0,
+      opponentDef: attackType === "magico" ? (enemy.magicalDefense ?? enemy.defense ?? 0) : (enemy.physicalDefense ?? enemy.defense ?? 0),
+      rollTotal: roll,
+      forceCritical: roll === 20,
+    })
+    : { quality: qId, isFalloCritico: false, damage: 0, counter: null };
 
   let heal = 0;
   if (eff.heal && enemy.hp <= enemy.maxHp * 0.4) {
@@ -327,7 +416,7 @@ export function executeEnemyAbility(enemy, ability, player, roll) {
 
   return {
     damage: res.damage,
-    isCrit: qId === QUALITY.critico.id,
+    isCrit: res.quality === QUALITY.critico.id,
     isFallo: res.isFalloCritico,
     counter: res.counter,
     quality: qId,
@@ -340,12 +429,19 @@ export function executeEnemyAbility(enemy, ability, player, roll) {
 export function executeEnemyBasicAttack(enemy, player, roll) {
   const quality = resolveD20Quality(roll);
   const qId = quality.id; // Solo 20 natural es crítico en tiradas 1d20.
+  const magical = enemy.basicAttackType === "magico";
+  const targetDefense = magical
+    ? (player.magicalDefense ?? player.defense ?? 0)
+    : (player.physicalDefense ?? player.defense ?? 0);
+  const sourceAttack = magical
+    ? (enemy.magicalAttack ?? enemy.attack ?? 0)
+    : (enemy.physicalAttack ?? enemy.attack ?? 0);
   const res = resolveAttack({
     qualityId: qId,
-    atk: enemy.attack,
-    def: player.defense || 0,
+    atk: sourceAttack,
+    def: targetDefense,
     opponentAtk: player.attack || 0,
-    opponentDef: enemy.defense || 0,
+    opponentDef: magical ? (enemy.magicalDefense ?? enemy.defense ?? 0) : (enemy.physicalDefense ?? enemy.defense ?? 0),
     rollTotal: roll,
     forceCritical: roll === 20,
   });

@@ -35,12 +35,12 @@ function roll(group, faces) {
   };
 }
 
-ok("Versión Atlas v2.23.2", () => {
+ok("Versión Atlas v2.23.2 o posterior de la familia", () => {
   const pkg = JSON.parse(read("package.json"));
   const lock = JSON.parse(read("package-lock.json"));
-  assert.equal(pkg.version, "2.23.2");
-  assert.equal(lock.version, "2.23.2");
-  assert.equal(lock.packages[""].version, "2.23.2");
+  assert.match(pkg.version, /^2\.23\.(?:[2-9]|[1-9][0-9]+)$/);
+  assert.equal(lock.version, pkg.version);
+  assert.equal(lock.packages[""].version, pkg.version);
 });
 
 ok("La mitad o más de los dados en 1 produce fallo crítico", () => {

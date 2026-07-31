@@ -99,6 +99,7 @@ function CatalogCard({ item, player, regionId, tier, onForge }) {
       {def.ability && <p className="mt-1.5 text-[10px] text-fuchsia-200">⚔ {def.ability.name}: <span className="text-slate-400">{def.ability.desc}</span></p>}
       <Requirements player={player} gold={gold} materials={materials} reason={!tierAllows ? reason : (!canForge && !owned ? reason : "")} />
       <button
+        type="button"
         onClick={() => onForge(kind, id)}
         disabled={!canForge || !tierAllows}
         className={`mt-2 w-full rounded-lg py-2 text-xs font-medium ${canForge && tierAllows ? "bg-amber-600 text-slate-950 hover:bg-amber-500" : "cursor-not-allowed bg-slate-700/50 text-slate-500"}`}
@@ -130,10 +131,10 @@ function UpgradeCard({ item, player, regionId, tier, onUpgrade, onEquip }) {
       </div>
       <Requirements player={player} gold={quote.gold} materials={quote.materials} reason={!quote.canUpgrade ? quote.reason : ""} />
       <div className="mt-2 flex gap-2">
-        <button onClick={() => onEquip(kind, ref)} className={`flex-1 rounded-lg py-2 text-xs font-medium ${equipped ? "bg-slate-700/50 text-slate-400" : "bg-emerald-700 text-white hover:bg-emerald-600"}`}>
+        <button type="button" onClick={() => onEquip(kind, ref)} className={`flex-1 rounded-lg py-2 text-xs font-medium ${equipped ? "bg-slate-700/50 text-slate-400" : "bg-emerald-700 text-white hover:bg-emerald-600"}`}>
           {equipped ? "Desequipar" : "Equipar"}
         </button>
-        <button onClick={() => onUpgrade(kind, ref)} disabled={!quote.canUpgrade} className={`flex-1 rounded-lg py-2 text-xs font-medium ${quote.canUpgrade ? "bg-sky-600 text-white hover:bg-sky-500" : "cursor-not-allowed bg-slate-700/50 text-slate-500"}`}>
+        <button type="button" onClick={() => onUpgrade(kind, ref)} disabled={!quote.canUpgrade} className={`flex-1 rounded-lg py-2 text-xs font-medium ${quote.canUpgrade ? "bg-sky-600 text-white hover:bg-sky-500" : "cursor-not-allowed bg-slate-700/50 text-slate-500"}`}>
           {quote.maxed ? `Máximo +${quote.level}` : quote.localMaxed ? `Límite local +${quote.localMax}` : `Mejorar +${quote.level} → +${quote.nextLevel}`}
         </button>
       </div>
@@ -159,6 +160,7 @@ export default function BlacksmithModal({
   const foundBrokenRelic = !!worldFlags["verde:broken_relic_found"];
   const cityServices = !!worldFlags["verde:city_services_open"];
   const canAttemptRelic = regionId === "verde" && tier.services.includes("relic_restore");
+  const smithConnected = typeof onForgeEquipment === "function" && typeof onUpgradeEquipment === "function" && typeof onEquipEquipment === "function";
 
   const catalog = useMemo(() => {
     if (!stockUnlocked) return [];
@@ -204,11 +206,12 @@ export default function BlacksmithModal({
             <Hammer className="w-5 h-5 text-amber-300" />
             <div><h2 className="font-heading text-base tracking-wide text-amber-100">{stock?.label || tier.label}</h2><p className="text-[10px] text-slate-400">{REGION_LABEL[regionId]} · mejoras hasta +{tier.maxUpgrade}</p></div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="min-h-0 space-y-3 overflow-y-auto p-3">
           <p className="text-[11px] text-slate-400">{tier.description} El catálogo depende de esta región y este asentamiento.</p>
+          {!smithConnected && <div className="rounded-xl border border-rose-700/60 bg-rose-950/35 p-3 text-xs text-rose-200">La herrería perdió conexión con el estado de la partida. Cierra y vuelve a abrir el menú.</div>}
 
           <section className="rounded-xl border border-slate-700 bg-slate-800/40 p-3">
             <div className="flex items-center justify-between gap-3">
@@ -219,7 +222,7 @@ export default function BlacksmithModal({
                   <div className="rounded-lg border border-slate-700 bg-slate-950/45 px-2 py-1.5"><p className="text-[9px] uppercase tracking-wider text-slate-500">Protección</p><p className="text-base font-medium text-emerald-300">{condition}%</p></div>
                 </div>
               </div>
-              <button onClick={onRepair} disabled={fullyRepaired} className={`rounded-lg px-3 py-2 text-xs font-medium ${fullyRepaired ? "cursor-not-allowed bg-slate-700/50 text-slate-500" : "bg-sky-700 text-white hover:bg-sky-600"}`}>{fullyRepaired ? "Sin daños" : "Reparar todo"}</button>
+              <button type="button" onClick={onRepair} disabled={fullyRepaired} className={`rounded-lg px-3 py-2 text-xs font-medium ${fullyRepaired ? "cursor-not-allowed bg-slate-700/50 text-slate-500" : "bg-sky-700 text-white hover:bg-sky-600"}`}>{fullyRepaired ? "Sin daños" : "Reparar todo"}</button>
             </div>
           </section>
 
@@ -231,28 +234,28 @@ export default function BlacksmithModal({
                 <p className={cityServices ? "text-emerald-300" : "text-rose-300"}>{cityServices ? "✓" : "✗"} Forja regional habilitada</p>
                 {GREEN_RELIC_COMPONENTS.map(component => { const has = !missingRelic.some(m => m.id === component.id); return <p key={component.id} className={has ? "text-emerald-300" : "text-rose-300"}>{has ? "✓" : "✗"} {component.name}</p>; })}
               </div>
-              <button onClick={onRestoreRelic} disabled={relicRestored} className={`mt-3 w-full rounded-lg py-2 text-xs font-medium ${relicRestored ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-600 text-white hover:bg-emerald-500"}`}>
+              <button type="button" onClick={onRestoreRelic} disabled={relicRestored} className={`mt-3 w-full rounded-lg py-2 text-xs font-medium ${relicRestored ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-600 text-white hover:bg-emerald-500"}`}>
                 {relicRestored ? <span className="inline-flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Reliquia restaurada</span> : "Restaurar reliquia"}
               </button>
             </section>
           )}
 
           <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-700 bg-slate-950/40 p-1">
-            <button onClick={() => setTab("catalog")} className={`rounded-lg py-2 text-xs font-medium ${tab === "catalog" ? "bg-amber-700 text-amber-50" : "text-slate-400"}`}>Catálogo local</button>
-            <button onClick={() => setTab("upgrade")} className={`rounded-lg py-2 text-xs font-medium ${tab === "upgrade" ? "bg-sky-700 text-sky-50" : "text-slate-400"}`}>Mejorar equipo</button>
+            <button type="button" onClick={() => setTab("catalog")} className={`rounded-lg py-2 text-xs font-medium ${tab === "catalog" ? "bg-amber-700 text-amber-50" : "text-slate-400"}`}>Catálogo local</button>
+            <button type="button" onClick={() => setTab("upgrade")} className={`rounded-lg py-2 text-xs font-medium ${tab === "upgrade" ? "bg-sky-700 text-sky-50" : "text-slate-400"}`}>Mejorar equipo</button>
           </div>
 
           {tab === "catalog" && (
             <section className="space-y-2">
               {!stockUnlocked && <div className="rounded-xl border border-rose-800/60 bg-rose-950/30 p-3 text-xs text-rose-200"><Lock className="mr-1 inline w-3.5 h-3.5" /> El catálogo se habilita al recuperar los servicios de este asentamiento.</div>}
-              {catalog.map(item => <CatalogCard key={`${item.kind}:${item.id}`} item={item} player={player} regionId={regionId} tier={tier} onForge={onForgeEquipment} />)}
+              {catalog.map(item => <CatalogCard key={`${item.kind}:${item.id}`} item={item} player={player} regionId={regionId} tier={tier} onForge={smithConnected ? onForgeEquipment : () => {}} />)}
               {stockUnlocked && !catalog.length && <p className="py-5 text-center text-xs text-slate-500">Este herrero no tiene diseños disponibles.</p>}
             </section>
           )}
 
           {tab === "upgrade" && (
             <section className="space-y-2">
-              {ownedItems.map(item => <UpgradeCard key={`${item.kind}:${item.ref}`} item={item} player={player} regionId={regionId} tier={tier} onUpgrade={onUpgradeEquipment} onEquip={onEquipEquipment} />)}
+              {ownedItems.map(item => <UpgradeCard key={`${item.kind}:${item.ref}`} item={item} player={player} regionId={regionId} tier={tier} onUpgrade={smithConnected ? onUpgradeEquipment : () => {}} onEquip={smithConnected ? onEquipEquipment : () => {}} />)}
               {!ownedItems.length && <p className="py-5 text-center text-xs text-slate-500">No tienes equipo mejorable.</p>}
             </section>
           )}

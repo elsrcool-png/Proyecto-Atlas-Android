@@ -47,3 +47,37 @@ export function consumeGreenRelicComponents(player) {
   }
   return questItems;
 }
+
+export const REGIONAL_BOSS_RELICS = Object.freeze({
+  fria: Object.freeze({
+    id: "fragmento_nucleo_artico",
+    state: "obtenida",
+    name: "Fragmento del Núcleo Ártico",
+    form: "Fragmento regional",
+    source: "Aurel, Último Portador",
+    desc: "Un fragmento del núcleo que Aurel sostuvo durante siglos bajo el hielo.",
+  }),
+  desierto: Object.freeze({
+    id: "nucleo_solar_antiguo",
+    state: "obtenida",
+    name: "Núcleo Solar Antiguo",
+    form: "Reliquia regional",
+    source: "Amon, Portador del Sol Eterno",
+    desc: "El núcleo abrasado que mantuvo activo el sello de la Región Árida.",
+  }),
+});
+
+export function getRegionalBossRelic(regionId) {
+  const relic = REGIONAL_BOSS_RELICS[regionId];
+  return relic ? { ...relic } : null;
+}
+
+export function reconcileRegionalBossRelics(player, defeatedBosses = []) {
+  if (!player) return player;
+  const defeated = defeatedBosses instanceof Set ? defeatedBosses : new Set(defeatedBosses || []);
+  const relics = { ...(player.relics || {}) };
+  let changed = false;
+  if (defeated.has("aurel_portador") && !relics.fria) { relics.fria = getRegionalBossRelic("fria"); changed = true; }
+  if (defeated.has("amon_solar") && !relics.desierto) { relics.desierto = getRegionalBossRelic("desierto"); changed = true; }
+  return changed ? { ...player, relics } : player;
+}

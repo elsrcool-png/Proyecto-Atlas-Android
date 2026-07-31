@@ -34,7 +34,7 @@ import { buildCombatSequence } from "@/lib/atlasCombatDirector";
 import { tickAtlasStatuses } from "@/lib/atlasStatusAtlas";
 import { getSmithTierById } from "@/lib/atlasEconomyV3";
 import { createAtlasSmithActions } from "@/lib/createAtlasSmithActions";
-import { canRestoreGreenRelic, consumeGreenRelicComponents, getGreenRelicForm, getMissingGreenRelicComponents } from "@/lib/atlasRelics";
+import { canRestoreGreenRelic, consumeGreenRelicComponents, getGreenRelicForm, getMissingGreenRelicComponents, getRegionalBossRelic, reconcileRegionalBossRelics } from "@/lib/atlasRelics";
 import { resolveCommonChest, resolveAncientChest, generateLegendaryChestWeapon, missingLegendarySeals, requiredSealsForRegion } from "@/lib/atlasChestSystem";
 import { getSectorDef, getStartingCoords, getInitialUnlockedSectorKeys, getMissionUnlocks, sectorIdFromCoords, sectorKey, getNeighborSectorId, getBlockedReason, getBossGateMissionId, getBossMissionId, isSectorUnlocked, coordsFromSectorId } from "@/lib/atlasRegionSectors";
 import { createMissionState, normalizeMissionState, getMissionLockReason as missionLockReason, getCurrentObjectiveText, advanceMission, activeStoryPointIds as collectActiveStoryPointIds } from "@/lib/atlasMissionEngine";
@@ -817,7 +817,11 @@ export default function useAtlasSession() {
       const inst = normInv.find(w => w.defId === equipped);
       equipped = inst ? inst.uid : null;
     }
-    const bossUnlocks = equipmentUnlocksFromBosses(save.defeatedBosses || []);
+    const defeatedBossIds = new Set(save.defeatedBosses || []);
+    if (save.worldFlags?.["fria:boss_defeated"]) defeatedBossIds.add("aurel_portador");
+    if (save.worldFlags?.["desierto:boss_defeated"]) defeatedBossIds.add("amon_solar");
+    const defeatedBossList = [...defeatedBossIds];
+    const bossUnlocks = equipmentUnlocksFromBosses(defeatedBossList);
     const equipmentUnlocks = {
       helmet: !!(save.player.equipmentUnlocks?.helmet || bossUnlocks.helmet),
       accessory2: !!(save.player.equipmentUnlocks?.accessory2 || bossUnlocks.accessory2),
@@ -840,8 +844,9 @@ export default function useAtlasSession() {
       armorUpgrades: save.player.armorUpgrades || {},
       helmetUpgrades: save.player.helmetUpgrades || {},
     };
-    if (migratedPlayer.accessory2 && migratedPlayer.accessory2 === migratedPlayer.accessory) migratedPlayer.accessory2 = null;
-    setPlayer(recomputePlayer(migratedPlayer));
+    const reconciledPlayer = reconcileRegionalBossRelics(migratedPlayer, defeatedBossList);
+    if (reconciledPlayer.accessory2 && reconciledPlayer.accessory2 === reconciledPlayer.accessory) reconciledPlayer.accessory2 = null;
+    setPlayer(recomputePlayer(reconciledPlayer));
     setRegionIndex(save.regionIndex ?? 0);
     setBlockIndex(save.blockIndex ?? 0);
     setSectorRow(save.sectorRow ?? getStartingCoords(REGIONS[save.regionIndex ?? 0].id).row);
@@ -857,7 +862,7 @@ export default function useAtlasSession() {
     if (!savedByRegion[savedRegionIdForMissions] && save.missions) savedByRegion[savedRegionIdForMissions] = save.missions;
     missionsByRegionRef.current = savedByRegion;
     setOpenedChests(new Set(save.openedChests || []));
-    setDefeatedBosses(new Set(save.defeatedBosses || []));
+    setDefeatedBosses(new Set(defeatedBossList));
     setDefeatedEnemyIds(new Set(save.defeatedEnemyIds || []));
     setVisitedSectors(new Set(save.visitedSectors || []));
     const savedRegionId = REGIONS[save.regionIndex ?? 0].id;
@@ -890,7 +895,7 @@ export default function useAtlasSession() {
     // la siguiente y añadir su santuario inicial al menú de viaje.
     const loadedRegionIdx = save.regionIndex ?? 0;
     const loadedRegion = REGIONS[loadedRegionIdx];
-    if (loadedRegion && (save.defeatedBosses || []).includes(loadedRegion.boss?.id) && loadedRegionIdx < REGIONS.length - 1) {
+    if (loadedRegion && defeatedBossIds.has(loadedRegion.boss?.id) && loadedRegionIdx < REGIONS.length - 1) {
       const nr = REGIONS[loadedRegionIdx + 1];
       const wf = save.worldFlags || {};
       if (!wf[`${nr.id}:unlocked`]) {
@@ -1908,7 +1913,13 @@ export default function useAtlasSession() {
       const rewardInventory = region.id === "verde" || !drop
         ? (p.accessoryInventory || [])
         : [...new Set([...(p.accessoryInventory || []), drop])];
-      const bossRewardPlayer = recomputePlayer({ ...p, equipmentUnlocks, accessoryInventory: rewardInventory });
+      const regionalRelic = getRegionalBossRelic(region.id);
+      const bossRewardPlayer = recomputePlayer({
+        ...p,
+        equipmentUnlocks,
+        accessoryInventory: rewardInventory,
+        relics: regionalRelic ? { ...(p.relics || {}), [region.id]: regionalRelic } : (p.relics || {}),
+      });
       const r = bossAutoLevel(bossRewardPlayer, regionIndex);
       setPlayer(recomputePlayer(r.player));
       if (r.player.level > p.level) toast(`¡Subes a nivel ${r.player.level}!`, "levelup");
@@ -1928,6 +1939,10 @@ export default function useAtlasSession() {
         pushLog("✦ Se desbloquea Accesorio II. Puedes combinar dos accesorios diferentes.");
       }
       if (region.id !== "verde" && drop && ACCESSORIES[drop]) toast(`¡${ACCESSORIES[drop].name} obtenido!`, "item");
+      if (regionalRelic) {
+        toast(`Reliquia registrada: ${regionalRelic.name}`, "boss");
+        pushLog(`✦ ${regionalRelic.name} queda marcada en la sección Reliquias de la mochila.`);
+      }
     } else {
       progressTracker("kill", null, 1, null, deadEnemy?.missionTag || deadEnemy?.id);
       gainXp(deadEnemy?.xpReward || KILL_XP[regionIndex]);

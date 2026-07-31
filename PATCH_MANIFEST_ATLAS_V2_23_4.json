@@ -1,0 +1,41 @@
+{
+  "project": "Proyecto Atlas Visual",
+  "version": "2.23.4",
+  "base_version": "2.23.3",
+  "title": "Estabilización crítica del combate Dungeon",
+  "status": "source_validated_build_pending",
+  "changes": {
+    "dungeon_combat": [
+      "Preserve crit as a boolean hit result",
+      "Expose internal probability as critChance",
+      "Prevent normal hits from being interpreted as critical hits"
+    ],
+    "validation": [
+      "Deterministic miss regression",
+      "Deterministic normal-hit regression",
+      "Deterministic critical-hit regression",
+      "Duplicate-result-property regression"
+    ]
+  },
+  "modified_files": [
+    "VERSION_ATLAS_VISUAL.txt",
+    "package.json",
+    "package-lock.json",
+    "src/lib/atlasDungeonSkills.js",
+    "scripts/validate-v2-23-4.mjs",
+    "ACTUALIZACION_ATLAS_V2_23_4.md",
+    "PATCH_MANIFEST_ATLAS_V2_23_4.json",
+    "scripts/validate-v2-23-3.mjs",
+    "VALIDACION_ATLAS_V2_23_4.txt",
+    "AUDITORIA_FASE_0_V2_23_4.md"
+  ],
+  "validation": {
+    "syntax_files": 292,
+    "local_imports": 661,
+    "v2_23_4_groups": 5,
+    "cumulative_validation": "passed",
+    "duplicate_static_object_keys": 0,
+    "npm_install": "blocked_by_registry_missing_packages",
+    "vite_build": "not_run_dependencies_unavailable"
+  }
+}

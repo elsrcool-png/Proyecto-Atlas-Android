@@ -1,19 +1,48 @@
-// PROYECTO ATLAS — Balance puro de enemigos comunes contra estadísticas base.
-// Este módulo no depende de React ni de alias internos, por lo que puede probarse
-// directamente desde Node y reutilizarse en modo libre, tablero y dungeon.
+// PROYECTO ATLAS v2.23.3 — Balance regional de enemigos.
+// El nivel define la progresión interna del sector, pero la región, el rol y las
+// estadísticas efectivas del jugador fijan pisos de amenaza reales. El anclaje
+// nunca rebaja las estadísticas regionales ya escaladas.
 
-export const PLAYER_ANCHOR_PROFILE = {
-  aggressive: { hp: 0.92, atk: 1.05, phys: 0.82, mag: 0.78 },
-  defensive: { hp: 1.05, atk: 0.86, phys: 1.08, mag: 0.92 },
-  magical: { hp: 0.84, atk: 0.98, phys: 0.74, mag: 1.08 },
-  resilient: { hp: 1.12, atk: 0.88, phys: 1.12, mag: 0.84 },
-  unpredictable: { hp: 0.9, atk: 1.02, phys: 0.84, mag: 0.84 },
-  tactical: { hp: 0.98, atk: 0.98, phys: 0.96, mag: 0.96 },
-};
+export const REGION_COMBAT_PROFILES = Object.freeze({
+  verde: Object.freeze({
+    hpMul: 1.00, atkMul: 1.00, defMul: 1.00,
+    minHp: 8, minAtk: 3, minDef: 1,
+    playerHpRatio: 0.72, playerAtkRatio: 0.58, playerDefRatio: 0.42,
+    attackPressure: -1,
+  }),
+  fria: Object.freeze({
+    hpMul: 1.10, atkMul: 1.10, defMul: 1.12,
+    minHp: 22, minAtk: 11, minDef: 7,
+    playerHpRatio: 1.20, playerAtkRatio: 0.75, playerDefRatio: 0.58,
+    attackPressure: 1,
+  }),
+  desierto: Object.freeze({
+    hpMul: 1.25, atkMul: 1.18, defMul: 1.18,
+    minHp: 32, minAtk: 15, minDef: 9,
+    playerHpRatio: 1.55, playerAtkRatio: 0.86, playerDefRatio: 0.62,
+    attackPressure: 2,
+  }),
+});
 
-function numericBase(value, fallback) {
+const ROLE_PROFILE = Object.freeze({
+  normal: Object.freeze({ hp: 1, atk: 1, def: 1, playerHp: 1, attackPressure: 0, playerDef: 1 }),
+  elite: Object.freeze({ hp: 1.28, atk: 1.10, def: 1.08, playerHp: 1.18, attackPressure: 1, playerDef: 1.08 }),
+  boss: Object.freeze({ hp: 1.00, atk: 1.08, def: 1.04, playerHp: 3.10, attackPressure: 3, playerDef: 1.12 }),
+});
+
+function numeric(value, fallback) {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+function roleFor(monster = {}) {
+  if (monster.boss) return "boss";
+  if (monster.elite) return "elite";
+  return "normal";
+}
+
+export function getRegionCombatProfile(regionId = "verde") {
+  return REGION_COMBAT_PROFILES[regionId] || REGION_COMBAT_PROFILES.verde;
 }
 
 export function balanceEnemyFromPlayerBase({
@@ -21,47 +50,57 @@ export function balanceEnemyFromPlayerBase({
   scaled,
   playerProfile,
   regionStart = 1,
+  regionId = scaled?._atlasRegionId || "verde",
   personality = "aggressive",
   focus = { phys: 1, mag: 1 },
 } = {}) {
   if (!scaled) throw new Error("scaled es obligatorio");
 
-  if (!playerProfile || monster?.boss) {
-    return {
-      hp: scaled.hp,
-      attack: scaled.attack,
-      physicalDefense: Math.max(0, Math.round(scaled.defense * (focus.phys ?? 1))),
-      magicalDefense: Math.max(0, Math.round(scaled.defense * (focus.mag ?? 1))),
-      anchored: false,
-      anchor: null,
-    };
-  }
+  const profile = getRegionCombatProfile(regionId);
+  const roleId = roleFor(monster);
+  const role = ROLE_PROFILE[roleId];
 
-  const profile = PLAYER_ANCHOR_PROFILE[personality] || PLAYER_ANCHOR_PROFILE.aggressive;
-  const pHp = numericBase(playerProfile.baseMaxHp ?? playerProfile.maxHp, 14);
-  const pAtk = numericBase(playerProfile.baseAttack ?? playerProfile.attack, 4);
-  const pPhys = numericBase(playerProfile.baseDefense ?? playerProfile.physicalDefense ?? playerProfile.defense, 2);
-  const pMag = numericBase(playerProfile.baseMagicalDefense ?? playerProfile.magicalDefense ?? playerProfile.defense, pPhys);
+  const pHp = numeric(playerProfile?.maxHp ?? playerProfile?.baseMaxHp, 14);
+  const pAtk = numeric(playerProfile?.attack ?? playerProfile?.baseAttack, 4);
+  const pPhys = numeric(playerProfile?.physicalDefense ?? playerProfile?.defense ?? playerProfile?.baseDefense, 2);
+  const pMag = numeric(playerProfile?.magicalDefense ?? playerProfile?.baseMagicalDefense ?? pPhys, pPhys);
 
-  const sectorSteps = Math.max(0, (scaled._atlasBaseLevel || scaled.level || regionStart) - regionStart);
-  const hpProgress = 1 + Math.min(0.28, sectorSteps * 0.035);
-  const atkProgress = 1 + Math.min(0.18, sectorSteps * 0.0225);
-  const defProgress = 1 + Math.min(0.16, sectorSteps * 0.02);
-  const softenedPhysFocus = 0.6 + (focus.phys ?? 1) * 0.4;
-  const softenedMagFocus = 0.6 + (focus.mag ?? 1) * 0.4;
+  const scaledPhys = numeric(scaled.physicalDefense ?? scaled.defense, 0);
+  const scaledMag = numeric(scaled.magicalDefense ?? scaled.defense, scaledPhys);
 
-  const anchorHp = pHp * profile.hp * hpProgress;
-  const anchorAtk = pAtk * profile.atk * atkProgress;
-  const anchorPhys = pPhys * profile.phys * softenedPhysFocus * defProgress;
-  const anchorMag = pMag * profile.mag * softenedMagFocus * defProgress;
-  const mix = (anchor, original) => anchor * 0.78 + original * 0.22;
+  const regionalHp = numeric(scaled.hp, 8) * (roleId === "boss" ? 1 : profile.hpMul) * role.hp;
+  const regionalAtk = numeric(scaled.attack, 3) * profile.atkMul * role.atk;
+  const regionalPhys = scaledPhys * profile.defMul * role.def * (focus.phys ?? 1);
+  const regionalMag = scaledMag * profile.defMul * role.def * (focus.mag ?? 1);
+
+  const playerHpFloor = pHp * profile.playerHpRatio * role.playerHp;
+  const playerAttackFloor = Math.max(
+    pPhys + profile.attackPressure + role.attackPressure,
+    pMag + profile.attackPressure + role.attackPressure - 1,
+    pAtk * profile.playerAtkRatio * role.atk,
+  );
+  const playerPhysFloor = pAtk * profile.playerDefRatio * role.playerDef * (0.72 + (focus.phys ?? 1) * 0.28);
+  const playerMagFloor = pAtk * profile.playerDefRatio * role.playerDef * (0.72 + (focus.mag ?? 1) * 0.28);
+
+  const hp = Math.max(profile.minHp * role.hp, regionalHp, playerHpFloor);
+  const attack = Math.max(profile.minAtk + role.attackPressure, regionalAtk, playerAttackFloor);
+  const physicalDefense = Math.max(profile.minDef * role.def, regionalPhys, playerPhysFloor);
+  const magicalDefense = Math.max(profile.minDef * role.def, regionalMag, playerMagFloor);
 
   return {
-    hp: Math.max(3, Math.round(mix(anchorHp, scaled.hp))),
-    attack: Math.max(1, Math.round(mix(anchorAtk, scaled.attack))),
-    physicalDefense: Math.max(0, Math.round(mix(anchorPhys, scaled.defense * (focus.phys ?? 1)))),
-    magicalDefense: Math.max(0, Math.round(mix(anchorMag, scaled.defense * (focus.mag ?? 1)))),
-    anchored: true,
-    anchor: { hp: pHp, attack: pAtk, physicalDefense: pPhys, magicalDefense: pMag },
+    hp: Math.max(3, Math.round(hp)),
+    attack: Math.max(1, Math.round(attack)),
+    physicalDefense: Math.max(0, Math.round(physicalDefense)),
+    magicalDefense: Math.max(0, Math.round(magicalDefense)),
+    anchored: !!playerProfile,
+    anchor: playerProfile ? {
+      hp: pHp,
+      attack: pAtk,
+      physicalDefense: pPhys,
+      magicalDefense: pMag,
+      regionId,
+      role: roleId,
+      personality,
+    } : null,
   };
 }
