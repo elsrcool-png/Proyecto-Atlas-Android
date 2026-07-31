@@ -375,6 +375,27 @@ export default function Game() {
           onCompanionUpdate={s.onCompanionUpdate}
           onWeaponWear={s.damageWeapon}
           onActivateFinalSanctuary={() => { audio.playPortal(); s.activateDungeonFinalSanctuary(); }}
+          onStartMiniBossCombat={s.startDungeonMiniBossCombat}
+          onOpenBackpack={() => s.setShowBackpack(true)}
+          backpackOpen={s.showBackpack}
+          classicCombatActive={!!s.enemy?.dungeonMiniBoss}
+          classicCombatView={s.enemy?.dungeonMiniBoss ? (
+            <CombatView
+              player={s.player}
+              enemy={s.enemy}
+              region={region}
+              lastResult={s.lastResult}
+              onAttack={s.handleAttack}
+              onSkill={s.onSkill}
+              onItem={s.onItem}
+              onEscape={s.handleEscape}
+              onEnemyDead={s.onEnemyDead}
+              busy={s.combatBusy || audio.combatIntroActive}
+              skills={s.skills}
+              skillCosts={s.skillCosts}
+              playerStatuses={s.playerStatuses}
+            />
+          ) : null}
           bossDefeated={s.dungeonBossDefeated}
           settings={settings}
           onUpdateSettings={updateSettings}

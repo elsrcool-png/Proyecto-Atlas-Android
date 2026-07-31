@@ -109,13 +109,13 @@ ok("Dungeon reutiliza el mismo director temporal y oculta los dados", () => {
   assert.equal(adapted.rollTotal, null);
 });
 
-ok("la vista Dungeon no abre una segunda cámara ni el combate clásico", () => {
+ok("la vista Dungeon conserva una sola cámara y desacopla el combate clásico", () => {
   const view = read("src/components/atlas/DungeonView.jsx");
   assert.match(view, /data-camera-mode=\{cameraProfile\.mode\}/);
   assert.match(view, /DungeonWallLayer/);
   assert.match(view, /DungeonOffscreenIndicators/);
   assert.match(view, /DungeonCombatActor/);
-  assert.doesNotMatch(view, /CombatView/);
+  assert.doesNotMatch(view, /import\s+.*CombatView/);
   assert.doesNotMatch(view, /combatFlash/);
   assert.doesNotMatch(view, /canvasRef/);
   assert.doesNotMatch(view, /onStartBossCombat/);
@@ -129,16 +129,15 @@ ok("el combate Dungeon ejecuta secuencias compartidas para jugador, aliados y en
   assert.match(hook, /attackerId: "player"/);
   assert.match(hook, /attackerId: a\.id/);
   assert.match(hook, /attackerId: e\.id/);
-  assert.match(hook, /ent\.boss && !bossDefeatedRef\.current/);
-  assert.doesNotMatch(hook, /inicia el combate clásico/);
+  assert.match(hook, /classicBoss/);
+  assert.match(hook, /El mini jefe se conserva como encuentro clásico separado/);
 });
 
-ok("derrotar al mini jefe se resuelve dentro de Dungeon y libera la salida", () => {
+ok("los enemigos normales se resuelven dentro de Dungeon sin abrir combate clásico", () => {
   const session = read("src/hooks/useAtlasSession.js");
   const block = session.slice(session.indexOf("const onDungeonEnemyKilled"), session.indexOf("const hireAdventurer"));
-  assert.match(block, /setDungeonBossDefeated\(true\)/);
-  assert.match(block, /completeDungeon\(true\)/);
-  assert.match(block, /rollGlobalLoot/);
+  assert.match(block, /gainXp/);
+  assert.match(block, /resolveCombatThreat/);
   assert.doesNotMatch(block, /startCombat\(/);
 });
 
@@ -149,9 +148,10 @@ ok("las paredes altas, cámara y actor respetan movimiento reducido", () => {
   assert.match(css, /prefers-reduced-motion/);
 });
 
-ok("la versión declarada corresponde a v2.26.0", () => {
+ok("la versión declarada conserva la base v2.26.0 o superior", () => {
   const pkg = JSON.parse(read("package.json"));
-  assert.equal(pkg.version, "2.26.0");
+  const [major, minor] = pkg.version.split(".").map(Number);
+  assert.ok(major > 2 || (major === 2 && minor >= 26));
 });
 
 console.log(`\nVALIDACIÓN ATLAS v2.26.0 CORRECTA — ${checks.length} bloques aprobados.`);

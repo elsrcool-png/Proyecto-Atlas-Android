@@ -54,14 +54,12 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
   const keysRef = useRef(0);
   const companionRef = useRef(companion);
   const playerRef = useRef(player);
-  const bossDefeatedRef = useRef(bossDefeated);
   useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
   useEffect(() => { alliesRef.current = allies; }, [allies]);
   useEffect(() => { defeatedRef.current = defeated; }, [defeated]);
   useEffect(() => { keysRef.current = keys; }, [keys]);
   useEffect(() => { companionRef.current = companion; }, [companion]);
   useEffect(() => { playerRef.current = player; }, [player]);
-  useEffect(() => { bossDefeatedRef.current = bossDefeated; }, [bossDefeated]);
 
   const hasLockedDoors = useMemo(() => {
     if (!baseDungeon) return false;
@@ -95,6 +93,34 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
 
+  const classicBoss = useMemo(() => {
+    if (!baseDungeon || bossDefeated) return null;
+    const ent = getEntities(baseDungeon);
+    if (!ent.boss) return null;
+    const diffMul = region?.difficultyMul || 1;
+    const start = regionIndex === 0 ? 1 : regionIndex === 1 ? 6 : 12;
+    const m = monsterById(ent.boss.monsterId);
+    const prepared = prepareEnemy(m, diffMul * 1.3, playerLevel || 1, start, region?.id, baseDungeon?.sectorId, playerRef.current || player);
+    return {
+      ...prepared,
+      id: `${baseDungeon.id}_boss_${ent.boss.x}_${ent.boss.y}`,
+      uid: `${baseDungeon.id}_boss_${ent.boss.x}_${ent.boss.y}`,
+      x: ent.boss.x,
+      y: ent.boss.y,
+      monsterId: ent.boss.monsterId,
+      name: prepared.name || m.name,
+      hp: prepared.hp,
+      maxHp: prepared.maxHp || prepared.hp,
+      attack: prepared.attack || m.attack || 0,
+      defense: prepared.defense || m.defense || 0,
+      boss: true,
+      dungeonMiniBoss: true,
+      dungeonId: baseDungeon.id,
+      sectorId: baseDungeon.sectorId,
+      keyHolder: !!ent.boss.keyHolder,
+    };
+  }, [baseDungeon, bossDefeated, region, regionIndex, playerLevel, player]);
+
   const initEnemies = useCallback(() => {
     if (!baseDungeon) return [];
     const ent = getEntities(baseDungeon);
@@ -106,20 +132,10 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
       const prepared = prepareEnemy(m, diffMul, playerLevel || 1, start, region?.id, baseDungeon?.sectorId, playerRef.current || player);
       list.push({ id: e.id, x: e.x, y: e.y, monsterId: e.monsterId, name: prepared.name || m.name, hp: prepared.hp, maxHp: prepared.hp, attack: prepared.attack || m.attack || 0, defense: prepared.defense || m.defense || 0, detectRange: 5, attackRange: 1, alerted: false });
     });
-    // El mini jefe pertenece al mismo combate de Dungeon y conserva la cámara única.
-    if (ent.boss && !bossDefeatedRef.current) {
-      const m = monsterById(ent.boss.monsterId);
-      const prepared = prepareEnemy(m, diffMul * 1.3, playerLevel || 1, start, region?.id, baseDungeon?.sectorId, playerRef.current || player);
-      list.push({
-        id: `${baseDungeon.id}_boss_${ent.boss.x}_${ent.boss.y}`,
-        x: ent.boss.x, y: ent.boss.y, monsterId: ent.boss.monsterId,
-        name: prepared.name || m.name, hp: prepared.hp, maxHp: prepared.hp,
-        attack: prepared.attack || m.attack || 0, defense: prepared.defense || m.defense || 0,
-        detectRange: 7, attackRange: 1, alerted: false, boss: true, keyHolder: !!ent.boss.keyHolder,
-      });
-    }
+    // El mini jefe se conserva como encuentro clásico separado. No forma parte
+    // de la cola táctica ni puede recibir ataques del combate vivo de Dungeon.
     return list;
-  }, [baseDungeon, region, regionIndex, playerLevel]);
+  }, [baseDungeon, region, regionIndex, playerLevel, player]);
 
   const buildAlly = useCallback(() => {
     const c = companionRef.current;
@@ -575,7 +591,7 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
 
   return {
     tactical, turn, enemies, allies, keys, defeated, cooldowns, log, busy, effects, facing: facingState,
-    hurtPulses, shake, debug, actorAnimations, activeTargetId,
+    hurtPulses, shake, debug, actorAnimations, activeTargetId, classicBoss,
     maybeStartTactical, afterMove, useSkill, useItem, wait, spendKey, patroll, basicAttack, rotate, clearTactical,
   };
 

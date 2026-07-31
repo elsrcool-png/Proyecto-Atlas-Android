@@ -3,7 +3,7 @@ import { Swords, FlaskRound, Hourglass } from "lucide-react";
 import { getEntities, DUNGEON_TILE } from "@/lib/atlasDungeons";
 import {
   getUnlockedDungeonSkills, DIR8, DIR8_KEYS, facingFromVector,
-  lineOfSight, isWalkableDiag,
+  lineOfSight, isWalkableDiag, chebyshev,
 } from "@/lib/atlasDungeonSkills";
 import useDungeonCombat from "@/hooks/useDungeonCombat";
 import DungeonCombatActor from "./DungeonCombatActor";
@@ -17,9 +17,9 @@ import { calculateDungeonCameraTransform, resolveDungeonCameraProfile } from "@/
 import { computeDungeonOcclusion } from "@/lib/atlasDungeonOcclusion";
 
 const T = DUNGEON_TILE;
-const FACING_LABEL = { up: "↑", down: "↓", left: "←", right: "→", up_left: "↖", up_right: "↗", down_left: "↙", down_right: "↘" };
+const FACING_ROTATION = { up: -90, up_right: -45, right: 0, down_right: 45, down: 90, down_left: 135, left: 180, up_left: 225 };
 
-export default function DungeonView({ dungeon, player, region, regionIndex, companion, onExit, onDescend, onOpenChest, onStoryPoint, onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear, onActivateFinalSanctuary, bossDefeated, settings, onUpdateSettings, onRequestOrientation }) {
+export default function DungeonView({ dungeon, player, region, regionIndex, companion, onExit, onDescend, onOpenChest, onStoryPoint, onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear, onActivateFinalSanctuary, onStartMiniBossCombat, bossDefeated, settings, onUpdateSettings, onRequestOrientation, onOpenBackpack, backpackOpen = false, classicCombatActive = false, classicCombatView = null }) {
   const [pos, setPos] = useState(dungeon?.spawn || { x: 1, y: 1 });
   const [facing, setFacing] = useState(() => resolveDungeonCameraProfile(dungeon, { w: 520, h: 360 }).entryFacing);
   const [opened, setOpened] = useState(new Set());
@@ -38,6 +38,8 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   const entitiesRef = useRef(getEntities(dungeon));
   const stepLock = useRef(false);
   const joyVecRef = useRef({ x: 0, y: 0 });
+  const classicBossStartedRef = useRef(false);
+  const inputPaused = backpackOpen || classicCombatActive;
 
   const liveDungeon = useMemo(() => (dungeon ? { ...dungeon, tiles: liveTiles } : dungeon), [dungeon, liveTiles]);
 
@@ -64,6 +66,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     setOpened(new Set()); setFacing(resolveDungeonCameraProfile(dungeon, { w: 520, h: 360 }).entryFacing); setMsg(null);
     setLiveTiles(dungeon ? [...dungeon.tiles] : []);
     setRevealed(new Set()); setShowMore(false);
+    classicBossStartedRef.current = false;
     entitiesRef.current = getEntities(dungeon);
     const sp = dungeon?.spawn || { x: 1, y: 1 };
     setTimeout(() => combat.maybeStartTactical(sp), 200);
@@ -115,14 +118,35 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   }, []);
 
   useEffect(() => {
-    if (combat.tactical) return;
+    if (combat.tactical || inputPaused) return;
     const id = setInterval(() => combat.patroll(posRef.current), 1600);
     return () => clearInterval(id);
-  }, [combat.tactical, combat.patroll]);
+  }, [combat.tactical, combat.patroll, inputPaused]);
 
   const skills = useMemo(() => getUnlockedDungeonSkills(player), [player]);
 
+  const startClassicMiniBoss = useCallback(() => {
+    const boss = combat.classicBoss;
+    if (!boss || bossDefeated || classicCombatActive || classicBossStartedRef.current) return false;
+    if (combat.tactical) {
+      flash("Derrota primero a los enemigos alertados.");
+      return false;
+    }
+    classicBossStartedRef.current = true;
+    joyVecRef.current = { x: 0, y: 0 };
+    combat.clearTactical();
+    const started = onStartMiniBossCombat?.(boss);
+    if (started === false) classicBossStartedRef.current = false;
+    return started !== false;
+  }, [combat.classicBoss, combat.tactical, combat.clearTactical, bossDefeated, classicCombatActive, flash, onStartMiniBossCombat]);
+
+  useEffect(() => {
+    if (!combat.classicBoss || bossDefeated || classicCombatActive || inputPaused) return;
+    if (chebyshev(pos, combat.classicBoss) <= 1 && lineOfSight(liveDungeon, pos.x, pos.y, combat.classicBoss.x, combat.classicBoss.y)) startClassicMiniBoss();
+  }, [pos.x, pos.y, combat.classicBoss, bossDefeated, classicCombatActive, inputPaused, liveDungeon, startClassicMiniBoss]);
+
   const moveStep = useCallback((dirKey) => {
+    if (inputPaused) return;
     const delta = DIR8[dirKey];
     if (!delta) return;
     setFacing(dirKey);
@@ -130,6 +154,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     const nx = cur.x + delta[0], ny = cur.y + delta[1];
     if (!isWalkableDiag(liveDungeon, cur.x, cur.y, nx, ny)) { flash("No puedes pasar por ahí."); return; }
     if (combat.enemies.some((e) => e.hp > 0 && e.x === nx && e.y === ny)) { flash("Casilla ocupada por un enemigo."); return; }
+    if (combat.classicBoss && combat.classicBoss.x === nx && combat.classicBoss.y === ny) { startClassicMiniBoss(); return; }
     if (combat.allies.some((a) => a.hp > 0 && a.x === nx && a.y === ny)) { flash("Tu escolta bloquea el paso."); return; }
     const np = { x: nx, y: ny };
     setPos(np);
@@ -141,7 +166,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
       flash("¡Trampa! Recibes un pinchazo.");
       onPlayerDamage?.(3);
     }
-  }, [liveDungeon, combat, flash, onPlayerDamage, liveTiles, bossDefeated, onActivateFinalSanctuary]);
+  }, [liveDungeon, combat, flash, onPlayerDamage, liveTiles, bossDefeated, onActivateFinalSanctuary, inputPaused, startClassicMiniBoss]);
 
   const rotateTo = useCallback((dirKey) => {
     if (!dirKey) return;
@@ -161,6 +186,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   }, [moveStep]);
 
   const onJoyMove = useCallback((x, y) => {
+    if (inputPaused) { joyVecRef.current = { x: 0, y: 0 }; stepLock.current = false; return; }
     const mag = Math.hypot(x, y);
     if (mag < 0.12) { joyVecRef.current = { x: 0, y: 0 }; stepLock.current = false; return; }
     joyVecRef.current = { x, y };
@@ -168,11 +194,11 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     if (!dirKey) return;
     if (mag < 0.55) { rotateTo(dirKey); stepLock.current = false; return; }
     tryStep(dirKey);
-  }, [rotateTo, tryStep]);
+  }, [rotateTo, tryStep, inputPaused]);
 
   // Bucle de avance continuo fuera de combate táctico.
   useEffect(() => {
-    if (combat.tactical) return;
+    if (combat.tactical || inputPaused) return;
     const id = setInterval(() => {
       const v = joyVecRef.current;
       if (Math.hypot(v.x, v.y) < 0.55) return;
@@ -180,11 +206,16 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
       if (dirKey) tryStep(dirKey);
     }, 60);
     return () => clearInterval(id);
-  }, [combat.tactical, tryStep]);
+  }, [combat.tactical, tryStep, inputPaused]);
 
   const onInteract = useCallback(() => {
+    if (inputPaused) return;
     const ent = entitiesRef.current;
     const cur = posRef.current;
+    if (combat.classicBoss && !bossDefeated && chebyshev(cur, combat.classicBoss) <= 1) {
+      startClassicMiniBoss();
+      return;
+    }
     if (ent.sanctuary) {
       const adj = Math.max(Math.abs(cur.x - ent.sanctuary.x), Math.abs(cur.y - ent.sanctuary.y)) <= 1;
       if (adj) {
@@ -241,21 +272,24 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
       }
     }
     flash("No hay nada que inspeccionar aquí.");
-  }, [liveTiles, opened, onOpenChest, onStoryPoint, onExit, combat, flash, bossDefeated, onActivateFinalSanctuary]);
+  }, [liveTiles, opened, onOpenChest, onStoryPoint, onExit, onDescend, combat, flash, bossDefeated, onActivateFinalSanctuary, inputPaused, startClassicMiniBoss]);
 
   // Acción A: en combate → ataque básico a la casilla mirada; fuera → interactuar.
   const onA = useCallback(() => {
+    if (inputPaused) return;
     if (combat.tactical) {
       if (combat.turn !== "player" || combat.busy) return;
       combat.basicAttack(posRef.current, facingRef.current);
     } else {
       onInteract();
     }
-  }, [combat, onInteract]);
+  }, [combat, onInteract, inputPaused]);
 
   useEffect(() => {
     const onKey = (e) => {
       const k = e.key.toLowerCase();
+      if (k === "i" && !classicCombatActive) { e.preventDefault(); onOpenBackpack?.(); return; }
+      if (inputPaused) return;
       const diagMap = { "7": "up_left", "9": "up_right", "1": "down_left", "3": "down_right", y: "up_left", u: "up_right", b: "down_left", n: "down_right" };
       if (diagMap[k]) { e.preventDefault(); moveStep(diagMap[k]); }
       else if (k === "arrowup" || k === "w") { e.preventDefault(); moveStep("up"); }
@@ -267,11 +301,11 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [moveStep, onA]);
+  }, [moveStep, onA, inputPaused, classicCombatActive, onOpenBackpack]);
 
   const cameraProfile = useMemo(() => resolveDungeonCameraProfile(dungeon, vp), [dungeon?.id, vp.w, vp.h]);
   const camera = useMemo(() => calculateDungeonCameraTransform({ dungeon, pos, viewport: vp, tileSize: T, profile: cameraProfile }), [dungeon, pos.x, pos.y, vp.w, vp.h, cameraProfile]);
-  const activeTarget = useMemo(() => combat.enemies.find((entry) => entry.id === combat.activeTargetId && entry.hp > 0) || combat.enemies.find((entry) => entry.boss && entry.hp > 0 && entry.alerted) || null, [combat.enemies, combat.activeTargetId]);
+  const activeTarget = useMemo(() => combat.enemies.find((entry) => entry.id === combat.activeTargetId && entry.hp > 0) || null, [combat.enemies, combat.activeTargetId]);
   const occludedWalls = useMemo(() => computeDungeonOcclusion(liveDungeon, [pos, activeTarget], { cameraSide: cameraProfile.cameraSide, rayLength: 6 }), [liveDungeon, pos.x, pos.y, activeTarget?.id, activeTarget?.x, activeTarget?.y, cameraProfile.cameraSide]);
 
   if (!dungeon || !player) return null;
@@ -303,9 +337,11 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             );
           }))}
 
-          <div className="absolute flex items-center justify-center" style={{ left: ent.exit.x * T, top: ent.exit.y * T, width: T, height: T }}>
-            <div className="flex items-center justify-center rounded font-bold" style={{ width: T - 8, height: T - 8, background: "linear-gradient(180deg,#3b82f6,#1e3a8a)", color: "#dbeafe", boxShadow: "0 0 10px 3px rgba(59,130,246,0.5)" }}>▼</div>
-          </div>
+          {revealed.has(`${ent.exit.x},${ent.exit.y}`) && (
+            <div className="absolute flex items-center justify-center" style={{ left: ent.exit.x * T, top: ent.exit.y * T, width: T, height: T }}>
+              <div className="flex items-center justify-center rounded font-bold" style={{ width: T - 8, height: T - 8, background: "linear-gradient(180deg,#3b82f6,#1e3a8a)", color: "#dbeafe", boxShadow: "0 0 10px 3px rgba(59,130,246,0.5)" }}>▼</div>
+            </div>
+          )}
 
           {ent.objective && revealed.has(`${ent.objective.x},${ent.objective.y}`) && (
             <div className="absolute flex items-center justify-center animate-pulse" style={{ left: ent.objective.x * T, top: ent.objective.y * T, width: T, height: T }}>
@@ -382,6 +418,21 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             </DungeonCombatActor>
           ))}
 
+          {combat.classicBoss && !bossDefeated && revealed.has(`${combat.classicBoss.x},${combat.classicBoss.y}`) && (
+            <DungeonCombatActor
+              id={combat.classicBoss.id}
+              actor={combat.classicBoss}
+              tileSize={T}
+              type="boss"
+              variant={combat.classicBoss.monsterId}
+              direction={combat.classicBoss.facing || "down"}
+              className="atlas-dungeon-boss-actor"
+              size={T + 10}
+            >
+              <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-rose-100 font-bold bg-rose-950/90 border border-rose-500/60 rounded px-1 whitespace-nowrap z-20">MINI JEFE</span>
+            </DungeonCombatActor>
+          )}
+
           <DungeonCombatActor
             id="player"
             actor={pos}
@@ -393,8 +444,9 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             animationState={combat.actorAnimations?.player}
             size={T + 8}
           >
-            {combat.tactical && <div className="absolute -inset-1 rounded-md border-2 border-emerald-400 z-0" />}
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[11px] text-emerald-300 font-bold bg-slate-950/80 rounded px-1.5 py-0.5 z-20" style={{ pointerEvents: "none" }}>{FACING_LABEL[facing]}</div>
+            <div className="absolute pointer-events-none rounded-full border-2 border-emerald-300/85 z-0" style={{ width: T + 14, height: T + 14, left: "50%", top: "58%", transform: "translate(-50%, -50%)", boxShadow: combat.tactical ? "0 0 10px rgba(52,211,153,.75)" : "0 0 6px rgba(52,211,153,.42)" }}>
+              <span className="absolute left-1/2 top-1/2 block h-0 w-0" style={{ transform: `translate(-50%, -50%) rotate(${FACING_ROTATION[facing] ?? 0}deg) translateX(${(T + 14) / 2}px)`, borderTop: "5px solid transparent", borderBottom: "5px solid transparent", borderLeft: "9px solid #6ee7b7", filter: "drop-shadow(0 0 3px rgba(16,185,129,.9))", transformOrigin: "0 50%" }} />
+            </div>
           </DungeonCombatActor>
 
           <DungeonWallLayer
@@ -429,6 +481,8 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
           showDebug={showDebug}
           onToggleDebug={() => setShowDebug(v => !v)}
           onExit={onExit}
+          onOpenBackpack={onOpenBackpack}
+          backpackDisabled={classicCombatActive}
           onMove={onJoyMove}
           onRotate={() => { const i = DIR8_KEYS.indexOf(facing); setFacing(DIR8_KEYS[(i + 1) % DIR8_KEYS.length]); }}
           onAction={onA}
@@ -533,6 +587,12 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             </div>
           );
         })()}
+
+        {classicCombatActive && classicCombatView && (
+          <div className="absolute inset-0 z-[70] bg-slate-950/96 p-2 sm:p-3" data-dungeon-classic-miniboss="true">
+            <div className="h-full max-w-6xl mx-auto">{classicCombatView}</div>
+          </div>
+        )}
       </div>
     </div>
   );

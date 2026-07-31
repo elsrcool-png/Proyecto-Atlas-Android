@@ -1,4 +1,4 @@
-import { Key, LogOut, RotateCw } from "lucide-react";
+import { Backpack, Key, LogOut, RotateCw } from "lucide-react";
 import Joystick from "../Joystick";
 import OrientationToggleButton from "../OrientationToggleButton";
 import { AtlasActionButton, AtlasButton, AtlasHudCard, AtlasStatusBar } from "@/components/atlas/ui";
@@ -13,6 +13,8 @@ export default function DungeonHudV3({
   showDebug,
   onToggleDebug,
   onExit,
+  onOpenBackpack,
+  backpackDisabled = false,
   onMove,
   onRotate,
   onAction,
@@ -35,6 +37,7 @@ export default function DungeonHudV3({
             <AtlasStatusBar compact kind="energy" label="EN" value={player?.mp || 0} max={player?.maxMp || 0} className="mt-1" />
           </AtlasHudCard>
           {settings && <OrientationToggleButton settings={settings} onChange={onUpdateSettings} onRequestOrientation={onRequestOrientation} className="atlas-ui-icon-button" />}
+          <AtlasButton variant="ghost" icon={Backpack} className="!min-h-10 !px-2 text-[10px]" onPress={onOpenBackpack} disabled={backpackDisabled}>Mochila</AtlasButton>
           <AtlasButton variant="ghost" className="!min-h-10 !px-2 text-[10px]" onPress={onToggleDebug}>{showDebug ? "DBG ✓" : "DBG"}</AtlasButton>
           <AtlasButton variant="ghost" icon={LogOut} className="!min-h-10 !px-3 text-xs" onPress={onExit}>Salir</AtlasButton>
         </div>

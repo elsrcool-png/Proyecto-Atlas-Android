@@ -973,6 +973,15 @@ export default function useAtlasSession() {
     pushLog(`¡${enemyData.name} aparece! (ATK ${enemyData.attack} · DEF ${enemyData.defense} · HP ${enemyData.hp})`);
   };
 
+  const startDungeonMiniBossCombat = (boss) => {
+    if (!inDungeon || !boss || dungeonBossDefeated || enemyRef.current) return false;
+    setShowBackpack(false);
+    startCombat({ ...boss, boss: true, dungeonMiniBoss: true, dungeonId: currentDungeonId, type: "miniboss" });
+    pushLog(`El guardián final de ${currentDungeon?.name || "la dungeon"} te obliga a combatir de frente.`);
+    toast("Combate contra mini jefe", "boss");
+    return true;
+  };
+
   const startCombatThreat = (monster, context = {}) => {
     const beh = worldBehavior(tierOf(threatStateRef.current).id);
     const isElite = Math.random() < beh.eliteChance;
@@ -1893,6 +1902,21 @@ export default function useAtlasSession() {
     combatRef.current.playerStatuses = {};
     setPlayerStatuses({});
     if (!info) return;
+    if (deadEnemy?.dungeonMiniBoss) {
+      gainXp(KILL_XP[regionIndex] * 2);
+      applyThreatDelta(1, "guardián de mazmorra");
+      progressTracker("kill", null, 1, null, deadEnemy.monsterId || deadEnemy.id);
+      if (Math.random() < 0.3) {
+        const mid = rollRegionMaterial(regionIndex);
+        setPlayer(p => ({ ...p, materials: { ...(p.materials || {}), [mid]: (p.materials?.[mid] || 0) + 1 } }));
+        toast(`Material: ${MATERIALS[mid]?.name || mid}`, "item");
+      }
+      setDungeonBossDefeated(true); completeDungeon(true);
+      rollGlobalLoot({ ...deadEnemy, boss: true, type: "miniboss" });
+      recordProgressionEvent({ type: "combat_win", amount: 1, boss: true, regionId: region.id });
+      toast("Mini jefe de dungeon derrotado", "boss"); pushLog("✦ El guardián final cae en combate directo. La salida de la dungeon queda liberada.");
+      return;
+    }
     if (deadEnemy?.worldEnemyId) markEnemyDefeated(deadEnemy.worldEnemyId);
     if (info.wasBoss) {
       const next = new Set(defeatedBosses); next.add(info.enemyId); setDefeatedBosses(next);
@@ -2317,7 +2341,7 @@ export default function useAtlasSession() {
     acceptGuildContract, claimGuildContract, equipMasterySkill, equipMasteryPassive, upgradeMasterySkill,
     acceptSpecialQuest, claimSpecialQuest,
     inDungeon, currentDungeonId, currentDungeon, enterDungeon, exitDungeon, descendDungeon, dungeonFloor, dungeonBossDefeated, activateDungeonFinalSanctuary,
-    onDungeonPlayerDamage, onDungeonSpendEnergy, onDungeonEnemyKilled,
+    startDungeonMiniBossCombat, onDungeonPlayerDamage, onDungeonSpendEnergy, onDungeonEnemyKilled,
     hireAdventurer, dismissCompanion, onCompanionUpdate,
     setNpcDialog, setShowLevelUp, setShowSheet, setShowBackpack, setShowShop, onDiceComplete, pushLog, rollDice,
   };

@@ -1,8 +1,9 @@
-// PROYECTO ATLAS — NPC maestros de Región Verde y Región Ártica.
+// PROYECTO ATLAS — NPC maestros de Región Verde, Región Ártica y Región Árida.
 // Conecta variantes narrativas con sprites runtime 72×96 de cuatro direcciones.
 
 export const GREEN_NPC_MASTER_ROOT = "/assets/atlas/npcs/region_verde/maestro_v1/runtime";
 export const ARCTIC_NPC_MASTER_ROOT = "/assets/atlas/npcs/region_artica/maestro_v1/runtime";
+export const ARID_NPC_MASTER_ROOT = "/assets/atlas/npcs/region_arida/maestro_v1/runtime";
 
 export const GREEN_NPC_ASSET_BY_VARIANT = Object.freeze({
   verde_roland: "capitan_roland",
@@ -53,6 +54,28 @@ export const ARCTIC_NPC_ASSET_BY_VARIANT = Object.freeze({
   fria_einar: "fria_einar",
 });
 
+
+export const ARID_NPC_ASSET_BY_VARIANT = Object.freeze({
+  desierto_sahara_nomad: "nomada_sahara",
+  desierto_kael_explorer: "explorador_kael",
+  desierto_merchant_camp: "mercader_nomada",
+  desierto_oasis_keeper: "guardian_oasis",
+  desierto_dara_bedouin: "beduina_dara",
+
+  desierto_oasis_guardian: "guardiana_desierto",
+  desierto_aran: "historiador_aran",
+  desierto_crystal_artisan: "artesana_cristales",
+  desierto_merchant_oasis: "mercader_oasis",
+  desierto_posadera: "posadera_sahara",
+  desierto_dara_trader: "comerciante_dara",
+
+  desierto_pharaoh: "faraon_solar",
+  desierto_solar_priest: "sacerdote_solar",
+  desierto_merchant_ancient: "mercader_desierto",
+  desierto_hostelera: "anfitriona_ruinas",
+  desierto_solar_forger: "herrero_rashid",
+});
+
 const VALID_DIRECTIONS = new Set(["down", "up", "left", "right"]);
 const PRELOAD_DIRECTIONS = ["down", "up", "left", "right"];
 let preloadPromise = null;
@@ -66,6 +89,8 @@ export function getNpcAssetProfile(variant) {
   if (green) return { root: GREEN_NPC_MASTER_ROOT, assetId: green, region: "verde" };
   const arctic = ARCTIC_NPC_ASSET_BY_VARIANT[variant];
   if (arctic) return { root: ARCTIC_NPC_MASTER_ROOT, assetId: arctic, region: "fria" };
+  const arid = ARID_NPC_ASSET_BY_VARIANT[variant];
+  if (arid) return { root: ARID_NPC_MASTER_ROOT, assetId: arid, region: "desierto" };
   return null;
 }
 
@@ -98,6 +123,7 @@ export function preloadNpcAssetVisuals() {
   const profiles = [
     ...Object.values(GREEN_NPC_ASSET_BY_VARIANT).map(assetId => ({ root: GREEN_NPC_MASTER_ROOT, assetId })),
     ...Object.values(ARCTIC_NPC_ASSET_BY_VARIANT).map(assetId => ({ root: ARCTIC_NPC_MASTER_ROOT, assetId })),
+    ...Object.values(ARID_NPC_ASSET_BY_VARIANT).map(assetId => ({ root: ARID_NPC_MASTER_ROOT, assetId })),
   ];
   const unique = [...new Map(profiles.map(profile => [`${profile.root}|${profile.assetId}`, profile])).values()];
   preloadPromise = Promise.allSettled(unique.flatMap(profile => (
@@ -112,14 +138,17 @@ export function preloadNpcAssetVisuals() {
 }
 
 export const ATLAS_NPC_ASSET_AUDIT = Object.freeze({
-  version: "2.19.7",
+  version: "2.27.0",
   greenNpcCount: 20,
   arcticNpcCount: 18,
-  expectedDirectionCount: (20 + 18) * 4,
+  aridNpcCount: 20,
+  connectedAridVariantCount: Object.keys(ARID_NPC_ASSET_BY_VARIANT).length,
+  expectedDirectionCount: (20 + 18 + 20) * 4,
   proceduralFallbacks: ["verde_vera_hunter"],
   runtimeCanvas: [72, 96],
   greenVariants: GREEN_NPC_ASSET_BY_VARIANT,
   arcticVariants: ARCTIC_NPC_ASSET_BY_VARIANT,
+  aridVariants: ARID_NPC_ASSET_BY_VARIANT,
 });
 
 export const ATLAS_GREEN_NPC_ASSET_AUDIT = ATLAS_NPC_ASSET_AUDIT;
