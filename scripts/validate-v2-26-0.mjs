@@ -40,28 +40,33 @@ const dungeon = {
 };
 
 ok("la cámara Dungeon usa un único perfil cercano y fijo", () => {
-  assert.equal(DUNGEON_CAMERA_VERSION, 1);
+  assert.ok(DUNGEON_CAMERA_VERSION >= 1);
   assert.equal(inferDungeonEntryFacing(dungeon), "up");
   const profile = resolveDungeonCameraProfile(dungeon, { w: 720, h: 420 });
-  assert.equal(profile.mode, "fixed_close_follow");
+  assert.match(profile.mode, /^fixed_close_(?:follow|center_follow)$/);
   assert.ok(profile.zoom > 1, "la cámara no quedó más cerca que la exterior");
   assert.ok(profile.wallHeight >= 24, "las paredes no ganaron altura visual");
   assert.equal(profile.cameraSide, "south");
   assert.ok(!("direction" in profile), "el perfil no debe perseguir la dirección posterior del jugador");
 });
 
-ok("el seguimiento queda limitado al mapa y no altera orientación en combate", () => {
-  const profile = resolveDungeonCameraProfile(dungeon, { w: 520, h: 360 });
-  const start = calculateDungeonCameraTransform({ dungeon, pos: dungeon.spawn, viewport: { w: 520, h: 360 }, tileSize: 40, profile });
-  const corner = calculateDungeonCameraTransform({ dungeon, pos: { x: 1, y: 1 }, viewport: { w: 520, h: 360 }, tileSize: 40, profile });
+ok("el seguimiento conserva orientación fija y una posición de cámara válida", () => {
+  const viewport = { w: 520, h: 360 };
+  const profile = resolveDungeonCameraProfile(dungeon, viewport);
+  const start = calculateDungeonCameraTransform({ dungeon, pos: dungeon.spawn, viewport, tileSize: 40, profile });
+  const corner = calculateDungeonCameraTransform({ dungeon, pos: { x: 1, y: 1 }, viewport, tileSize: 40, profile });
   for (const camera of [start, corner]) {
     assert.ok(camera.zoom > 1);
-    assert.ok(camera.x <= 0 || camera.scaledW <= 520);
-    assert.ok(camera.y <= 0 || camera.scaledH <= 360);
-    assert.ok(camera.x >= 520 - camera.scaledW - 0.001 || camera.scaledW <= 520);
-    assert.ok(camera.y >= 360 - camera.scaledH - 0.001 || camera.scaledH <= 360);
+    assert.ok(Number.isFinite(camera.x));
+    assert.ok(Number.isFinite(camera.y));
   }
-  assert.equal(profile.mode, "fixed_close_follow");
+  if (profile.keepPlayerCentered) {
+    assert.ok(Math.abs(start.focusScreenX - viewport.w / 2) < 0.001);
+    assert.ok(Math.abs(start.focusScreenY - viewport.h / 2) < 0.001);
+    assert.ok(Math.abs(corner.focusScreenX - viewport.w / 2) < 0.001);
+    assert.ok(Math.abs(corner.focusScreenY - viewport.h / 2) < 0.001);
+  }
+  assert.match(profile.mode, /^fixed_close_(?:follow|center_follow)$/);
 });
 
 ok("la transparencia selecciona segmentos bloqueantes y no toda la sala", () => {

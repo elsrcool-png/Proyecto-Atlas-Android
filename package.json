@@ -1,7 +1,7 @@
 {
   "name": "base44-app",
   "private": true,
-  "version": "2.27.0",
+  "version": "2.28.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -71,13 +71,15 @@
     "validate:v2-26-0-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-26-0.mjs",
     "validate:v2-26-0": "npm run validate:syntax-imports && npm run validate:v2-26-0-core && npm run validate:v2-25-0",
     "validate:v2-27-0-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-27-0.mjs",
-    "validate:v2-27-0": "npm run validate:syntax-imports && npm run validate:v2-27-0-core && npm run validate:v2-26-0"
+    "validate:v2-27-0": "npm run validate:syntax-imports && npm run validate:v2-27-0-core && npm run validate:v2-26-0",
+    "validate:v2-28-0-core": "node --experimental-loader ./scripts/atlas-alias-loader.mjs scripts/validate-v2-28-0.mjs",
+    "validate:v2-28-0": "npm run validate:syntax-imports && npm run validate:v2-28-0-core && npm run validate:v2-27-0"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.39",
     "@base44/vite-plugin": "^1.0.30",
-    "@capacitor/android": "^8.4.2",
-    "@capacitor/core": "^8.4.2",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -143,7 +145,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.4.2",
+    "@capacitor/cli": "^8.5.0",
     "@eslint/js": "^9.19.0",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",

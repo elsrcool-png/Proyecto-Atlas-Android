@@ -1,0 +1,5 @@
+
+> base44-app@2.28.0 build
+> vite build
+
+sh: 1: vite: not found

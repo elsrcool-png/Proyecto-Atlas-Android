@@ -38,14 +38,17 @@ export default function DungeonCombatActor({
     family: sequence.animation.weaponType,
     id: sequence.animation.animationType,
   } : null;
+  const movementClass = active ? `atlas-dungeon-actor-active--${movementType || "lunge"}` : "";
   const pose = down ? "defeat" : hurt ? "hurt" : active ? (sequence?.visualQuality === "miss" ? "miss" : sequence?.animation?.dungeonType === "magic" ? "cast" : "attack") : "idle";
   const actorSize = size || (type === "boss" ? tileSize + 8 : type === "player" ? tileSize + 4 : tileSize - 2);
 
   return (
     <div
-      className={`absolute flex flex-col items-center justify-end atlas-dungeon-actor ${active ? "atlas-dungeon-actor-active" : ""} ${hurt ? "atlas-dg-hurt" : ""} ${className}`}
+      className={`absolute flex flex-col items-center justify-end atlas-dungeon-actor ${active ? "atlas-dungeon-actor-active" : ""} ${movementClass} ${hurt ? "atlas-dg-hurt" : ""} ${className}`}
       data-actor-id={id}
       data-animation-context={active ? "shared-combat-sequence" : "idle"}
+      data-animation-movement={movementType || "idle"}
+      data-animation-quality={animationState?.qualityId || "medio"}
       key={`${id}:${animationState?.token || "idle"}`}
       style={{
         left: actor.x * tileSize,

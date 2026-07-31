@@ -733,3 +733,78 @@
   .atlas-dungeon-camera-layer { transition-duration: 1ms !important; }
   .atlas-dungeon-wall-segment { transition-duration: 1ms !important; }
 }
+
+/* Atlas v2.28.0 — QA final de cámara, HUD y animaciones Dungeon */
+@keyframes atlas-dungeon-actor-stationary {
+  0%, 12% { transform: translate3d(0,0,0) scale(1); }
+  34% { transform: translate3d(calc(var(--dg-attack-x) * -.18), calc(var(--dg-attack-y) * -.18), 0) scale(.97); }
+  54% { transform: translate3d(calc(var(--dg-attack-x) * .12), calc(var(--dg-attack-y) * .12), 0) scale(1.07); }
+  76% { transform: translate3d(0,0,0) scale(1.02); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes atlas-dungeon-actor-projectile {
+  0%, 15% { transform: translate3d(0,0,0) scale(1); }
+  38% { transform: translate3d(calc(var(--dg-attack-x) * -.12), calc(var(--dg-attack-y) * -.12), 0) scale(.96); }
+  52% { transform: translate3d(calc(var(--dg-attack-x) * .06), calc(var(--dg-attack-y) * .06), 0) scale(1.04); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+.atlas-dungeon-actor-active--stationary,
+.atlas-dungeon-actor-active--magic {
+  animation-name: atlas-dungeon-actor-stationary;
+}
+.atlas-dungeon-actor-active--projectile {
+  animation-name: atlas-dungeon-actor-projectile;
+}
+.atlas-dungeon-actor[data-animation-quality="critico"] {
+  filter: drop-shadow(0 0 7px rgba(251,191,36,.72));
+}
+
+@keyframes atlas-dungeon-encounter-flash {
+  0% { opacity: 0; box-shadow: inset 0 0 0 rgba(244,63,94,0); }
+  18% { opacity: 1; box-shadow: inset 0 0 70px rgba(244,63,94,.34); }
+  48% { opacity: .42; box-shadow: inset 0 0 35px rgba(244,63,94,.18); }
+  100% { opacity: 0; box-shadow: inset 0 0 0 rgba(244,63,94,0); }
+}
+.atlas-dungeon-encounter-flash {
+  animation: atlas-dungeon-encounter-flash 520ms ease-out forwards;
+}
+
+.atlas-dungeon-turn-banner { top: 116px; }
+.atlas-dungeon-debug-panel { top: 166px; }
+.atlas-dungeon-combat-log { top: 204px; }
+
+@media (orientation: landscape) {
+  .atlas-dungeon-turn-banner { top: 58px; }
+  .atlas-dungeon-debug-panel { top: 104px; }
+  .atlas-dungeon-combat-log { top: 142px; }
+  .atlas-dungeon-hud__right { max-width: 52vw; }
+  .atlas-dungeon-minimap { margin-top: -1px; }
+}
+
+@media (orientation: portrait) {
+  .atlas-dungeon-hud__identity { max-width: 49% !important; }
+  .atlas-dungeon-hud__right { max-width: 50%; }
+  .atlas-dungeon-hud__vitals { width: min(34vw, 150px) !important; }
+  .atlas-dungeon-hud__actions { width: 100%; }
+  .atlas-dungeon-backpack-button { flex: 1 1 auto; }
+  .atlas-dungeon-minimap { margin-top: 1px; }
+}
+
+@media (max-width: 560px) {
+  .atlas-dungeon-hud { padding: 6px; }
+  .atlas-dungeon-hud__layout { gap: 5px; }
+  .atlas-dungeon-hud__identity { max-width: 46% !important; padding: 7px 8px !important; }
+  .atlas-dungeon-hud__vitals { width: 128px !important; padding: 6px 7px !important; }
+  .atlas-dungeon-hud__actions .atlas-ui-button { min-width: 40px; }
+  .atlas-dungeon-hud__actions .atlas-ui-button span { font-size: 8px; }
+  .atlas-dungeon-turn-banner { top: 112px; max-width: 76%; }
+  .atlas-dungeon-turn-banner span { font-size: 9px; }
+  .atlas-dungeon-debug-panel { top: 158px; }
+  .atlas-dungeon-combat-log { top: 196px; }
+  .atlas-dungeon-joystick { left: 14px; bottom: 18px; }
+  .atlas-dungeon-actions { right: 14px; bottom: 18px; gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-dungeon-encounter-flash { animation-duration: 1ms !important; }
+}

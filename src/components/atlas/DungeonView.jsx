@@ -9,6 +9,7 @@ import useDungeonCombat from "@/hooks/useDungeonCombat";
 import DungeonCombatActor from "./DungeonCombatActor";
 import DungeonWallLayer from "./DungeonWallLayer";
 import DungeonOffscreenIndicators from "./DungeonOffscreenIndicators";
+import DungeonMiniMap from "./DungeonMiniMap";
 import DungeonVfx from "./DungeonVfx";
 import AtlasPressButton from "./AtlasPressButton";
 import DungeonHudV3 from "./ui-v3/DungeonHudV3";
@@ -29,6 +30,8 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   const [revealed, setRevealed] = useState(() => new Set());
   const [showMore, setShowMore] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [knownInteractables, setKnownInteractables] = useState(() => new Set());
+  const [encounterFlash, setEncounterFlash] = useState(0);
   const vpRef = useRef(null);
   const msgTimer = useRef(null);
   const posRef = useRef(pos);
@@ -44,6 +47,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   const liveDungeon = useMemo(() => (dungeon ? { ...dungeon, tiles: liveTiles } : dungeon), [dungeon, liveTiles]);
 
   const flash = useCallback((m) => {
+    if (!m || (/enemigo/i.test(m) && /(detect|alert|modo táctico)/i.test(m))) return;
     setMsg(m);
     if (msgTimer.current) clearTimeout(msgTimer.current);
     msgTimer.current = setTimeout(() => setMsg(null), 2000);
@@ -55,7 +59,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     callbacks: {
       onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear,
       getPlayerDefense: () => player?.physicalDefense ?? player?.defense ?? 0,
-      onMessage: flash, onTacticalStart: () => {}, onEndTactical: () => {}, onClear: () => {},
+      onMessage: flash, onTacticalStart: () => setEncounterFlash((value) => value + 1), onEndTactical: () => {}, onClear: () => {},
     },
   });
 
@@ -65,7 +69,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     setPos(dungeon?.spawn || { x: 1, y: 1 });
     setOpened(new Set()); setFacing(resolveDungeonCameraProfile(dungeon, { w: 520, h: 360 }).entryFacing); setMsg(null);
     setLiveTiles(dungeon ? [...dungeon.tiles] : []);
-    setRevealed(new Set()); setShowMore(false);
+    setRevealed(new Set()); setKnownInteractables(new Set()); setShowMore(false);
     classicBossStartedRef.current = false;
     entitiesRef.current = getEntities(dungeon);
     const sp = dungeon?.spawn || { x: 1, y: 1 };
@@ -94,6 +98,22 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
       return next;
     });
   }, [pos, dungeon?.id, liveDungeon]);
+
+  // Las escaleras/salida se descubren por proximidad y línea de visión, no
+  // simplemente por revelar una habitación completa en la niebla de guerra.
+  useEffect(() => {
+    if (!dungeon) return;
+    const ent = entitiesRef.current;
+    if (!ent?.exit) return;
+    const closeEnough = chebyshev(pos, ent.exit) <= 2;
+    if (!closeEnough || !lineOfSight(liveDungeon, pos.x, pos.y, ent.exit.x, ent.exit.y)) return;
+    setKnownInteractables((prev) => {
+      if (prev.has("exit")) return prev;
+      const next = new Set(prev);
+      next.add("exit");
+      return next;
+    });
+  }, [dungeon?.id, pos.x, pos.y, liveDungeon]);
 
   // Sacudida de cámara en impactos/críticos (Web Animations API, sin remontar).
   useEffect(() => {
@@ -310,7 +330,16 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
 
   if (!dungeon || !player) return null;
 
+  if (classicCombatActive && classicCombatView) {
+    return (
+      <div className="atlas-ui-v3 fixed inset-0 z-[120] overflow-y-auto bg-slate-950" data-dungeon-classic-miniboss="true">
+        <div className="min-h-full w-full p-2 sm:p-3">{classicCombatView}</div>
+      </div>
+    );
+  }
+
   const ent = entitiesRef.current;
+  const exitKnown = knownInteractables.has("exit");
   const { x: camX, y: camY, zoom, gridW, gridH } = camera;
 
   const tileBg = (ch) => {
@@ -337,7 +366,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             );
           }))}
 
-          {revealed.has(`${ent.exit.x},${ent.exit.y}`) && (
+          {exitKnown && (
             <div className="absolute flex items-center justify-center" style={{ left: ent.exit.x * T, top: ent.exit.y * T, width: T, height: T }}>
               <div className="flex items-center justify-center rounded font-bold" style={{ width: T - 8, height: T - 8, background: "linear-gradient(180deg,#3b82f6,#1e3a8a)", color: "#dbeafe", boxShadow: "0 0 10px 3px rgba(59,130,246,0.5)" }}>▼</div>
             </div>
@@ -471,6 +500,8 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
           tactical={combat.tactical}
         />
 
+        {encounterFlash > 0 && <div key={encounterFlash} className="atlas-dungeon-encounter-flash absolute inset-0 z-20 pointer-events-none" aria-hidden />}
+
         <DungeonHudV3
           dungeon={dungeon}
           player={player}
@@ -487,17 +518,29 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
           onRotate={() => { const i = DIR8_KEYS.indexOf(facing); setFacing(DIR8_KEYS[(i + 1) % DIR8_KEYS.length]); }}
           onAction={onA}
           tactical={combat.tactical}
+          miniMap={(
+            <DungeonMiniMap
+              liveTiles={liveTiles}
+              pos={pos}
+              enemies={combat.enemies}
+              allies={combat.allies}
+              revealed={revealed}
+              exit={ent.exit}
+              exitKnown={exitKnown}
+              tactical={combat.tactical}
+            />
+          )}
         />
 
         {combat.tactical && (
-          <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-rose-950/85 border border-rose-600 flex items-center gap-2">
+          <div className="atlas-dungeon-turn-banner absolute left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-rose-950/85 border border-rose-600 flex items-center gap-2">
             <Swords className="w-3.5 h-3.5 text-rose-300" />
             <span className="text-[11px] text-rose-100 font-medium">{combat.turn === "player" ? "Tu turno — mueve, gira o ataca" : "Turno de los enemigos..."}</span>
           </div>
         )}
 
         {showDebug && (
-          <div className="absolute top-12 left-2 z-40 rounded-lg bg-slate-950/92 border border-emerald-500/50 p-2 text-[10px] text-emerald-200 font-mono max-w-[230px] leading-tight">
+          <div className="atlas-dungeon-debug-panel absolute left-2 z-50 rounded-lg bg-slate-950/92 border border-emerald-500/50 p-2 text-[10px] text-emerald-200 font-mono max-w-[230px] leading-tight">
             <div className="text-emerald-400 font-bold mb-0.5">DEPURACIÓN</div>
             <div>turno: {String(combat.turn)} · busy: {String(combat.busy)}</div>
             <div>tactical: {String(combat.tactical)}</div>
@@ -510,38 +553,12 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
         )}
 
         {combat.tactical && combat.log.length > 0 && (
-          <div className="absolute top-24 left-2 z-20 max-w-[60%] space-y-0.5">
+          <div className="atlas-dungeon-combat-log absolute left-2 z-30 max-w-[60%] space-y-0.5">
             {combat.log.slice(-4).map((l, i) => (
               <p key={i} className="text-[10px] text-slate-200 bg-slate-950/70 rounded px-1.5 py-0.5 leading-tight">{l}</p>
             ))}
           </div>
         )}
-
-        {/* Minimapa */}
-        <div className="absolute top-14 right-3 z-20 rounded-md bg-slate-950/88 border border-slate-600 p-1 shadow-lg" style={{ lineHeight: 0 }}>
-          {liveTiles.map((row, y) => (
-            <div key={y} className="flex" style={{ height: 3 }}>
-              {Array.from(row).map((ch, x) => {
-                let bg = "#3a2a14";
-                const en = combat.enemies.find((e) => e.boss && e.x === x && e.y === y) || combat.enemies.find((e) => e.x === x && e.y === y);
-                const al = combat.allies.find((a) => a.x === x && a.y === y);
-                if (ch === "#" || ch === " ") bg = "#6b4220";
-                else if (x === pos.x && y === pos.y) bg = "#38f838";
-                else if (al) bg = "#2dd4bf";
-                else if (ch === "E") bg = "#3b82f6";
-                else if (ch === "S") bg = "#22c55e";
-                else if (en && en.hp > 0) bg = en.alerted && combat.tactical ? "#ef4444" : "#f97316";
-                else if (ch === "P") bg = "#22d3ee";
-                else if (ch === "C" || ch === "O") bg = "#fbbf24";
-                else if (ch === "L") bg = "#7a4a1a";
-                else if (ch === "D") bg = "#9a6a2a";
-                else bg = "#e8d98c";
-                if (!revealed.has(`${x},${y}`)) bg = "#0a0a0a";
-                return <div key={x} style={{ width: 3, height: 3, background: bg }} />;
-              })}
-            </div>
-          ))}
-        </div>
 
         {msg && (
           <div className="absolute left-1/2 -translate-x-1/2 z-20 pointer-events-none max-w-[80%]" style={{ bottom: combat.tactical ? 150 : 140 }}>
@@ -588,11 +605,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
           );
         })()}
 
-        {classicCombatActive && classicCombatView && (
-          <div className="absolute inset-0 z-[70] bg-slate-950/96 p-2 sm:p-3" data-dungeon-classic-miniboss="true">
-            <div className="h-full max-w-6xl mx-auto">{classicCombatView}</div>
-          </div>
-        )}
+
       </div>
     </div>
   );

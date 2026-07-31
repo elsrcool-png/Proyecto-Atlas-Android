@@ -54,6 +54,7 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
   const keysRef = useRef(0);
   const companionRef = useRef(companion);
   const playerRef = useRef(player);
+  const initializedDungeonRef = useRef(null);
   useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
   useEffect(() => { alliesRef.current = allies; }, [allies]);
   useEffect(() => { defeatedRef.current = defeated; }, [defeated]);
@@ -135,7 +136,7 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
     // El mini jefe se conserva como encuentro clásico separado. No forma parte
     // de la cola táctica ni puede recibir ataques del combate vivo de Dungeon.
     return list;
-  }, [baseDungeon, region, regionIndex, playerLevel, player]);
+  }, [baseDungeon, region, regionIndex, playerLevel]);
 
   const buildAlly = useCallback(() => {
     const c = companionRef.current;
@@ -147,13 +148,18 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
   }, [baseDungeon]);
 
   useEffect(() => {
+    if (!baseDungeon) return;
+    const dungeonKey = `${baseDungeon.id || "dungeon"}:${baseDungeon.floor || 1}`;
+    if (initializedDungeonRef.current === dungeonKey) return;
+    initializedDungeonRef.current = dungeonKey;
     const list = initEnemies();
     setEnemies(list); enemiesRef.current = list;
     const allyList = buildAlly();
     setAllies(allyList); alliesRef.current = allyList;
     setKeys(0); keysRef.current = 0;
-    setTactical(false); setTurn(null); setCooldowns({}); setDefeated(new Set()); setLog([]); setBusy(false); setEffects([]); setHurtPulses(new Set()); setShake(0); setDebug(null); setActorAnimations({}); setActiveTargetId(null);
-  }, [baseDungeon?.id, initEnemies, buildAlly]);
+    setTactical(false); setTurn(null); setCooldowns({}); setDefeated(new Set()); defeatedRef.current = new Set();
+    setLog([]); setBusy(false); setEffects([]); setHurtPulses(new Set()); setShake(0); setDebug(null); setActorAnimations({}); setActiveTargetId(null);
+  }, [baseDungeon?.id, baseDungeon?.floor]);
 
   const syncCompanion = useCallback((a) => {
     if (a && a.id === "companion") callbacksRef.current.onCompanionUpdate?.({ hp: Math.max(0, a.hp), incapacitated: a.hp <= 0 });
@@ -171,7 +177,6 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
       if (any) {
         setTurn("player");
         setEnemies((prev) => prev.map((e) => ({ ...e, alerted: e.hp > 0 && chebyshev(e, pp) <= e.detectRange && lineOfSight(dungeon, e.x, e.y, pp.x, pp.y) })));
-        pushLog("¡Enemigo detectado! Modo táctico activado.");
         triggerShake(0.5);
         callbacksRef.current.onTacticalStart?.();
       }
