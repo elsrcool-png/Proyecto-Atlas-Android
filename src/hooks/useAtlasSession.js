@@ -25,7 +25,8 @@ import {
 import { tierOf, THREAT_GAIN, THREAT_REDUCE, worldBehavior, rollEvent, THREAT_MAX, isThreatEnemy, rollLootThreat, COMBAT_WIN_THRESHOLD } from "@/lib/atlasThreat";
 import { rollThreatEvent, threatEconomyMod } from "@/lib/atlasThreatExpansion";
 import { getBossCanon } from "@/lib/atlasLore";
-import { saveAdventure, clearAdventure, getActiveSaveSlot, setActiveSaveSlot } from "@/lib/atlasSave";
+import { saveAdventure, clearAdventure, getActiveSaveSlot, setActiveSaveSlot, ATLAS_SAVE_VERSION } from "@/lib/atlasSave";
+import { resolveSaveRuntimeRegionIndex } from "@/lib/atlasRegionRegistry";
 import { DUNGEONS, generateDungeonFloor, getDungeonAccessState } from "@/lib/atlasDungeons";
 import { TUTORIAL_FLAG, TUTORIAL_DONE_FLAG } from "@/lib/atlasDungeonEntry";
 import { decideEnemyAction, executeEnemyAbility, executeEnemyBasicAttack, statusDefMod, statusAtkMod, enemyEnergyRegen, prepareEnemy, randomRegionMonster, STATUS_INFO, ABILITY_TYPE } from "@/lib/atlasEnemyAI";
@@ -120,6 +121,9 @@ export default function useAtlasSession() {
   const missionsRef = useRef(missions);
   const missionsByRegionRef = useRef({});
   const worldFlagsRef = useRef(worldFlags);
+  const worldStateRef = useRef({});
+  const regionStatesRef = useRef({});
+  const dailyStateRef = useRef({ dayIndex: 0, globalSanctuaryUseDay: null, flags: {} });
   const diceCallbackRef = useRef(null);
   const pendingDeadRef = useRef(null);
   const playerRef = useRef(null);
@@ -470,27 +474,35 @@ export default function useAtlasSession() {
     return source;
   };
 
-  // Guardado de sesión: escribe ÚNICAMENTE en la ranura activa.
-  // Acumula tiempo jugado y registra la fecha del último guardado.
   const persistSession = (extra = {}) => {
-    const now = Date.now();
-    const elapsed = now - sessionStartRef.current;
-    sessionStartRef.current = now;
-    playTimeRef.current += elapsed;
+    const now = Date.now(), elapsed = now - sessionStartRef.current;
+    sessionStartRef.current = now; playTimeRef.current += elapsed;
+    const targetRegionId = extra.worldState?.currentRegionId || extra.currentRegionId || extra.lastRegionId || region.id;
+    const targetNodeId = extra.worldState?.currentNodeId || extra.currentNodeId || extra.lastSectorId || currentSectorId;
+    const targetUnlockedRegions = extra.worldState?.unlockedRegionIds || extra.unlockedRegions || [...unlockedRegionsRef.current];
+    const targetWorldFlags = extra.worldState?.globalFlags || extra.worldFlags || worldFlagsRef.current;
+    const nextWorldState = { ...worldStateRef.current, ...(extra.worldState || {}), schemaVersion: 1,
+      currentRegionId: targetRegionId, currentNodeId: targetNodeId,
+      unlockedRegionIds: [...targetUnlockedRegions], globalFlags: targetWorldFlags };
+    worldStateRef.current = nextWorldState;
     saveAdventure({
       player: playerRef.current, regionIndex, blockIndex, sectorRow, threat: threatStateRef.current,
       missions, openedChests: [...openedChests], defeatedBosses: [...defeatedBosses],
       defeatedEnemyIds: [...defeatedEnemyIds], visitedSectors: [...visitedSectors],
-      priorityMissionId, unlockedSectors: [...unlockedSectors], worldFlags: worldFlagsRef.current, saveVersion: 6,
+      priorityMissionId, unlockedSectors: [...unlockedSectors], worldFlags: targetWorldFlags, saveVersion: ATLAS_SAVE_VERSION,
       activatedSanctuaries: [...activatedSanctuariesRef.current], unlockedSanctuaries: [...unlockedSanctuaries],
       lastActivatedSanctuaryId: lastActivatedSanctuaryIdRef.current,
-      unlockedRegions: [...unlockedRegionsRef.current], lastRegionId: region.id, lastSectorId: currentSectorId,
+      unlockedRegions: [...targetUnlockedRegions], lastRegionId: targetRegionId, lastSectorId: targetNodeId,
+      currentRegionId: targetRegionId, currentNodeId: targetNodeId,
+      regionStates: extra.regionStates || regionStatesRef.current,
+      dailyState: extra.dailyState || dailyStateRef.current,
       playTimeMs: playTimeRef.current, savedAt: now,
-      missionsByRegion: missionsByRegionRef.current, ...extra,
+      missionsByRegion: missionsByRegionRef.current,
+      ...extra,
+      worldState: nextWorldState,
     });
   };
 
-  // ── Amenaza: incrementos solo por evento definido, máx +1, con anti-duplicado ──
   const recentThreatEventsRef = useRef(new Map());
   const THREAT_DEDUP_MS = 1000;
   const applyThreatEvent = (eventKey, delta) => {
@@ -505,7 +517,6 @@ export default function useAtlasSession() {
     });
   };
 
-  // ── Reequilibrio de Amenaza ──
   // Contador de combates normales ganados: +1 cada 3. Se reinicia al descansar en santuario.
   const combatWinCounterRef = useRef(0);
   // Aplica un único cambio de Amenaza con causa visible en el HUD (mín 0, máx THREAT_MAX).
@@ -587,6 +598,9 @@ export default function useAtlasSession() {
     setVisitedSectors(new Set());
     setUnlockedSectors(new Set(deriveUnlockedSectorKeys(r0.id, generateMissions(r0), initialMissions)));
     worldFlagsRef.current = {};
+    worldStateRef.current = { schemaVersion: 1, currentRegionId: r0.id, currentNodeId: sectorIdFromCoords(startCoords.col, startCoords.row), unlockedRegionIds: [r0.id], globalFlags: {} };
+    regionStatesRef.current = {};
+    dailyStateRef.current = { dayIndex: 0, globalSanctuaryUseDay: null, flags: {} };
     setWorldFlags({});
     // Portal de Invocación inicial: santuario del Campamento del Umbral (verde A2)
     const initialSanctuary = getInitialSanctuary();
@@ -811,6 +825,10 @@ export default function useAtlasSession() {
     if (slot) setActiveSaveSlot(slot);
     sessionStartRef.current = Date.now();
     playTimeRef.current = save.playTimeMs || 0;
+    const resumeRegionIndex = resolveSaveRuntimeRegionIndex(save, REGIONS);
+    const resumeRegion = REGIONS[resumeRegionIndex] || REGIONS[0];
+    const resumeNodeId = save.worldState?.currentNodeId || save.currentNodeId || save.lastSectorId;
+    const resumeCoords = coordsFromSectorId(resumeNodeId);
     const normInv = normalizeWeaponInventory(save.player.weaponInventory || []);
     let equipped = save.player.weapon || null;
     if (equipped && typeof equipped === "string" && WEAPONS[equipped]) {
@@ -847,17 +865,17 @@ export default function useAtlasSession() {
     const reconciledPlayer = reconcileRegionalBossRelics(migratedPlayer, defeatedBossList);
     if (reconciledPlayer.accessory2 && reconciledPlayer.accessory2 === reconciledPlayer.accessory) reconciledPlayer.accessory2 = null;
     setPlayer(recomputePlayer(reconciledPlayer));
-    setRegionIndex(save.regionIndex ?? 0);
-    setBlockIndex(save.blockIndex ?? 0);
-    setSectorRow(save.sectorRow ?? getStartingCoords(REGIONS[save.regionIndex ?? 0].id).row);
+    setRegionIndex(resumeRegionIndex);
+    setBlockIndex(resumeCoords?.col ?? save.blockIndex ?? 0);
+    setSectorRow(resumeCoords?.row ?? save.sectorRow ?? getStartingCoords(resumeRegion.id).row);
     setThreat(save.threat ?? 0);
-    const resumedDefs = generateMissions(REGIONS[save.regionIndex ?? 0]);
+    const resumedDefs = generateMissions(resumeRegion);
     const resumedMissions = initMissionsFromDefs(resumedDefs, save.missions || null);
     missionsRef.current = resumedMissions;
     setMissions(resumedMissions);
     setPriorityMissionId(save.priorityMissionId || null);
     // Restaurar (o migrar) el almacén de misiones por región.
-    const savedRegionIdForMissions = REGIONS[save.regionIndex ?? 0]?.id || "verde";
+    const savedRegionIdForMissions = resumeRegion.id || "verde";
     const savedByRegion = (save.missionsByRegion && typeof save.missionsByRegion === "object") ? { ...save.missionsByRegion } : {};
     if (!savedByRegion[savedRegionIdForMissions] && save.missions) savedByRegion[savedRegionIdForMissions] = save.missions;
     missionsByRegionRef.current = savedByRegion;
@@ -865,21 +883,26 @@ export default function useAtlasSession() {
     setDefeatedBosses(new Set(defeatedBossList));
     setDefeatedEnemyIds(new Set(save.defeatedEnemyIds || []));
     setVisitedSectors(new Set(save.visitedSectors || []));
-    const savedRegionId = REGIONS[save.regionIndex ?? 0].id;
+    const savedRegionId = resumeRegion.id;
     // Recalcular desde la campaña repara guardados de versiones que abrían
     // toda la Región Verde mediante GREEN_TEST_UNLOCKS.
     const campaignUnlocks = deriveUnlockedSectorKeys(savedRegionId, resumedDefs, resumedMissions);
     setUnlockedSectors(new Set(campaignUnlocks));
-    worldFlagsRef.current = save.worldFlags || {};
-    setWorldFlags(save.worldFlags || {});
-    const rR = save.unlockedRegions?.length ? new Set(save.unlockedRegions) : new Set(["verde", ...Object.keys(save.worldFlags || {}).filter(k => k.endsWith(":unlocked")).map(k => k.replace(":unlocked", ""))]);
+    const restoredWorldFlags = save.worldState?.globalFlags || save.worldFlags || {};
+    worldFlagsRef.current = restoredWorldFlags;
+    worldStateRef.current = save.worldState || { schemaVersion: 1, currentRegionId: savedRegionId, currentNodeId: resumeNodeId || null, globalFlags: restoredWorldFlags };
+    regionStatesRef.current = save.regionStates || {};
+    dailyStateRef.current = save.dailyState || { dayIndex: 0, globalSanctuaryUseDay: null, flags: {} };
+    setWorldFlags(restoredWorldFlags);
+    const savedUnlockedRegions = save.worldState?.unlockedRegionIds || save.unlockedRegions;
+    const rR = savedUnlockedRegions?.length ? new Set(savedUnlockedRegions) : new Set(["verde", ...Object.keys(restoredWorldFlags).filter(k => k.endsWith(":unlocked")).map(k => k.replace(":unlocked", ""))]);
     unlockedRegionsRef.current = rR; setUnlockedRegions(rR);
     setEnemy(null); setLastResult(null); setBonusMove(false); setPendingMoves(0); setDiceAnim(null);
     setStatus("playing"); setScreen("playing");
     setShowIntro(false); setNpcDialog(null); setShowShop(false); setShowBackpack(false); setShowSheet(false);
     setChestReward(null); setLootReward(null); setDestinyEvent(null); setToasts([]);
     // Migrar santuarios y resolver spawn seguro en el último portal activado
-    const migrated = migrateSaveSanctuaries(save, REGIONS[save.regionIndex ?? 0]?.id);
+    const migrated = migrateSaveSanctuaries(save, resumeRegion.id);
     const migratedSet = new Set(migrated.activatedSanctuaries || []);
     const migratedUnlocked = new Set(migrated.unlockedSanctuaries || migrated.activatedSanctuaries || []);
     activatedSanctuariesRef.current = migratedSet;
@@ -893,7 +916,7 @@ export default function useAtlasSession() {
     // región no quedó marcada como desbloqueada (partida antigua o guardado
     // antes del avance automático), reparar: marcar completada, desbloquear
     // la siguiente y añadir su santuario inicial al menú de viaje.
-    const loadedRegionIdx = save.regionIndex ?? 0;
+    const loadedRegionIdx = resumeRegionIndex;
     const loadedRegion = REGIONS[loadedRegionIdx];
     if (loadedRegion && defeatedBossIds.has(loadedRegion.boss?.id) && loadedRegionIdx < REGIONS.length - 1) {
       const nr = REGIONS[loadedRegionIdx + 1];
@@ -914,7 +937,7 @@ export default function useAtlasSession() {
     }
 
     // Resolver spawn: usar santuario del save, no coordenadas de muerte
-    const continueData = resolveContinueSpawn(save, REGIONS[save.regionIndex ?? 0]?.id, exploreWorld);
+    const continueData = resolveContinueSpawn(save, resumeRegion.id, exploreWorld);
     const sanctuary = continueData.sanctuary;
     const sp = { x: sanctuary.spawnX, y: sanctuary.spawnY };
     const sRegionIndex = continueData.regionIndex;
@@ -924,7 +947,7 @@ export default function useAtlasSession() {
     lastShrineRef.current = { regionIndex: sRegionIndex, blockIndex: sCoords.col, sectorRow: sCoords.row, x: sp.x, y: sp.y, sanctuaryId: sanctuary.id };
     setLastShrine(lastShrineRef.current);
     // Si el santuario está en una región/sector distinto al del save viejo, ajustar
-    if (sRegionIndex !== (save.regionIndex ?? 0)) setRegionIndex(sRegionIndex);
+    if (sRegionIndex !== resumeRegionIndex) setRegionIndex(sRegionIndex);
     if (sCoords.col !== (save.blockIndex ?? 0)) setBlockIndex(sCoords.col);
     setSectorRow(sCoords.row);
     lastRevealPosRef.current = null;

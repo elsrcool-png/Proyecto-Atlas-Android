@@ -38,7 +38,8 @@ function roll(group, faces) {
 ok("Versión Atlas v2.23.2 o posterior de la familia", () => {
   const pkg = JSON.parse(read("package.json"));
   const lock = JSON.parse(read("package-lock.json"));
-  assert.match(pkg.version, /^2\.23\.(?:[2-9]|[1-9][0-9]+)$/);
+  const [major, minor, patch] = pkg.version.split(".").map(Number);
+  assert.ok(major > 2 || (major === 2 && (minor > 23 || (minor === 23 && patch >= 2))));
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages[""].version, pkg.version);
 });

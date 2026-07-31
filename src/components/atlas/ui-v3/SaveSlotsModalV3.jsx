@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Clock, Play, Plus, Trash2 } from "lucide-react";
 import ChibiSprite from "../ChibiSprite";
 import { AtlasButton, AtlasConfirmDialog, AtlasModal } from "@/components/atlas/ui";
-
-const REGION_LABELS = { verde: "Reino Verde", fria: "Reino Ártico", desierto: "Reino Árido" };
+import { getRegionLabel } from "@/lib/atlasRegionRegistry";
 
 function fmtDate(ms) {
   if (!ms) return "—";
@@ -29,7 +28,7 @@ function SlotCard({ index, slot, mode, onPick, onDelete }) {
   const [confirmMode, setConfirmMode] = useState(null);
   const occupied = Boolean(slot);
   const player = slot?.player;
-  const region = REGION_LABELS[slot?.lastRegionId] || slot?.regionLabel || "—";
+  const region = getRegionLabel(slot?.worldState?.currentRegionId || slot?.lastRegionId, slot?.regionLabel || "—");
   const sector = slot?.lastSectorName || (slot ? `${String.fromCharCode(65 + (slot.blockIndex || 0))}${(slot.sectorRow || 0) + 1}` : "—");
 
   const choose = () => {

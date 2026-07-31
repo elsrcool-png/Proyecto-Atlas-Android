@@ -21,7 +21,8 @@ function ok(name, fn) {
 
 ok("Versión Atlas v2.23.1 o posterior de la familia", () => {
   const pkg = JSON.parse(read("package.json"));
-  assert.match(pkg.version, /^2\.23\.[1-9][0-9]*$/);
+  const [major, minor, patch] = pkg.version.split(".").map(Number);
+  assert.ok(major > 2 || (major === 2 && (minor > 23 || (minor === 23 && patch >= 1))));
 });
 
 ok("Todos los grupos ofensivos alcanzan un máximo de 20", () => {

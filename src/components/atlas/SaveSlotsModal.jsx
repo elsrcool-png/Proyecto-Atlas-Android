@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Trash2, Play, Plus, AlertTriangle, X, Clock } from "lucide-react";
-
-const REGION_LABELS = { verde: "Reino Verde", fria: "Reino Ártico", desierto: "Reino Árido" };
+import { getRegionLabel } from "@/lib/atlasRegionRegistry";
 
 function fmtDate(ms) {
   if (!ms) return "—";
@@ -28,7 +27,7 @@ function SlotCard({ index, slot, mode, onPick, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const occupied = !!slot;
   const p = slot?.player;
-  const region = slot ? REGION_LABELS[slot.lastRegionId] || slot.regionLabel || "—" : null;
+  const region = slot ? getRegionLabel(slot.worldState?.currentRegionId || slot.lastRegionId, slot.regionLabel || "—") : null;
   const sector = slot?.lastSectorName || (slot ? `${String.fromCharCode(65 + (slot.blockIndex || 0))}${(slot.sectorRow || 0) + 1}` : null);
   const mission = slot?.priorityMissionName || "—";
 

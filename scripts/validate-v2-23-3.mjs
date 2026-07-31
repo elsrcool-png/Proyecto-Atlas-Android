@@ -27,7 +27,8 @@ function ok(name, fn) {
 ok("Versión Atlas v2.23.3 o posterior de la familia", () => {
   const pkg = JSON.parse(read("package.json"));
   const lock = JSON.parse(read("package-lock.json"));
-  assert.match(pkg.version, /^2\.23\.(?:3|[4-9]|[1-9]\d+)$/);
+  const [major, minor, patch] = pkg.version.split(".").map(Number);
+  assert.ok(major > 2 || (major === 2 && (minor > 23 || (minor === 23 && patch >= 3))));
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages[""].version, pkg.version);
   assert.match(read("VERSION_ATLAS_VISUAL.txt"), new RegExp(`v${pkg.version.replaceAll(".", "\\.")}`));

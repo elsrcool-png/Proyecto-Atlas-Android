@@ -3,6 +3,7 @@ import { Compass, X, Lock, Skull, Footprints, ChevronRight } from "lucide-react"
 import { REGIONS } from "@/lib/atlasData";
 import RegionTopView from "./RegionTopView";
 import { getRegionLayout, sectorKey } from "@/lib/atlasRegionSectors";
+import { getRegionGraph } from "@/lib/atlasWorldGraph";
 
 export default function ExplorationMap({ discovered, currentRegion, currentBlock, defeatedBosses, game, exploreBlocks, playerPos, playerDir, lastShrine, onClose }) {
   const [openRi, setOpenRi] = React.useState(null);
@@ -16,12 +17,14 @@ export default function ExplorationMap({ discovered, currentRegion, currentBlock
           <h2 className="flex items-center gap-2 text-base font-heading text-slate-100"><Compass className="w-5 h-5 text-amber-300" /> Mapa de Exploración</h2>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button>
         </div>
-        <p className="text-[11px] text-slate-400 mb-4 leading-snug">Cada reino usa ahora su dibujo canónico de nueve sectores. Toca una región para verla completa, con rutas bloqueadas, sectores abiertos y tu posición.</p>
+        <p className="text-[11px] text-slate-400 mb-4 leading-snug">Las tres regiones iniciales conservan su composición canónica 3×3. El motor ya usa nodos estables para admitir regiones irregulares posteriores sin alterar estos mapas.</p>
 
         <div className="space-y-3">
           {REGIONS.map((region, ri) => {
             const layout = getRegionLayout(region.id);
+            const graph = getRegionGraph(region.id);
             const sectors = Object.values(layout.sectors);
+            const totalNodes = graph ? Object.keys(graph.nodes).length : sectors.length;
             const unlockedCount = sectors.filter(s => unlockedSectors.has(sectorKey(region.id, s.id))).length;
             const visitedCount = sectors.filter(s => visitedSectors.has(`${ri}:${s.col}:${s.row}`)).length;
             const regionKnown = unlockedCount > 0 || visitedCount > 0 || ri === currentRegion;
@@ -46,7 +49,7 @@ export default function ExplorationMap({ discovered, currentRegion, currentBlock
                         {regionBossDown && <Skull className="w-4 h-4 text-rose-400" />}
                       </div>
                       <p className="text-[10px] text-slate-300 mt-1">{region.subtitle}</p>
-                      <p className="text-[10px] text-slate-400 mt-2">{visitedCount}/9 explorados · {unlockedCount}/9 desbloqueados</p>
+                      <p className="text-[10px] text-slate-400 mt-2">{visitedCount}/{totalNodes} explorados · {unlockedCount}/{totalNodes} desbloqueados</p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-950/55 border border-white/10 p-1.5" style={{ aspectRatio: "1536 / 1157" }}>

@@ -49,6 +49,7 @@ import SaveSlotsModalV3 from "@/components/atlas/ui-v3/SaveSlotsModalV3";
 import { sectorIdFromCoords, getSectorDef } from "@/lib/atlasRegionSectors";
 import { generateMissions } from "@/lib/atlasMissions";
 import { getAtlasIntegrationFlags } from "@/lib/atlasHeroIntegrationFlags";
+import { resolveSaveRegionId, resolveSaveRuntimeRegionIndex } from "@/lib/atlasRegionRegistry";
 
 const NPC_KEYS = ["campamento", "pueblo", "ciudad"];
 
@@ -108,11 +109,13 @@ export default function Game() {
   // Resúmenes enriquecidos para el modal de ranuras.
   const slotSummaries = React.useMemo(() => slotList.map((save) => {
     if (!save) return null;
-    const regionId = save.lastRegionId || REGIONS[save.regionIndex]?.id || "verde";
-    const secName = (() => { try { return getSectorDef(regionId, sectorIdFromCoords(save.blockIndex || 0, save.sectorRow || 0))?.name; } catch (e) { return null; } })();
+    const regionId = resolveSaveRegionId(save, REGIONS);
+    const runtimeRegionIndex = resolveSaveRuntimeRegionIndex(save, REGIONS);
+    const nodeId = save.worldState?.currentNodeId || save.currentNodeId || save.lastSectorId || sectorIdFromCoords(save.blockIndex || 0, save.sectorRow || 0);
+    const secName = (() => { try { return getSectorDef(regionId, nodeId)?.name; } catch (e) { return null; } })();
     let missionName = null;
     try {
-      const defs = generateMissions(REGIONS[save.regionIndex] || REGIONS[0]);
+      const defs = generateMissions(REGIONS[runtimeRegionIndex] || REGIONS[0]);
       const all = [...(defs.campamento || []), ...(defs.pueblo || []), ...(defs.ciudad || [])];
       const pid = save.priorityMissionId;
       const def = pid ? all.find(d => d.id === pid) : all.find(d => save.missions?.[d.id]?.active && save.missions?.[d.id]?.status !== "done");

@@ -173,3 +173,18 @@ android/local.properties
 *.pem
 *.apk
 *.aab
+
+# Atlas Android: archivos que nunca deben subirse
+node_modules/
+dist/
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/public/
+android/local.properties
+*.p12
+*.jks
+*.keystore
+*.pem
+*.apk
+*.aab

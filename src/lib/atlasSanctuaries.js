@@ -3,6 +3,7 @@
 // Sin generación aleatoria, sin semillas, posiciones manuales estables.
 
 import { coordsFromSectorId } from "@/lib/atlasRegionSectors";
+import { PLAYABLE_REGION_IDS, normalizeRegionId } from "@/lib/atlasRegionRegistry";
 
 const SANCTUARY_RADIUS = 100;
 
@@ -195,8 +196,9 @@ export function getInitialSanctuary() {
 }
 
 export function getRegionIndex(regionId) {
-  const order = { verde: 0, fria: 1, desierto: 2 };
-  return order[regionId] ?? 0;
+  const normalized = normalizeRegionId(regionId, "verde");
+  const index = PLAYABLE_REGION_IDS.indexOf(normalized);
+  return index >= 0 ? index : 0;
 }
 
 // Devuelve la posición de aparición segura frente al portal del santuario.
@@ -287,9 +289,12 @@ export function validateSanctuaryZone(world, sanctuary) {
 // Si no tiene activatedSanctuaries, activa el santuario inicial apropiado.
 export function migrateSaveSanctuaries(save, currentRegionId) {
   if (!save) return save;
-  const regionId = save.regionId || currentRegionId || "verde";
-  const regionIdx = typeof save.regionIndex === "number" ? save.regionIndex : getRegionIndex(regionId);
-  const actualRegionId = ["verde", "fria", "desierto"][regionIdx] || regionId;
+  const regionId = normalizeRegionId(
+    save.worldState?.currentRegionId || save.lastRegionId || save.regionId || currentRegionId,
+    "verde",
+  );
+  const regionIdx = getRegionIndex(regionId);
+  const actualRegionId = PLAYABLE_REGION_IDS[regionIdx] || regionId;
 
   const activated = save.activatedSanctuaries?.length
     ? new Set(save.activatedSanctuaries)
@@ -299,7 +304,7 @@ export function migrateSaveSanctuaries(save, currentRegionId) {
 
   // Si no hay último santuario, usar el del campamento de la región actual
   if (!lastId) {
-    const sectorId = save.sectorId || ["A2", "B1", "A1"][regionIdx] || "A2";
+    const sectorId = save.worldState?.currentNodeId || save.lastSectorId || save.sectorId || ["A2", "B1", "A1"][regionIdx] || "A2";
     let fallback = getSanctuaryForSector(actualRegionId, sectorId);
     if (!fallback) fallback = getSanctuariesForRegion(actualRegionId)[0];
     if (fallback) {

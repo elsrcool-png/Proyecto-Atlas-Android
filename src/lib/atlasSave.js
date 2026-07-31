@@ -1,12 +1,16 @@
 // Persistencia de la aventura — Sistema de 3 ranuras independientes.
-// Cada ranura usa su propia clave de guardado y una copia de respaldo.
-// El guardado automático escribe únicamente en la ranura activa.
+// Esquema v7: IDs regionales estables, posición nodal y estados separados.
+
+import { ATLAS_REGION_REGISTRY, normalizeRegionId } from "@/lib/atlasRegionRegistry";
+
 const SLOT_KEYS = ["atlas_save_slot_1", "atlas_save_slot_2", "atlas_save_slot_3"];
 const BACKUP_KEYS = ["atlas_save_slot_1_bak", "atlas_save_slot_2_bak", "atlas_save_slot_3_bak"];
 const ACTIVE_KEY = "atlas_save_active_slot";
 const LEGACY_MIGRATED_KEY = "atlas_save_legacy_migrated";
 const LEGACY_KEYS = ["atlas_adventure_save_v4", "atlas_adventure_save_v3", "atlas_adventure_save_v2", "atlas_adventure_save_v1"];
+const LEGACY_RUNTIME_REGION_IDS = ["verde", "fria", "desierto"];
 
+export const ATLAS_SAVE_VERSION = 7;
 
 const VISUAL_DEFAULTS_V5 = Object.freeze({
   Humano: { raceBase: "humano_neutral_v1", profileId: "appearance_humano_brown_tousled_v1" },
@@ -14,22 +18,163 @@ const VISUAL_DEFAULTS_V5 = Object.freeze({
   Enano: { raceBase: "enano_neutral_v1", profileId: "appearance_enano_copper_beard_v1" },
 });
 
-function migrateSaveV6(save) {
-  if (!save?.player) return save;
-  const base = VISUAL_DEFAULTS_V5[save.player.race] || VISUAL_DEFAULTS_V5.Humano;
-  const withAppearance = save.player.appearance?.version >= 1
-    ? save.player
-    : { ...save.player, appearance: { version: 1, ...base, cosmetic: null } };
-  const player = {
+const uniqueStrings = (value) => [...new Set((Array.isArray(value) ? value : []).filter((item) => typeof item === "string" && item.length))];
+
+function migratePlayerV6(player) {
+  if (!player || typeof player !== "object") return player;
+  const base = VISUAL_DEFAULTS_V5[player.race] || VISUAL_DEFAULTS_V5.Humano;
+  const withAppearance = player.appearance?.version >= 1
+    ? player
+    : { ...player, appearance: { version: 1, ...base, cosmetic: null } };
+  return {
     ...withAppearance,
     weaponUpgrades: withAppearance.weaponUpgrades || {},
     armorUpgrades: withAppearance.armorUpgrades || {},
     helmetUpgrades: withAppearance.helmetUpgrades || {},
   };
-  return { ...save, saveVersion: Math.max(6, Number(save.saveVersion) || 0), player };
 }
 
-let activeSaveSlot = null; // 1..3 o null
+function legacySectorId(save) {
+  if (typeof save?.lastSectorId === "string" && save.lastSectorId) return save.lastSectorId;
+  if (typeof save?.currentNodeId === "string" && save.currentNodeId) return save.currentNodeId;
+  const col = Number(save?.blockIndex);
+  const row = Number(save?.sectorRow);
+  if (Number.isInteger(col) && col >= 0 && col <= 2 && Number.isInteger(row) && row >= 0 && row <= 2) {
+    return `${String.fromCharCode(65 + col)}${row + 1}`;
+  }
+  return "A1";
+}
+
+function legacyRegionId(save) {
+  const explicit = normalizeRegionId(save?.worldState?.currentRegionId ?? save?.lastRegionId ?? save?.currentRegionId);
+  if (explicit) return explicit;
+  const index = Number(save?.regionIndex);
+  return normalizeRegionId(LEGACY_RUNTIME_REGION_IDS[Number.isInteger(index) ? index : 0], "verde");
+}
+
+function visitedNodesByRegion(save) {
+  const byRegion = {};
+  for (const raw of uniqueStrings(save?.visitedSectors)) {
+    const match = /^(\d+):(\d+):(\d+)$/.exec(raw);
+    if (!match) continue;
+    const regionId = LEGACY_RUNTIME_REGION_IDS[Number(match[1])];
+    const col = Number(match[2]);
+    const row = Number(match[3]);
+    if (!regionId || col < 0 || col > 2 || row < 0 || row > 2) continue;
+    const nodeId = `${String.fromCharCode(65 + col)}${row + 1}`;
+    if (!byRegion[regionId]) byRegion[regionId] = [];
+    byRegion[regionId].push(nodeId);
+  }
+  return byRegion;
+}
+
+function unlockedNodesByRegion(save) {
+  const byRegion = {};
+  for (const raw of uniqueStrings(save?.unlockedSectors)) {
+    const splitAt = raw.indexOf(":");
+    if (splitAt <= 0) continue;
+    const regionId = normalizeRegionId(raw.slice(0, splitAt));
+    const nodeId = raw.slice(splitAt + 1);
+    if (!regionId || !nodeId) continue;
+    if (!byRegion[regionId]) byRegion[regionId] = [];
+    byRegion[regionId].push(nodeId);
+  }
+  return byRegion;
+}
+
+function buildRegionStates(save, currentRegionId) {
+  const previous = save?.regionStates && typeof save.regionStates === "object" ? save.regionStates : {};
+  const flags = save?.worldFlags && typeof save.worldFlags === "object" ? save.worldFlags : {};
+  const visited = visitedNodesByRegion(save);
+  const unlockedNodes = unlockedNodesByRegion(save);
+  const unlockedRegions = new Set(uniqueStrings(save?.unlockedRegions).map((id) => normalizeRegionId(id)).filter(Boolean));
+  unlockedRegions.add(currentRegionId);
+
+  const result = {};
+  for (const definition of ATLAS_REGION_REGISTRY) {
+    const id = definition.id;
+    const old = previous[id] && typeof previous[id] === "object" ? previous[id] : {};
+    const completed = Boolean(
+      old.status === "LIBERATED"
+      || old.status === "POST_LIBERATION"
+      || flags[`${id}:completed`]
+      || flags[`${id}:restored`]
+      || flags[`${id}:boss_defeated`],
+    );
+    const unlocked = completed || unlockedRegions.has(id) || Boolean(flags[`${id}:unlocked`]);
+    const status = completed
+      ? (old.status === "POST_LIBERATION" ? "POST_LIBERATION" : "LIBERATED")
+      : unlocked
+        ? (["DISCOVERED", "CORRUPTED", "BOSS_AVAILABLE", "RING_BROKEN"].includes(old.status) ? old.status : "CORRUPTED")
+        : "LOCKED";
+    const regionalFlags = Object.fromEntries(Object.entries(flags).filter(([key]) => key.startsWith(`${id}:`)));
+
+    result[id] = {
+      status,
+      discoveredNodeIds: uniqueStrings([...(old.discoveredNodeIds || []), ...(visited[id] || [])]),
+      unlockedNodeIds: uniqueStrings([...(old.unlockedNodeIds || []), ...(unlockedNodes[id] || [])]),
+      completedBoss: Boolean(old.completedBoss || flags[`${id}:boss_defeated`] || completed),
+      flags: { ...(old.flags || {}), ...regionalFlags },
+    };
+  }
+  return result;
+}
+
+export function migrateSaveV7(input) {
+  if (!input || typeof input !== "object") return input;
+  const sourceVersion = Number(input.saveVersion ?? input.schemaVersion) || 0;
+  const currentRegionId = legacyRegionId(input);
+  const currentNodeId = input?.worldState?.currentNodeId || legacySectorId(input);
+  const unlockedRegionIds = uniqueStrings([
+    ...(input?.worldState?.unlockedRegionIds || []),
+    ...(input.unlockedRegions || []),
+    currentRegionId,
+  ].map((id) => normalizeRegionId(id)).filter(Boolean));
+  const globalFlags = {
+    ...((input?.worldState?.globalFlags && typeof input.worldState.globalFlags === "object") ? input.worldState.globalFlags : {}),
+    ...((input.worldFlags && typeof input.worldFlags === "object") ? input.worldFlags : {}),
+  };
+  const regionStates = buildRegionStates({ ...input, unlockedRegions: unlockedRegionIds, worldFlags: globalFlags }, currentRegionId);
+  const dailyState = {
+    dayIndex: Number(input?.dailyState?.dayIndex ?? input.dayCount ?? 0) || 0,
+    globalSanctuaryUseDay: input?.dailyState?.globalSanctuaryUseDay ?? input.globalSanctuaryUseDay ?? null,
+    flags: { ...((input?.dailyState?.flags && typeof input.dailyState.flags === "object") ? input.dailyState.flags : {}) },
+  };
+
+  return {
+    ...input,
+    saveVersion: ATLAS_SAVE_VERSION,
+    schemaVersion: ATLAS_SAVE_VERSION,
+    migratedFromVersion: sourceVersion < ATLAS_SAVE_VERSION ? sourceVersion : (input.migratedFromVersion ?? null),
+    player: migratePlayerV6(input.player),
+    lastRegionId: currentRegionId,
+    lastSectorId: currentNodeId,
+    currentRegionId,
+    currentNodeId,
+    unlockedRegions: unlockedRegionIds,
+    worldFlags: globalFlags,
+    worldState: {
+      ...((input.worldState && typeof input.worldState === "object") ? input.worldState : {}),
+      schemaVersion: 1,
+      currentRegionId,
+      currentNodeId,
+      unlockedRegionIds,
+      globalFlags,
+    },
+    regionStates,
+    dailyState,
+    compatibility: {
+      legacyRegionIndex: Number.isInteger(Number(input.regionIndex)) ? Number(input.regionIndex) : 0,
+      legacyBlockIndex: Number.isInteger(Number(input.blockIndex)) ? Number(input.blockIndex) : 0,
+      legacySectorRow: Number.isInteger(Number(input.sectorRow)) ? Number(input.sectorRow) : 0,
+      ...((input.compatibility && typeof input.compatibility === "object") ? input.compatibility : {}),
+    },
+  };
+}
+
+export const migrateSave = migrateSaveV7;
+
+let activeSaveSlot = null;
 
 function clampSlot(n) { const i = Number(n); return i >= 1 && i <= 3 ? i : null; }
 
@@ -55,7 +200,6 @@ export function clearActiveSaveSlot() {
   try { localStorage.removeItem(ACTIVE_KEY); } catch (e) { }
 }
 
-// Escritura segura: conserva una copia de respaldo antes de reemplazar.
 function safeWrite(key, backupKey, json) {
   try {
     const prev = localStorage.getItem(key);
@@ -65,7 +209,6 @@ function safeWrite(key, backupKey, json) {
   } catch (e) { return false; }
 }
 
-// Valida que el contenido tenga la estructura mínima de una partida jugable.
 function isValidSave(parsed) {
   return parsed && typeof parsed === "object" && parsed.player && typeof parsed.player === "object";
 }
@@ -73,7 +216,7 @@ function isValidSave(parsed) {
 export function saveToSlot(n, data) {
   const slot = clampSlot(n);
   if (!slot) return false;
-  const payload = JSON.stringify(migrateSaveV6({ saveVersion: 6, savedAt: Date.now(), ...data }));
+  const payload = JSON.stringify(migrateSaveV7({ savedAt: Date.now(), ...data, saveVersion: ATLAS_SAVE_VERSION }));
   return safeWrite(SLOT_KEYS[slot - 1], BACKUP_KEYS[slot - 1], payload);
 }
 
@@ -85,16 +228,15 @@ export function loadSlot(n) {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!isValidSave(parsed)) {
-      // Contenido corrupto: intentar recuperar desde el respaldo.
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV6(bp); }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV7(bp); }
       return null;
     }
-    return migrateSaveV6(parsed);
+    return migrateSaveV7(parsed);
   } catch (e) {
     try {
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV6(bp); }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV7(bp); }
     } catch (e2) { }
     return null;
   }
@@ -107,13 +249,8 @@ export function deleteSlot(n) {
 }
 
 export function isSlotOccupied(n) { return !!loadSlot(n); }
+export function listSlots() { return [1, 2, 3].map((n) => loadSlot(n)); }
 
-export function listSlots() {
-  return [1, 2, 3].map((n) => loadSlot(n));
-}
-
-// Migración del guardado antiguo único: copia al Espacio 1 si está vacío.
-// No elimina el guardado antiguo hasta confirmar que la copia funcionó.
 export function migrateLegacySave() {
   try {
     if (localStorage.getItem(LEGACY_MIGRATED_KEY)) return false;
@@ -125,15 +262,13 @@ export function migrateLegacySave() {
       if (!isValidSave(parsed)) continue;
       if (!loadSlot(1)) {
         const ok = saveToSlot(1, parsed);
-        // Confirmar la migración leyendo la ranura recién escrita.
         const verified = ok && !!loadSlot(1);
         if (verified) {
           localStorage.setItem(LEGACY_MIGRATED_KEY, "1");
-          return true; // migrado al Espacio 1; el original se conserva.
+          return true;
         }
         return false;
       }
-      // El Espacio 1 ya estaba ocupado: marcamos la migración como hecha sin copiar.
       localStorage.setItem(LEGACY_MIGRATED_KEY, "1");
       return false;
     }
@@ -142,11 +277,9 @@ export function migrateLegacySave() {
   return false;
 }
 
-// ── API retrocompatible usada por useAtlasSession ──
-// Toda escritura automática va a la ranura activa (si existe).
 export async function saveAdventure(data) {
   const n = getActiveSaveSlot();
-  if (!n) return; // sin ranura activa: no escribe nada (evita pérdida de datos).
+  if (!n) return;
   saveToSlot(n, data);
 }
 
@@ -160,5 +293,4 @@ export async function clearAdventure() {
   const n = getActiveSaveSlot();
   if (!n) return;
   deleteSlot(n);
-  // Se mantiene la ranura activa: la nueva partida sobrescribirá el mismo espacio.
 }

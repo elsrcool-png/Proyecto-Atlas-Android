@@ -115,8 +115,19 @@ export function sectorKey(regionId, sectorId) {
   return `${regionId}:${sectorId}`;
 }
 
+export function getRegionLayoutStrict(regionId) {
+  return REGION_SECTOR_LAYOUTS[regionId] || null;
+}
+
+// Compatibilidad con la base previa: los tres IDs jugables siempre existen.
+// El fallback Verde se conserva solo para llamadas antiguas; el motor nodal
+// debe usar getRegionLayoutStrict() o getRegionGraph().
 export function getRegionLayout(regionId) {
-  return REGION_SECTOR_LAYOUTS[regionId] || REGION_SECTOR_LAYOUTS.verde;
+  return getRegionLayoutStrict(regionId) || REGION_SECTOR_LAYOUTS.verde;
+}
+
+export function hasLegacyRegionLayout(regionId) {
+  return Boolean(getRegionLayoutStrict(regionId));
 }
 
 export function getSectorDef(regionId, colOrId, row) {

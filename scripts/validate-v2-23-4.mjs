@@ -29,13 +29,14 @@ const skill = getDungeonSkills("Guerrero")[0];
 const player = { class: "Guerrero", race: "Enano", attack: 10 };
 const target = { defense: 0 };
 
-ok("Versión Atlas v2.23.4 sincronizada", () => {
+ok("Versión Atlas conserva la corrección v2.23.4 o posterior", () => {
   const pkg = JSON.parse(read("package.json"));
   const lock = JSON.parse(read("package-lock.json"));
-  assert.equal(pkg.version, "2.23.4");
+  const parts = pkg.version.split(".").map(Number);
+  assert.ok(parts[0] > 2 || (parts[0] === 2 && (parts[1] > 23 || (parts[1] === 23 && parts[2] >= 4))));
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages[""].version, pkg.version);
-  assert.match(read("VERSION_ATLAS_VISUAL.txt"), /v2\.23\.4/);
+  assert.match(read("VERSION_ATLAS_VISUAL.txt"), new RegExp(`v${pkg.version.replaceAll(".", "\\.")}`));
 });
 
 ok("Un fallo de precisión conserva crit como booleano falso", () => {

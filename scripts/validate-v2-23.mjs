@@ -26,7 +26,8 @@ function ok(name, fn) {
 
 ok("Versión Atlas de la familia v2.23", () => {
   const pkg = JSON.parse(read("package.json"));
-  assert.match(pkg.version, /^2\.23\./);
+  const [major, minor] = pkg.version.split(".").map(Number);
+  assert.ok(major > 2 || (major === 2 && minor >= 23));
 });
 
 ok("Las 20 caras del D20 usan las bandas aprobadas", () => {
@@ -156,10 +157,10 @@ ok("UI integra Consumible y herrería regional completa", () => {
   assert.match(explore, /onForgeEquipment=\{game\.forgeEquipment\}/);
 });
 
-ok("Guardado v6 migra mapas de mejora", () => {
+ok("Guardado versionado migra mapas de mejora", () => {
   const save = read("src/lib/atlasSave.js");
   const session = read("src/hooks/useAtlasSession.js");
-  assert.match(save, /saveVersion:\s*6/);
+  assert.match(save, /ATLAS_SAVE_VERSION\s*=\s*7|saveVersion:\s*6/);
   assert.match(save, /armorUpgrades/);
   assert.match(save, /helmetUpgrades/);
   assert.match(session, /armorUpgrades:\s*\{\}/);
