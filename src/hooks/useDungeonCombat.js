@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { getEntities, isWalkable } from "@/lib/atlasDungeons";
 import { resolveAbilityAnimation } from "@/lib/atlasAbilityAnimations";
+import { buildDungeonCombatSequence, dungeonSequenceImpactDelay } from "@/lib/atlasDungeonCombatAdapter";
 import {
   lineOfSight, chebyshev, stepToward, resolveSkillHit,
   tileInFacing, hasCover, isWalkableDiag,
@@ -27,14 +28,10 @@ function findAllySpawn(dungeon, spawn) {
 let _eid = 1;
 const nextEffectId = () => `vfx_${Date.now()}_${_eid++}`;
 
-// Duraciones (ms) de cada fase de animación.
-const ANTICIP = 120;
-const STRIKE_MELEE = 360;
-const STRIKE_PROJ = 430;
-const STRIKE_MAGIC = 400;
+// Pausa posterior al impacto antes de liberar el turno.
 const IMPACT_SETTLE = 280;
 
-export default function useDungeonCombat({ baseDungeon, dungeon, region, regionIndex, playerLevel, companion, player, callbacks }) {
+export default function useDungeonCombat({ baseDungeon, dungeon, region, regionIndex, playerLevel, companion, player, bossDefeated = false, callbacks }) {
   const [tactical, setTactical] = useState(false);
   const [turn, setTurn] = useState(null);
   const [enemies, setEnemies] = useState([]);
@@ -48,6 +45,8 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
   const [hurtPulses, setHurtPulses] = useState(() => new Set());
   const [shake, setShake] = useState(0);
   const [debug, setDebug] = useState(null);
+  const [actorAnimations, setActorAnimations] = useState({});
+  const [activeTargetId, setActiveTargetId] = useState(null);
 
   const enemiesRef = useRef([]);
   const alliesRef = useRef([]);
@@ -55,12 +54,14 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
   const keysRef = useRef(0);
   const companionRef = useRef(companion);
   const playerRef = useRef(player);
+  const bossDefeatedRef = useRef(bossDefeated);
   useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
   useEffect(() => { alliesRef.current = allies; }, [allies]);
   useEffect(() => { defeatedRef.current = defeated; }, [defeated]);
   useEffect(() => { keysRef.current = keys; }, [keys]);
   useEffect(() => { companionRef.current = companion; }, [companion]);
   useEffect(() => { playerRef.current = player; }, [player]);
+  useEffect(() => { bossDefeatedRef.current = bossDefeated; }, [bossDefeated]);
 
   const hasLockedDoors = useMemo(() => {
     if (!baseDungeon) return false;
@@ -105,8 +106,18 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
       const prepared = prepareEnemy(m, diffMul, playerLevel || 1, start, region?.id, baseDungeon?.sectorId, playerRef.current || player);
       list.push({ id: e.id, x: e.x, y: e.y, monsterId: e.monsterId, name: prepared.name || m.name, hp: prepared.hp, maxHp: prepared.hp, attack: prepared.attack || m.attack || 0, defense: prepared.defense || m.defense || 0, detectRange: 5, attackRange: 1, alerted: false });
     });
-    // El mini jefe final se resuelve con combate clásico (no táctico):
-    // no se añade a la lista de enemigos tácticos.
+    // El mini jefe pertenece al mismo combate de Dungeon y conserva la cámara única.
+    if (ent.boss && !bossDefeatedRef.current) {
+      const m = monsterById(ent.boss.monsterId);
+      const prepared = prepareEnemy(m, diffMul * 1.3, playerLevel || 1, start, region?.id, baseDungeon?.sectorId, playerRef.current || player);
+      list.push({
+        id: `${baseDungeon.id}_boss_${ent.boss.x}_${ent.boss.y}`,
+        x: ent.boss.x, y: ent.boss.y, monsterId: ent.boss.monsterId,
+        name: prepared.name || m.name, hp: prepared.hp, maxHp: prepared.hp,
+        attack: prepared.attack || m.attack || 0, defense: prepared.defense || m.defense || 0,
+        detectRange: 7, attackRange: 1, alerted: false, boss: true, keyHolder: !!ent.boss.keyHolder,
+      });
+    }
     return list;
   }, [baseDungeon, region, regionIndex, playerLevel]);
 
@@ -125,7 +136,7 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
     const allyList = buildAlly();
     setAllies(allyList); alliesRef.current = allyList;
     setKeys(0); keysRef.current = 0;
-    setTactical(false); setTurn(null); setCooldowns({}); setDefeated(new Set()); setLog([]); setBusy(false); setEffects([]); setHurtPulses(new Set()); setShake(0); setDebug(null);
+    setTactical(false); setTurn(null); setCooldowns({}); setDefeated(new Set()); setLog([]); setBusy(false); setEffects([]); setHurtPulses(new Set()); setShake(0); setDebug(null); setActorAnimations({}); setActiveTargetId(null);
   }, [baseDungeon?.id, initEnemies, buildAlly]);
 
   const syncCompanion = useCallback((a) => {
@@ -201,24 +212,67 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
     return a.facing || "down";
   }
 
-  // ── Núcleo del sistema de animaciones ──
-  // playStrike: emite la animación de golpe (lunge/projectile/magic),
-  // y al llegar al impacto invoca onImpact (donde se aplica el daño).
+  // ── Núcleo compartido de animaciones ──
+  // Las secuencias proceden del mismo CombatDirector usado por el modo Combate.
+  // Dungeon solo adapta coordenadas del mundo y mantiene los dados ocultos.
   const playStrike = useCallback((opts, onImpact) => {
-    const { attacker, target, vfx = "lunge", miss, isCrit, text, element, impactType, projectileType } = opts;
-    const vfxType = vfx === "projectile" ? "projectile" : vfx === "magic" ? "magic" : "lunge";
-    emitVfx({ type: vfxType, from: attacker, x: target.x, y: target.y, text: miss ? null : text, crit: isCrit, miss: !!miss, element, impactType, projectileType });
-    const dur = vfxType === "projectile" ? STRIKE_PROJ : vfxType === "magic" ? STRIKE_MAGIC : STRIKE_MELEE;
+    const {
+      attacker, target, attackerId = "player", targetId = null,
+      skill = { name: "Ataque", hits: 1 }, className, kind = "basic",
+      miss, isCrit, damage = 0, element, impactType, projectileType,
+      statusId = null, onVisualHit,
+    } = opts;
+    const sequence = buildDungeonCombatSequence({
+      skill, className, element, statusId, kind,
+      result: { hit: !miss, missed: !!miss, crit: !!isCrit, dmg: damage, totalDamage: damage },
+    });
+    const token = `${attackerId}:${Date.now()}:${nextEffectId()}`;
+    setActorAnimations((prev) => ({
+      ...prev,
+      [attackerId]: { token, sequence, target: { x: target.x, y: target.y }, qualityId: sequence.qualityId, landed: !miss, kind },
+    }));
+    setActiveTargetId(targetId);
+
+    const anim = sequence.animation || {};
+    const moveAt = Number(sequence.events?.find((event) => event.type === "MOVE_ATTACKER")?.at || 80);
+    const impactDelay = dungeonSequenceImpactDelay(sequence);
     setTimeout(() => {
-      if (miss) {
-        emitVfx({ type: "miss", x: target.x, y: target.y, element });
-      } else {
-        emitVfx({ type: "impact", x: target.x, y: target.y, crit: isCrit, element, impactType });
-        if (isCrit) triggerShake(0.7);
-        else triggerShake(0.3);
-      }
-      onImpact?.();
-    }, dur);
+      const vfxType = anim.dungeonType === "projectile" ? "projectile" : anim.dungeonType === "magic" ? "magic" : "lunge";
+      emitVfx({
+        type: vfxType, from: attacker, x: target.x, y: target.y,
+        element: element || anim.element, impactType: impactType || anim.impactType,
+        projectileType: projectileType || anim.projectileType, miss: !!miss,
+      });
+    }, moveAt);
+
+    if (miss || !sequence.hits?.length) {
+      setTimeout(() => {
+        emitVfx({ type: "miss", x: target.x, y: target.y, element: element || anim.element });
+        onImpact?.(sequence);
+      }, impactDelay);
+    } else {
+      sequence.hits.forEach((hit) => {
+        setTimeout(() => {
+          emitVfx({
+            type: "impact", x: target.x, y: target.y,
+            text: String(hit.damage), crit: !!hit.crit,
+            element: element || anim.element, impactType: impactType || anim.impactType,
+          });
+          onVisualHit?.(hit, sequence);
+          triggerShake(Math.min(sequence.camera?.shake || 0.3, sequence.camera?.maxShake || 0.72));
+        }, Number(hit.at || impactDelay));
+      });
+      setTimeout(() => onImpact?.(sequence), impactDelay);
+    }
+
+    setTimeout(() => {
+      setActorAnimations((prev) => {
+        if (prev[attackerId]?.token !== token) return prev;
+        const next = { ...prev }; delete next[attackerId]; return next;
+      });
+      setActiveTargetId((current) => current === targetId ? null : current);
+    }, Number(sequence.totalDuration || 720) + 80);
+    return sequence;
   }, [emitVfx, triggerShake]);
 
   const reviveCompanion = useCallback(() => {
@@ -238,8 +292,6 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
 
     const list = enemiesRef.current.map((e) => ({ ...e }));
     const alliesList = alliesRef.current.map((a) => ({ ...a }));
-    let totalPlayerDmg = 0;
-
     const queue = [];
     for (const a of alliesList) if (a.hp > 0 && !a.incapacitated) queue.push({ kind: "ally", actor: a });
     for (const e of list) if (e.hp > 0) queue.push({ kind: "enemy", actor: e });
@@ -265,9 +317,15 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
           const isCrit = Math.random() < 0.1;
           const final = isCrit ? Math.round(dmg * 1.5) : dmg;
           setDebug({ phase: "enemy", action: { attacker: a.id, target: target.id, type: "lunge", dmg: final, crit: isCrit } });
-          playStrike({ attacker: { x: a.x, y: a.y }, target: { x: target.x, y: target.y }, vfx: "lunge", isCrit, text: String(final), element: resolveAbilityAnimation(null, { class: a.class }).element, impactType: "slash" }, () => {
+          playStrike({
+            attacker: { x: a.x, y: a.y }, target: { x: target.x, y: target.y },
+            attackerId: a.id, targetId: target.id,
+            skill: { name: canAbility ? a.ability : "Ataque básico", hits: 1 }, className: a.class,
+            kind: canAbility ? "classAbility" : "basic", isCrit, damage: final,
+            element: resolveAbilityAnimation(null, { class: a.class }).element, impactType: "slash",
+            onVisualHit: () => pushHurt(target.id),
+          }, () => {
             target.hp = Math.max(0, target.hp - final);
-            pushHurt(target.id);
             setEnemies(list.map((e) => ({ ...e })));
             if (target.hp <= 0) emitVfx({ type: "defeat", x: target.x, y: target.y });
             pushLog(`${a.name} ${canAbility ? `usa ${a.ability}: ${final}` : `ataca a ${target.name}: ${final}`}${isCrit ? " (¡crítico!)" : ""}.`);
@@ -291,22 +349,28 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
       for (const a of alliesList) if (a.hp > 0 && !a.incapacitated) targets.push({ x: a.x, y: a.y, def: a.defense || 0, ally: a });
       const tgt = targets.sort((x, y) => chebyshev(x, e) - chebyshev(y, e))[0];
       if (chebyshev(tgt, e) <= e.attackRange) {
+        e.facing = _vecFacing(e, tgt);
+        setEnemies(list.map((entry) => ({ ...entry })));
         if (tgt.isPlayer) rotate(_vecFacing(pp, e));
         const hit = Math.random() < 0.85;
         const isCrit = hit && Math.random() < 0.08;
         let dmg = hit ? Math.max(1, e.attack - tgt.def) : 0;
         if (hit && isCrit) dmg = Math.round(dmg * 1.5);
         setDebug({ phase: "enemy", action: { attacker: e.id, target: tgt.isPlayer ? "player" : tgt.ally.id, type: "lunge", dmg, crit: isCrit, miss: !hit } });
-        playStrike({ attacker: { x: e.x, y: e.y }, target: { x: tgt.x, y: tgt.y }, vfx: "lunge", miss: !hit, isCrit, text: hit ? String(dmg) : null, element: monsterById(e.monsterId)?.element || "fisico", impactType: "slash" }, () => {
+        playStrike({
+          attacker: { x: e.x, y: e.y }, target: { x: tgt.x, y: tgt.y },
+          attackerId: e.id, targetId: tgt.isPlayer ? "player" : tgt.ally.id,
+          skill: { name: `${e.name} — ataque`, hits: 1 }, kind: "enemy",
+          miss: !hit, isCrit, damage: dmg,
+          element: monsterById(e.monsterId)?.element || "fisico", impactType: "slash",
+          onVisualHit: () => pushHurt(tgt.isPlayer ? "player" : tgt.ally.id),
+        }, () => {
           if (!hit) { pushLog(`${e.name} falla el ataque.`); setTimeout(done, IMPACT_SETTLE); return; }
           if (tgt.isPlayer) {
-            totalPlayerDmg += dmg;
-            pushHurt("player");
             callbacksRef.current.onPlayerDamage?.(dmg);
             pushLog(`${e.name} te ataca: ${dmg}${isCrit ? " (¡crítico!)" : ""}.`);
           } else {
             tgt.ally.hp = Math.max(0, tgt.ally.hp - dmg);
-            pushHurt(tgt.ally.id);
             setAllies(alliesList.map((a) => ({ ...a })));
             alliesList.forEach(syncCompanion);
             pushLog(`${e.name} ataca a ${tgt.ally.name}: ${dmg}.`);
@@ -317,7 +381,7 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
       } else {
         const occ = new Set(list.filter((x) => x.hp > 0).map((x) => `${x.x},${x.y}`));
         const st = stepToward(dungeon, { x: e.x, y: e.y }, { x: tgt.x, y: tgt.y }, occ);
-        if (st) { e.x = st.x; e.y = st.y; setEnemies(list.map((x) => ({ ...x }))); }
+        if (st) { e.facing = _vecFacing(e, st); e.x = st.x; e.y = st.y; setEnemies(list.map((x) => ({ ...x }))); }
         done();
       }
     };
@@ -385,21 +449,33 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
     const target = enemiesRef.current.find((e) => e.hp > 0 && e.x === tgt.x && e.y === tgt.y && lineOfSight(dungeon, pp.x, pp.y, e.x, e.y));
     const anim = resolveAbilityAnimation({ name: "Ataque básico" }, { class: playerRef.current?.class });
     if (!target) {
-      emitVfx({ type: anim.dungeonType, from: { x: pp.x, y: pp.y }, x: tgt.x, y: tgt.y, miss: true, element: anim.element, impactType: anim.impactType });
       pushLog("Atacas al aire. Los enemigos avanzan.");
       setDebug({ phase: "player", action: { attacker: "player", target: null, type: anim.dungeonType, miss: true } });
-      setTimeout(() => endPlayerTurn(pp), STRIKE_MELEE + 120);
+      playStrike({
+        attacker: { x: pp.x, y: pp.y }, target: { x: tgt.x, y: tgt.y },
+        attackerId: "player", targetId: null,
+        skill: { name: playerRef.current?.class === "Mago" ? "Bastonazo" : playerRef.current?.class === "Pícaro" ? "Navajazo" : "Espadazo", hits: 1 },
+        className: playerRef.current?.class, kind: "basic", miss: true, damage: 0,
+        element: anim.element, impactType: anim.impactType, projectileType: anim.projectileType,
+      }, () => setTimeout(() => endPlayerTurn(pp), IMPACT_SETTLE));
       return;
     }
     const dist = chebyshev(pp, target);
     const cover = hasCover(dungeon, target);
     const r = resolveSkillHit({ accuracy: 0.9, critChance: 0.1, critMult: 1.5, damage: (p) => p.attack || 0 }, playerRef.current, target, { distance: dist, cover });
     setDebug({ phase: "player", action: { attacker: "player", target: target.id, type: anim.dungeonType, dmg: r.dmg, crit: r.crit, miss: !r.hit } });
-    playStrike({ attacker: { x: pp.x, y: pp.y }, target: { x: target.x, y: target.y }, vfx: anim.dungeonType, miss: !r.hit, isCrit: r.crit, text: r.hit ? String(r.dmg) : null, element: anim.element, impactType: anim.impactType, projectileType: anim.projectileType }, () => {
+    playStrike({
+      attacker: { x: pp.x, y: pp.y }, target: { x: target.x, y: target.y },
+      attackerId: "player", targetId: target.id,
+      skill: { name: playerRef.current?.class === "Mago" ? "Bastonazo" : playerRef.current?.class === "Pícaro" ? "Navajazo" : "Espadazo", hits: 1 },
+      className: playerRef.current?.class, kind: "basic",
+      miss: !r.hit, isCrit: r.crit, damage: r.dmg,
+      element: anim.element, impactType: anim.impactType, projectileType: anim.projectileType,
+      onVisualHit: () => pushHurt(target.id),
+    }, () => {
       if (!r.hit) { pushLog(`Tu ataque falla a ${target.name}.`); setTimeout(() => endPlayerTurn(pp), IMPACT_SETTLE); return; }
       const willDie = target.hp - r.dmg <= 0;
       setEnemies((prev) => prev.map((e) => e.id === target.id ? { ...e, hp: Math.max(0, e.hp - r.dmg) } : e));
-      pushHurt(target.id);
       if (willDie) emitVfx({ type: "defeat", x: target.x, y: target.y });
       pushLog(`Atacas a ${target.name}: ${r.dmg}${r.crit ? " (¡crítico!)" : ""}.`);
       setTimeout(() => endPlayerTurn(pp), IMPACT_SETTLE);
@@ -422,7 +498,6 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
     const hits = skill.hits || 1;
     const hitList = skill.aoe ? targets : [targets.sort((a, b) => chebyshev(a, pp) - chebyshev(b, pp))[0]];
     const anim = resolveAbilityAnimation(skill, { class: (pl || playerRef.current)?.class });
-    const vfx = anim.dungeonType;
     if (skill.aoe) emitVfx({ type: "area", tiles: hitList.map((h) => ({ x: h.x, y: h.y })), element: anim.element });
     // Calcular resultados sin aplicar daño todavía.
     const results = hitList.map((t) => {
@@ -436,32 +511,40 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
       }
       return { id: t.id, x: t.x, y: t.y, total, crit, missed };
     });
-    // Emitir animaciones de golpe para cada objetivo.
-    let anyCrit = false;
-    results.forEach((r) => {
-      if (r.missed) emitVfx({ type: vfx, from: { x: pp.x, y: pp.y }, x: r.x, y: r.y, miss: true, element: anim.element, projectileType: anim.projectileType });
-      else { emitVfx({ type: vfx, from: { x: pp.x, y: pp.y }, x: r.x, y: r.y, text: String(r.total), crit: r.crit, element: anim.element, projectileType: anim.projectileType, impactType: anim.impactType }); if (r.crit) anyCrit = true; }
-    });
-    if (anyCrit || skill.aoe) triggerShake(anim.cameraEffect?.shake || 0.4);
-    setDebug({ phase: "player", action: { skill: skill.name, type: vfx, element: anim.element, targets: results.length, aoe: !!skill.aoe } });
-    const dur = vfx === "projectile" ? STRIKE_PROJ : vfx === "magic" ? STRIKE_MAGIC : STRIKE_MELEE;
-    setTimeout(() => {
+    // Una única secuencia compartida anima al atacante. Los objetivos AOE
+    // reciben sus impactos en el mismo instante sin duplicar clips.
+    const primaryResult = results.find((entry) => !entry.missed) || results[0];
+    const primaryTarget = hitList.find((entry) => entry.id === primaryResult.id) || primary;
+    setDebug({ phase: "player", action: { skill: skill.name, type: anim.dungeonType, element: anim.element, targets: results.length, aoe: !!skill.aoe } });
+    playStrike({
+      attacker: { x: pp.x, y: pp.y }, target: { x: primaryTarget.x, y: primaryTarget.y },
+      attackerId: "player", targetId: primaryResult.id,
+      skill, className: (pl || playerRef.current)?.class, kind: skill.type || "classAbility",
+      miss: primaryResult.missed, isCrit: primaryResult.crit, damage: primaryResult.total,
+      element: anim.element, impactType: anim.impactType, projectileType: anim.projectileType,
+      statusId: skill.status?.type || null,
+      onVisualHit: () => pushHurt(primaryResult.id),
+    }, () => {
       const list = enemiesRef.current.map((e) => ({ ...e }));
       results.forEach((r) => {
-        if (r.missed) { emitVfx({ type: "miss", x: r.x, y: r.y, element: anim.element }); pushLog(`${skill.name} falla a un enemigo.`); return; }
+        if (r.missed) {
+          if (r.id !== primaryResult.id) emitVfx({ type: "miss", x: r.x, y: r.y, element: anim.element });
+          pushLog(`${skill.name} falla a un enemigo.`);
+          return;
+        }
         const tgt = list.find((e) => e.id === r.id);
         if (!tgt) return;
         tgt.hp = Math.max(0, tgt.hp - r.total);
         pushHurt(tgt.id);
-        emitVfx({ type: "impact", x: r.x, y: r.y, crit: r.crit, element: anim.element, impactType: anim.impactType });
+        if (r.id !== primaryResult.id) emitVfx({ type: "impact", x: r.x, y: r.y, text: String(r.total), crit: r.crit, element: anim.element, impactType: anim.impactType });
         if (skill.status) emitVfx({ type: "status", x: r.x, y: r.y, element: anim.element });
         if (tgt.hp <= 0) emitVfx({ type: "defeat", x: r.x, y: r.y });
         pushLog(`${skill.name} → ${tgt.name}: ${r.total}${r.crit ? " (¡crítico!)" : ""}.${skill.status ? ` + ${skill.status.type}` : ""}`);
       });
       setEnemies(list);
       setTimeout(() => endPlayerTurn(pp), IMPACT_SETTLE);
-    }, dur);
-  }, [tactical, busy, turn, cooldowns, dungeon, emitVfx, pushLog, pushHurt, triggerShake, endPlayerTurn]);
+    });
+  }, [tactical, busy, turn, cooldowns, dungeon, emitVfx, pushLog, pushHurt, playStrike, endPlayerTurn]);
 
   const useItem = useCallback((pp) => {
     if (!tactical || busy || turn !== "player") return;
@@ -487,12 +570,12 @@ export default function useDungeonCombat({ baseDungeon, dungeon, region, regionI
 
   // Reinicia el estado táctico (p.ej. al iniciar el combate clásico del mini jefe).
   const clearTactical = useCallback(() => {
-    setTactical(false); setTurn(null); setBusy(false); setDebug(null);
+    setTactical(false); setTurn(null); setBusy(false); setDebug(null); setActorAnimations({}); setActiveTargetId(null);
   }, []);
 
   return {
     tactical, turn, enemies, allies, keys, defeated, cooldowns, log, busy, effects, facing: facingState,
-    hurtPulses, shake, debug,
+    hurtPulses, shake, debug, actorAnimations, activeTargetId,
     maybeStartTactical, afterMove, useSkill, useItem, wait, spendKey, patroll, basicAttack, rotate, clearTactical,
   };
 

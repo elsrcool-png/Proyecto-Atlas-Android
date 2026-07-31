@@ -704,3 +704,32 @@
     max-width: 560px;
   }
 }
+
+/* Atlas v2.26.0 — Cámara cercana y combate compartido en Dungeon */
+@keyframes atlas-dungeon-actor-sequence {
+  0%, 10% { transform: translate3d(0, 0, 0) scale(1); }
+  36% { transform: translate3d(calc(var(--dg-attack-x) * .72), calc(var(--dg-attack-y) * .72), 0) scale(1.035); }
+  52% { transform: translate3d(var(--dg-attack-x), var(--dg-attack-y), 0) scale(1.06); }
+  68% { transform: translate3d(calc(var(--dg-attack-x) * .64), calc(var(--dg-attack-y) * .64), 0) scale(1.02); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+.atlas-dungeon-actor-active {
+  animation: atlas-dungeon-actor-sequence var(--dg-attack-duration, 620ms) cubic-bezier(.2,.72,.25,1) both;
+  will-change: transform;
+}
+.atlas-dungeon-camera-layer {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+.atlas-dungeon-wall-segment {
+  transform: translateZ(0);
+  will-change: opacity;
+}
+.atlas-dungeon-boss-actor {
+  filter: drop-shadow(0 0 8px rgba(244,63,94,.55));
+}
+@media (prefers-reduced-motion: reduce) {
+  .atlas-dungeon-actor-active { animation-duration: 1ms !important; }
+  .atlas-dungeon-camera-layer { transition-duration: 1ms !important; }
+  .atlas-dungeon-wall-segment { transition-duration: 1ms !important; }
+}

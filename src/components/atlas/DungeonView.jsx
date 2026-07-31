@@ -5,32 +5,31 @@ import {
   getUnlockedDungeonSkills, DIR8, DIR8_KEYS, facingFromVector,
   lineOfSight, isWalkableDiag,
 } from "@/lib/atlasDungeonSkills";
-import { drawPlayerSprite } from "@/lib/atlasPixel";
-import { drawPlayerFrameWithModularFallback } from "@/lib/atlasHeroCanvasBridge";
 import useDungeonCombat from "@/hooks/useDungeonCombat";
-import EntitySprite from "./EntitySprite";
+import DungeonCombatActor from "./DungeonCombatActor";
+import DungeonWallLayer from "./DungeonWallLayer";
+import DungeonOffscreenIndicators from "./DungeonOffscreenIndicators";
 import DungeonVfx from "./DungeonVfx";
-import CombatView from "./ui-v3/CombatViewAdapterV3";
 import AtlasPressButton from "./AtlasPressButton";
 import DungeonHudV3 from "./ui-v3/DungeonHudV3";
 import { getSkillStatusHints } from "@/lib/atlasSkillStatusHints";
+import { calculateDungeonCameraTransform, resolveDungeonCameraProfile } from "@/lib/atlasDungeonCamera";
+import { computeDungeonOcclusion } from "@/lib/atlasDungeonOcclusion";
 
 const T = DUNGEON_TILE;
 const FACING_LABEL = { up: "↑", down: "↓", left: "←", right: "→", up_left: "↖", up_right: "↗", down_left: "↙", down_right: "↘" };
 
-export default function DungeonView({ dungeon, player, region, regionIndex, companion, onExit, onDescend, onOpenChest, onStoryPoint, onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear, enemy, lastResult, onAttack, onSkill, onItem, onEscape, onEnemyDead, worldSkills, worldSkillCosts, playerStatuses, combatBusy, onStartBossCombat, onActivateFinalSanctuary, bossDefeated, settings, onUpdateSettings, onRequestOrientation }) {
+export default function DungeonView({ dungeon, player, region, regionIndex, companion, onExit, onDescend, onOpenChest, onStoryPoint, onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear, onActivateFinalSanctuary, bossDefeated, settings, onUpdateSettings, onRequestOrientation }) {
   const [pos, setPos] = useState(dungeon?.spawn || { x: 1, y: 1 });
-  const [facing, setFacing] = useState("down");
+  const [facing, setFacing] = useState(() => resolveDungeonCameraProfile(dungeon, { w: 520, h: 360 }).entryFacing);
   const [opened, setOpened] = useState(new Set());
   const [msg, setMsg] = useState(null);
   const [vp, setVp] = useState({ w: 520, h: 360 });
   const [liveTiles, setLiveTiles] = useState(() => (dungeon ? [...dungeon.tiles] : []));
   const [revealed, setRevealed] = useState(() => new Set());
   const [showMore, setShowMore] = useState(false);
-  const [combatFlash, setCombatFlash] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const vpRef = useRef(null);
-  const canvasRef = useRef(null);
   const msgTimer = useRef(null);
   const posRef = useRef(pos);
   posRef.current = pos;
@@ -38,7 +37,6 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   facingRef.current = facing;
   const entitiesRef = useRef(getEntities(dungeon));
   const stepLock = useRef(false);
-  const moveCooldown = useRef(0);
   const joyVecRef = useRef({ x: 0, y: 0 });
 
   const liveDungeon = useMemo(() => (dungeon ? { ...dungeon, tiles: liveTiles } : dungeon), [dungeon, liveTiles]);
@@ -51,7 +49,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
 
   const combat = useDungeonCombat({
     baseDungeon: dungeon, dungeon: liveDungeon, region, regionIndex,
-    playerLevel: player?.level || 1, companion, player,
+    playerLevel: player?.level || 1, companion, player, bossDefeated,
     callbacks: {
       onPlayerDamage, onSpendEnergy, onEnemyKilled, onUseConsumable, onCompanionUpdate, onWeaponWear,
       getPlayerDefense: () => player?.physicalDefense ?? player?.defense ?? 0,
@@ -63,7 +61,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
 
   useEffect(() => {
     setPos(dungeon?.spawn || { x: 1, y: 1 });
-    setOpened(new Set()); setFacing("down"); setMsg(null);
+    setOpened(new Set()); setFacing(resolveDungeonCameraProfile(dungeon, { w: 520, h: 360 }).entryFacing); setMsg(null);
     setLiveTiles(dungeon ? [...dungeon.tiles] : []);
     setRevealed(new Set()); setShowMore(false);
     entitiesRef.current = getEntities(dungeon);
@@ -94,15 +92,6 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     });
   }, [pos, dungeon?.id, liveDungeon]);
 
-  // Destello visual al entrar en combate táctico.
-  useEffect(() => {
-    if (combat.tactical) {
-      setCombatFlash(true);
-      const t = setTimeout(() => setCombatFlash(false), 650);
-      return () => clearTimeout(t);
-    }
-  }, [combat.tactical]);
-
   // Sacudida de cámara en impactos/críticos (Web Animations API, sin remontar).
   useEffect(() => {
     if (!combat.shake) return;
@@ -126,10 +115,6 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   }, []);
 
   useEffect(() => {
-    if (canvasRef.current && player) drawPlayerFrameWithModularFallback({ surface: "dungeon", legacyDraw: () => drawPlayerSprite(canvasRef.current, player.class, facingToCardinal(facing), 0, 3, player.race) });
-  }, [facing, player, pos]);
-
-  useEffect(() => {
     if (combat.tactical) return;
     const id = setInterval(() => combat.patroll(posRef.current), 1600);
     return () => clearInterval(id);
@@ -149,12 +134,6 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     const np = { x: nx, y: ny };
     setPos(np);
     combat.afterMove(np);
-    // Mini jefe: al pisar su casilla, inicia el combate clásico.
-    const mb = entitiesRef.current.boss;
-    if (mb && !bossDefeated && np.x === mb.x && np.y === mb.y) {
-      combat.clearTactical?.();
-      onStartBossCombat?.(mb);
-    }
     // Trampa: pinchazo leve al pisarla (se consume).
     const tile = liveTiles[np.y] && liveTiles[np.y][np.x];
     if (tile === "T") {
@@ -162,7 +141,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
       flash("¡Trampa! Recibes un pinchazo.");
       onPlayerDamage?.(3);
     }
-  }, [liveDungeon, combat, flash, onPlayerDamage, liveTiles, bossDefeated, onStartBossCombat, onActivateFinalSanctuary]);
+  }, [liveDungeon, combat, flash, onPlayerDamage, liveTiles, bossDefeated, onActivateFinalSanctuary]);
 
   const rotateTo = useCallback((dirKey) => {
     if (!dirKey) return;
@@ -206,11 +185,6 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   const onInteract = useCallback(() => {
     const ent = entitiesRef.current;
     const cur = posRef.current;
-    // Mini jefe: combate clásico al interactuar (en casilla o adyacente).
-    if (ent.boss && !bossDefeated) {
-      const adj = Math.max(Math.abs(cur.x - ent.boss.x), Math.abs(cur.y - ent.boss.y)) <= 1;
-      if (adj) { combat.clearTactical?.(); onStartBossCombat?.(ent.boss); return; }
-    }
     if (ent.sanctuary) {
       const adj = Math.max(Math.abs(cur.x - ent.sanctuary.x), Math.abs(cur.y - ent.sanctuary.y)) <= 1;
       if (adj) {
@@ -267,7 +241,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
       }
     }
     flash("No hay nada que inspeccionar aquí.");
-  }, [liveTiles, opened, onOpenChest, onStoryPoint, onExit, combat, flash, bossDefeated, onStartBossCombat, onActivateFinalSanctuary]);
+  }, [liveTiles, opened, onOpenChest, onStoryPoint, onExit, combat, flash, bossDefeated, onActivateFinalSanctuary]);
 
   // Acción A: en combate → ataque básico a la casilla mirada; fuera → interactuar.
   const onA = useCallback(() => {
@@ -295,14 +269,15 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
     return () => window.removeEventListener("keydown", onKey);
   }, [moveStep, onA]);
 
+  const cameraProfile = useMemo(() => resolveDungeonCameraProfile(dungeon, vp), [dungeon?.id, vp.w, vp.h]);
+  const camera = useMemo(() => calculateDungeonCameraTransform({ dungeon, pos, viewport: vp, tileSize: T, profile: cameraProfile }), [dungeon, pos.x, pos.y, vp.w, vp.h, cameraProfile]);
+  const activeTarget = useMemo(() => combat.enemies.find((entry) => entry.id === combat.activeTargetId && entry.hp > 0) || combat.enemies.find((entry) => entry.boss && entry.hp > 0 && entry.alerted) || null, [combat.enemies, combat.activeTargetId]);
+  const occludedWalls = useMemo(() => computeDungeonOcclusion(liveDungeon, [pos, activeTarget], { cameraSide: cameraProfile.cameraSide, rayLength: 6 }), [liveDungeon, pos.x, pos.y, activeTarget?.id, activeTarget?.x, activeTarget?.y, cameraProfile.cameraSide]);
+
   if (!dungeon || !player) return null;
 
   const ent = entitiesRef.current;
-  // Vista ampliada: aleja la cámara en móvil para mostrar más terreno.
-  const zoom = vp.w < 640 ? 0.82 : vp.w < 1000 ? 0.92 : 1;
-  const camX = vp.w / 2 - zoom * (pos.x * T + T / 2);
-  const camY = vp.h / 2 - zoom * (pos.y * T + T / 2);
-  const gridW = dungeon.cols * T, gridH = dungeon.rows * T;
+  const { x: camX, y: camY, zoom, gridW, gridH } = camera;
 
   const tileBg = (ch) => {
     if (ch === "#" || ch === " ") return { background: "linear-gradient(180deg,#b9743a,#8a5226)", boxShadow: "inset 0 4px 0 #6fb04a, inset 0 -3px 0 rgba(0,0,0,0.35)" };
@@ -316,7 +291,7 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
   return (
     <div className="atlas-ui-v3 min-h-screen relative flex flex-col" data-region={region?.id} style={{ background: "#1a1206" }}>
       <div ref={vpRef} className="relative w-full overflow-hidden" style={{ height: "100dvh" }}>
-        <div className="absolute top-0 left-0" style={{ width: gridW, height: gridH, transform: `translate(${camX}px, ${camY}px) scale(${zoom})`, transformOrigin: "0 0" }}>
+        <div className="absolute top-0 left-0 atlas-dungeon-camera-layer" data-camera-mode={cameraProfile.mode} style={{ width: gridW, height: gridH, transform: `translate3d(${camX}px, ${camY}px, 0) scale(${zoom})`, transformOrigin: "0 0", transition: `transform ${cameraProfile.followMs}ms cubic-bezier(.2,.7,.25,1)`, willChange: "transform" }}>
           {liveTiles.map((row, y) => Array.from(row).map((ch, x) => {
             const vis = revealed.has(`${x},${y}`);
             return (
@@ -356,63 +331,93 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             );
           })}
 
-          {ent.boss && !bossDefeated && revealed.has(`${ent.boss.x},${ent.boss.y}`) && (
-            <div className="absolute flex items-center justify-center animate-pulse" style={{ left: ent.boss.x * T, top: ent.boss.y * T, width: T, height: T, zIndex: 5 }}>
-              <div className="relative flex items-center justify-center">
-                <EntitySprite type="boss" variant={ent.boss.monsterId} size={T - 2} className="drop-shadow-[0_0_8px_rgba(244,63,94,0.85)]" />
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-rose-200 font-bold bg-slate-950/85 rounded px-1 whitespace-nowrap" style={{ pointerEvents: "none" }}>MINI JEFE</span>
-              </div>
-            </div>
-          )}
-
           {combat.allies.map((a) => {
             const down = a.incapacitated || a.hp <= 0;
             return (
-              <div key={a.id} className={`absolute flex flex-col items-center ${combat.hurtPulses?.has(a.id) ? "atlas-dg-hurt" : ""}`} style={{ left: a.x * T, top: a.y * T, width: T, height: T, transition: "left 0.2s ease-out, top 0.2s ease-out", opacity: down ? 0.45 : 1 }}>
-                <div className="flex items-center justify-center atlas-sprite-idle" style={{ width: T, height: T, filter: down ? "grayscale(1)" : "none" }}>
-                  <div className="flex items-center justify-center rounded-full font-bold text-[10px] text-teal-50" style={{ width: T - 12, height: T - 12, background: "linear-gradient(180deg,#0d9488,#0f766e)", boxShadow: "0 0 8px 2px rgba(13,148,136,0.5)", border: "2px solid #5eead4" }}>{a.name ? a.name[0] : "E"}</div>
-                </div>
+              <DungeonCombatActor
+                key={a.id}
+                id={a.id}
+                actor={a}
+                tileSize={T}
+                type="player"
+                player={a}
+                direction={a.facing || "down"}
+                hurt={combat.hurtPulses?.has(a.id)}
+                down={down}
+                animationState={combat.actorAnimations?.[a.id]}
+                className={down ? "grayscale" : ""}
+                size={T + 2}
+              >
                 {combat.tactical && (
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-9 h-1 rounded-full bg-slate-900/80 overflow-hidden z-20">
                     <div className="h-full bg-teal-300" style={{ width: `${Math.max(0, (a.hp / a.maxHp) * 100)}%` }} />
                   </div>
                 )}
-                {down && <span className="absolute -top-1 right-0 text-[8px] text-rose-300 bg-slate-950/80 rounded px-1">✖</span>}
-              </div>
+                {down && <span className="absolute -top-1 right-0 text-[8px] text-rose-300 bg-slate-950/80 rounded px-1 z-20">✖</span>}
+              </DungeonCombatActor>
             );
           })}
 
           {combat.enemies.filter((e) => e.hp > 0 && revealed.has(`${e.x},${e.y}`)).map((e) => (
-            <div key={e.id} className={`absolute flex flex-col items-center ${combat.hurtPulses?.has(e.id) ? "atlas-dg-hurt" : ""}`} style={{ left: e.x * T, top: e.y * T, width: T, height: T, transition: "left 0.2s ease-out, top 0.2s ease-out" }}>
+            <DungeonCombatActor
+              key={e.id}
+              id={e.id}
+              actor={e}
+              tileSize={T}
+              type={e.boss ? "boss" : "monster"}
+              variant={e.monsterId}
+              direction={e.facing || "down"}
+              hurt={combat.hurtPulses?.has(e.id)}
+              animationState={combat.actorAnimations?.[e.id]}
+              className={e.boss ? "atlas-dungeon-boss-actor" : ""}
+              size={e.boss ? T + 10 : T}
+            >
               {e.alerted && combat.tactical && <div className="absolute -inset-1 rounded-md border-2 border-red-500 animate-pulse z-0" />}
-              <div className="flex items-center justify-center atlas-sprite-idle relative z-10" style={{ width: T, height: T }}>
-                <EntitySprite type={e.boss ? "boss" : "monster"} variant={e.monsterId} size={e.boss ? T - 2 : T - 8} className="drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]" />
-              </div>
+              {e.boss && <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-rose-100 font-bold bg-rose-950/90 border border-rose-500/60 rounded px-1 whitespace-nowrap z-20">MINI JEFE</span>}
               {combat.tactical && (
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-9 h-1 rounded-full bg-slate-900/80 overflow-hidden z-20">
                   <div className="h-full bg-rose-400" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
                 </div>
               )}
-            </div>
+            </DungeonCombatActor>
           ))}
 
-          <div className={`absolute flex flex-col items-center justify-center ${combat.hurtPulses?.has("player") ? "atlas-dg-hurt" : ""}`} style={{ left: pos.x * T, top: pos.y * T, width: T, height: T, transition: "left 0.16s ease-out, top 0.16s ease-out" }}>
+          <DungeonCombatActor
+            id="player"
+            actor={pos}
+            tileSize={T}
+            type="player"
+            player={player}
+            direction={facing}
+            hurt={combat.hurtPulses?.has("player")}
+            animationState={combat.actorAnimations?.player}
+            size={T + 8}
+          >
             {combat.tactical && <div className="absolute -inset-1 rounded-md border-2 border-emerald-400 z-0" />}
-            <div className="atlas-shadow" />
-            <canvas ref={canvasRef} width={36} height={48} style={{ imageRendering: "pixelated" }} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10" />
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[11px] text-emerald-300 font-bold bg-slate-950/80 rounded px-1.5 py-0.5 z-20" style={{ pointerEvents: "none" }}>{FACING_LABEL[facing]}</div>
-          </div>
+          </DungeonCombatActor>
+
+          <DungeonWallLayer
+            dungeon={liveDungeon}
+            liveTiles={liveTiles}
+            revealed={revealed}
+            tileSize={T}
+            wallHeight={cameraProfile.wallHeight}
+            occludedKeys={occludedWalls}
+            regionId={region?.id}
+            minOpacity={cameraProfile.minOccludedOpacity}
+          />
 
           <DungeonVfx effects={combat.effects} />
         </div>
 
-        {enemy && (
-          <div className="absolute inset-0 z-50 flex flex-col bg-slate-950/85 backdrop-blur-sm p-2 sm:p-4">
-            <div className="w-full max-w-3xl mx-auto flex-1 min-h-0">
-              <CombatView player={player} enemy={enemy} region={region} lastResult={lastResult} onAttack={onAttack} onSkill={onSkill} onItem={onItem} onEscape={onEscape} onEnemyDead={onEnemyDead} busy={combatBusy} skills={worldSkills} skillCosts={worldSkillCosts} playerStatuses={playerStatuses} />
-            </div>
-          </div>
-        )}
+        <DungeonOffscreenIndicators
+          enemies={combat.enemies}
+          camera={camera}
+          viewport={vp}
+          tileSize={T}
+          tactical={combat.tactical}
+        />
 
         <DungeonHudV3
           dungeon={dungeon}
@@ -436,15 +441,15 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
             <span className="text-[11px] text-rose-100 font-medium">{combat.turn === "player" ? "Tu turno — mueve, gira o ataca" : "Turno de los enemigos..."}</span>
           </div>
         )}
-        {combatFlash && (
-          <div className="absolute inset-0 z-30 pointer-events-none atlas-dg-vfx-burst" style={{ border: "3px solid rgba(244,63,94,0.75)", boxShadow: "inset 0 0 80px rgba(244,63,94,0.35)" }} />
-        )}
+
         {showDebug && (
           <div className="absolute top-12 left-2 z-40 rounded-lg bg-slate-950/92 border border-emerald-500/50 p-2 text-[10px] text-emerald-200 font-mono max-w-[230px] leading-tight">
             <div className="text-emerald-400 font-bold mb-0.5">DEPURACIÓN</div>
             <div>turno: {String(combat.turn)} · busy: {String(combat.busy)}</div>
             <div>tactical: {String(combat.tactical)}</div>
             <div>effects: {combat.effects?.length || 0} · enemigos: {combat.enemies?.length || 0}</div>
+            <div>cámara: {cameraProfile.mode} · zoom: {zoom.toFixed(2)}</div>
+            <div>oclusores: {occludedWalls.size} · objetivo: {combat.activeTargetId || "—"}</div>
             <div>shake: {String(combat.shake)} · hurt: {[...(combat.hurtPulses || [])].join(",") || "—"}</div>
             {combat.debug && <div className="mt-1 text-amber-300">acción: {JSON.stringify(combat.debug.action || combat.debug)}</div>}
           </div>
@@ -531,12 +536,4 @@ export default function DungeonView({ dungeon, player, region, regionIndex, comp
       </div>
     </div>
   );
-}
-
-function facingToCardinal(f) {
-  if (f.startsWith("up")) return "up";
-  if (f.startsWith("down")) return "down";
-  if (f.startsWith("left")) return "left";
-  if (f.startsWith("right")) return "right";
-  return "down";
 }

@@ -33,7 +33,7 @@ function DmgText({ x, y, text, crit, color }) {
 export default function DungeonVfx({ effects }) {
   if (!effects || !effects.length) return null;
   return (
-    <div className="absolute inset-0 pointer-events-none z-30">
+    <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 900 }}>
       {effects.map((e) => {
         const s = STYLE[e.type] || STYLE.slash;
         const cx = e.x * T + T / 2;

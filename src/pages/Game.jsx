@@ -358,7 +358,28 @@ export default function Game() {
           </div>
         </div>
       ) : s.inDungeon ? (
-        <DungeonView dungeon={s.currentDungeon} player={s.player} region={s.region} regionIndex={s.regionIndex} companion={s.player?.companion || null} onExit={s.exitDungeon} onDescend={s.descendDungeon} onOpenChest={s.openChest} onStoryPoint={s.onStoryPoint} onPlayerDamage={s.onDungeonPlayerDamage} onSpendEnergy={s.onDungeonSpendEnergy} onEnemyKilled={s.onDungeonEnemyKilled} onUseConsumable={s.useConsumable} onCompanionUpdate={s.onCompanionUpdate} onWeaponWear={s.damageWeapon} enemy={s.enemy} lastResult={s.lastResult} onAttack={s.handleAttack} onSkill={s.onSkill} onItem={s.onItem} onEscape={s.handleEscape} onEnemyDead={s.onEnemyDead} worldSkills={s.skills} worldSkillCosts={s.skillCosts} playerStatuses={s.playerStatuses} combatBusy={s.combatBusy || audio.combatIntroActive} onStartBossCombat={s.startDungeonBossCombat} onActivateFinalSanctuary={() => { audio.playPortal(); s.activateDungeonFinalSanctuary(); }} bossDefeated={s.dungeonBossDefeated} settings={settings} onUpdateSettings={updateSettings} onRequestOrientation={requestOrientation} />
+        <DungeonView
+          dungeon={s.currentDungeon}
+          player={s.player}
+          region={s.region}
+          regionIndex={s.regionIndex}
+          companion={s.player?.companion || null}
+          onExit={s.exitDungeon}
+          onDescend={s.descendDungeon}
+          onOpenChest={s.openChest}
+          onStoryPoint={s.onStoryPoint}
+          onPlayerDamage={s.onDungeonPlayerDamage}
+          onSpendEnergy={s.onDungeonSpendEnergy}
+          onEnemyKilled={s.onDungeonEnemyKilled}
+          onUseConsumable={s.useConsumable}
+          onCompanionUpdate={s.onCompanionUpdate}
+          onWeaponWear={s.damageWeapon}
+          onActivateFinalSanctuary={() => { audio.playPortal(); s.activateDungeonFinalSanctuary(); }}
+          bossDefeated={s.dungeonBossDefeated}
+          settings={settings}
+          onUpdateSettings={updateSettings}
+          onRequestOrientation={requestOrientation}
+        />
       ) : (
         <ExploreMode game={exploreGame} />
       )}

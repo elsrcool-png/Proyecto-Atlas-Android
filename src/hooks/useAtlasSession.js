@@ -115,7 +115,6 @@ export default function useAtlasSession() {
   const [dungeonSession, setDungeonSession] = useState(null);
   const dungeonSessionRef = useRef(null);
   useEffect(() => { dungeonSessionRef.current = dungeonSession; }, [dungeonSession]);
-  const dungeonBossContextRef = useRef(null);
   const [priorityMissionId, setPriorityMissionId] = useState(null);
   const [visitedSectors, setVisitedSectors] = useState(new Set());
   const [unlockedSectors, setUnlockedSectors] = useState(() => new Set(getInitialUnlockedSectorKeys("verde")));
@@ -612,16 +611,6 @@ export default function useAtlasSession() {
     [currentDungeonId, dungeonFloor, dungeonSeed]
   );
 
-  // Mini jefe de dungeon: inicia el combate clásico (no táctico).
-  const startDungeonBossCombat = (monster) => {
-    if (enemy || diceAnim) return;
-    const m = MONSTERS.find(x => x.id === monster?.monsterId) || MONSTERS[0];
-    const prepared = prepareEnemy(m, (region.difficultyMul || 1) * 1.3, player?.level || 1, REGION_META[regionIndex].start, region.id, currentSectorId, playerRef.current || player);
-    const data = { ...prepared, id: m.id, uid: `${currentDungeonId}_miniboss`, dungeonBoss: true, missionTag: m.id, name: prepared.name || m.name, boss: false };
-    dungeonBossContextRef.current = { monsterId: m.id, dungeonId: currentDungeonId };
-    startCombat(data);
-  };
-
   const enterDungeon = (id) => {
     if (enemy || diceAnim || !DUNGEONS[id]) return;
     const d = DUNGEONS[id];
@@ -636,7 +625,6 @@ export default function useAtlasSession() {
     setDungeonSeed(Math.floor(Math.random() * 1e9));
     setInDungeon(true);
     setEnemy(null);
-    dungeonBossContextRef.current = null;
     setDungeonBossDefeated(false);
     // Guarda el punto de regreso exterior: frente al NPC de entrada (entrada de la dungeon).
     const extX = d.entrancePos?.x ?? 0;
@@ -735,8 +723,7 @@ export default function useAtlasSession() {
     if (!arch) return;
     const total = arch.floorCount || 1;
     if (dungeonFloor < total) {
-      dungeonBossContextRef.current = null;
-      setDungeonBossDefeated(false);
+        setDungeonBossDefeated(false);
       setDungeonFloor((f) => f + 1);
       pushLog(`Desciendes al piso ${dungeonFloor + 1} de ${arch.name}.`);
     } else {
@@ -775,9 +762,10 @@ export default function useAtlasSession() {
     if (_dtr.delta) applyThreatDelta(_dtr.delta, _dtr.cause);
     progressTracker("kill", null, 1, null, e.monsterId);
     if (Math.random() < 0.3) { const mid = rollRegionMaterial(regionIndex); setPlayer(p => ({ ...p, materials: { ...(p.materials || {}), [mid]: (p.materials?.[mid] || 0) + 1 } })); }
-    pushLog(`Derrotas a ${e.name || "enemigo"} en la dungeon.`);
+    if (!isBoss) { pushLog(`Derrotas a ${e.name || "enemigo"} en la dungeon.`); return; }
+    setDungeonBossDefeated(true); completeDungeon(true); rollGlobalLoot({ ...e, boss: true, type: "miniboss" });
+    toast("Mini jefe de dungeon derrotado", "boss"); pushLog("✦ El guardián cae dentro de la propia dungeon. La salida queda liberada.");
   };
-
   const hireAdventurer = (adv) => {
     const p = playerRef.current; if (!p || !adv) return;
     const cost = adv.cost || 0;
@@ -1729,7 +1717,6 @@ export default function useAtlasSession() {
       };
     });
     applyThreatEvent("respawn", 3);
-    dungeonBossContextRef.current = null;
     setEnemy(null); setLastResult(null); setCombatAnimating(false);
     clearCombatTimers();
     combatRef.current.playerStatuses = {};
@@ -1907,17 +1894,6 @@ export default function useAtlasSession() {
     setPlayerStatuses({});
     if (!info) return;
     if (deadEnemy?.worldEnemyId) markEnemyDefeated(deadEnemy.worldEnemyId);
-    // Mini jefe de dungeon: combate clásico — recompensa y salida libre.
-    if (dungeonBossContextRef.current) {
-      dungeonBossContextRef.current = null;
-      gainXp(KILL_XP[regionIndex] * 2);
-      rollGlobalLoot({ boss: true, type: "miniboss" });
-      setDungeonBossDefeated(true);
-      completeDungeon(true);
-      toast("¡Mini jefe de la dungeon derrotado!", "boss");
-      pushLog("✦ Derrotas al mini jefe. El camino a la salida queda libre.");
-      return;
-    }
     if (info.wasBoss) {
       const next = new Set(defeatedBosses); next.add(info.enemyId); setDefeatedBosses(next);
       const drop = BOSS_DROPS[regionIndex];
@@ -2004,7 +1980,7 @@ export default function useAtlasSession() {
     showDice(singleDie(20, roll), "Escape", () => {
       const res = resolveEscape({ ...player, defense: playerDefVsType(player, "fisico") }, { ...enemy, defense: enemy.physicalDefense ?? enemy.defense }, roll);
       pushLog(res.log);
-      if (res.success) { dungeonBossContextRef.current = null; clearCombatTimers(); setEnemy(null); setLastResult(null); setCombatAnimating(false); combatRef.current.playerStatuses = {}; setPlayerStatuses({}); toast("Has escapado", "info"); }
+      if (res.success) { clearCombatTimers(); setEnemy(null); setLastResult(null); setCombatAnimating(false); combatRef.current.playerStatuses = {}; setPlayerStatuses({}); toast("Has escapado", "info"); }
       else { triggerEnemyTurn(enemy); }
     });
   };
@@ -2340,7 +2316,7 @@ export default function useAtlasSession() {
     progressionState, progressionDisplay,
     acceptGuildContract, claimGuildContract, equipMasterySkill, equipMasteryPassive, upgradeMasterySkill,
     acceptSpecialQuest, claimSpecialQuest,
-    inDungeon, currentDungeonId, currentDungeon, enterDungeon, exitDungeon, descendDungeon, dungeonFloor, dungeonBossDefeated, startDungeonBossCombat, activateDungeonFinalSanctuary,
+    inDungeon, currentDungeonId, currentDungeon, enterDungeon, exitDungeon, descendDungeon, dungeonFloor, dungeonBossDefeated, activateDungeonFinalSanctuary,
     onDungeonPlayerDamage, onDungeonSpendEnergy, onDungeonEnemyKilled,
     hireAdventurer, dismissCompanion, onCompanionUpdate,
     setNpcDialog, setShowLevelUp, setShowSheet, setShowBackpack, setShowShop, onDiceComplete, pushLog, rollDice,
