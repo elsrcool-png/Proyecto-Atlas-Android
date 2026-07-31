@@ -160,7 +160,7 @@ ok("UI integra Consumible y herrería regional completa", () => {
 ok("Guardado versionado migra mapas de mejora", () => {
   const save = read("src/lib/atlasSave.js");
   const session = read("src/hooks/useAtlasSession.js");
-  assert.match(save, /ATLAS_SAVE_VERSION\s*=\s*7|saveVersion:\s*6/);
+  assert.match(save, /ATLAS_SAVE_VERSION\s*=\s*(?:[7-9]|\d{2,})/);
   assert.match(save, /armorUpgrades/);
   assert.match(save, /helmetUpgrades/);
   assert.match(session, /armorUpgrades:\s*\{\}/);

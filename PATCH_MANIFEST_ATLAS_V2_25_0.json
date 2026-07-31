@@ -1,0 +1,59 @@
+{
+  "version": "2.25.0",
+  "base": "2.24.0",
+  "lot": "Lote 2 - progresion posterior a Region 3",
+  "saveSchema": 8,
+  "changes": [
+    "Gremio de Aventureros desbloqueado al completar Region 3",
+    "contratos persistentes y reputacion",
+    "Registro de Maestrias",
+    "aprendizaje, sustitucion y equipamiento de habilidades",
+    "evolucion de Maestrias por uso y contrato",
+    "misiones especiales activadas por Amenaza",
+    "notificacion automatica y recompensas ocultas",
+    "integracion con combate y pasivas",
+    "migracion de guardado v7 a v8",
+    "preparacion de ascenso de clase y evolucion racial",
+    "pruebas acumulativas v2.25.0"
+  ],
+  "validation": {
+    "syntaxFiles": 299,
+    "localImports": 684,
+    "focusedBlocks": 14,
+    "fullRegressionPassed": true,
+    "buildCertified": false,
+    "buildBlocker": "node_modules ausente; vite y eslint no disponibles"
+  },
+  "mapCompositionChanged": false,
+  "regions1To3GameplayChanged": false,
+  "futureRegionsActivated": false,
+  "modifiedFiles": [
+    "VERSION_ATLAS_VISUAL.txt",
+    "package-lock.json",
+    "package.json",
+    "scripts/validate-combat-stability-v2-19-1.mjs",
+    "scripts/validate-v2-23.mjs",
+    "scripts/validate-v2-24-0.mjs",
+    "src/components/atlas/ExploreMode.jsx",
+    "src/components/atlas/MissionJournal.jsx",
+    "src/components/atlas/PlayerHub.jsx",
+    "src/hooks/useAtlasSession.js",
+    "src/lib/atlasSave.js",
+    "src/lib/atlasSkillStatusHints.js",
+    "src/lib/atlasSkills.js",
+    "src/lib/createAtlasCombatActions.js",
+    "src/pages/Game.jsx"
+  ],
+  "addedFiles": [
+    "ACTUALIZACION_ATLAS_V2_25_0.md",
+    "AUDITORIA_LOTE_2_ATLAS_V2_25_0.md",
+    "VALIDACION_ATLAS_V2_25_0.txt",
+    "scripts/validate-v2-25-0.mjs",
+    "src/components/atlas/hub/HubGuild.jsx",
+    "src/components/atlas/hub/HubMasteries.jsx",
+    "src/hooks/useAtlasCombatThreatTracker.js",
+    "src/hooks/useAtlasPostRegion3Progression.js",
+    "src/lib/atlasPostRegion3Progression.js"
+  ],
+  "removedFiles": []
+}

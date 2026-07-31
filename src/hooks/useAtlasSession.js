@@ -2,8 +2,8 @@ import React, { useState, useRef, useMemo, useEffect } from "react";
 import { REGIONS, MONSTERS } from "@/lib/atlasData";
 import { recomputePlayer, ACCESSORIES, STARTER_ACCESSORIES, BOSS_DROPS, CLASS_OFF_TYPE } from "@/lib/atlasSkills";
 import { makeWeaponInstance, normalizeWeaponInventory, resolveWeaponDefId } from "@/lib/atlasWeaponInstances";
-import { ENERGY, getSkillSet } from "@/lib/atlasSkillDesign";
-import { getWeaponAbility, getLootWeaponAbility, CLASS_WEAPONS, getGreenRelicWeaponId } from "@/lib/atlasWeapons";
+import { ENERGY } from "@/lib/atlasSkillDesign";
+import { CLASS_WEAPONS, getGreenRelicWeaponId } from "@/lib/atlasWeapons";
 import { getPotion } from "@/lib/atlasShop";
 import { rollDie, canTravel, resolveTravel, resolveEscape, resolveEncounter } from "@/lib/atlasEngine";
 import { randInt } from "@/lib/atlasWorld";
@@ -22,7 +22,7 @@ import {
   getSafeSanctuarySpawn, resolveContinueSpawn, migrateSaveSanctuaries,
   canTravelToSanctuary,
 } from "@/lib/atlasSanctuaries";
-import { tierOf, THREAT_GAIN, THREAT_REDUCE, worldBehavior, rollEvent, THREAT_MAX, isThreatEnemy, rollLootThreat, COMBAT_WIN_THRESHOLD } from "@/lib/atlasThreat";
+import { tierOf, THREAT_GAIN, THREAT_REDUCE, worldBehavior, rollEvent, THREAT_MAX } from "@/lib/atlasThreat";
 import { rollThreatEvent, threatEconomyMod } from "@/lib/atlasThreatExpansion";
 import { getBossCanon } from "@/lib/atlasLore";
 import { saveAdventure, clearAdventure, getActiveSaveSlot, setActiveSaveSlot, ATLAS_SAVE_VERSION } from "@/lib/atlasSave";
@@ -49,6 +49,8 @@ import useAtlasCombatRuntime from "@/hooks/useAtlasCombatRuntime";
 import useAtlasCombatPassives from "@/hooks/useAtlasCombatPassives";
 import createAtlasCombatActions from "@/lib/createAtlasCombatActions";
 import createAtlasEquipmentActions from "@/lib/createAtlasEquipmentActions";
+import useAtlasPostRegion3Progression from "@/hooks/useAtlasPostRegion3Progression";
+import useAtlasCombatThreatTracker from "@/hooks/useAtlasCombatThreatTracker";
 
 const NPC_KEYS = ["campamento", "pueblo", "ciudad"];
 const SECTOR_OF_BLOCK = ["campamento", "pueblo", "ciudad"];
@@ -139,6 +141,7 @@ export default function useAtlasSession() {
   const lastShrineRef = useRef(null);
   const shrineSnapshotRef = useRef(null);
   const recentToastRef = useRef({ msg: "", at: 0 });
+  const progressionBridgeRef = useRef({ persist: null, toast: null, pushLog: null });
 
   const region = REGIONS[regionIndex];
   const block = BLOCK_DEFS[region.id][blockIndex];
@@ -150,10 +153,12 @@ export default function useAtlasSession() {
   const node = map.nodes[location] || map.nodes[map.spawnId] || Object.values(map.nodes)[0];
   const terrain = region.terrains[node.terrain] || {};
   const npcKey = NPC_KEYS.includes(node.terrain) ? node.terrain : null;
-  const skills = useMemo(() => player ? {
-    ...(getSkillSet(player) || {}),
-    weapon: getWeaponAbility(player) || getLootWeaponAbility(player?.weapon ? WEAPONS[resolveWeaponDefId(player, player.weapon)] : null),
-  } : null, [player?.race, player?.class, player?.level, player?.weapon, player?.classWeapon, player?.weaponUpgrades]);
+  const progression = useAtlasPostRegion3Progression({ player, playerRef, setPlayer, worldFlags, setWorldFlags, worldFlagsRef,
+    defeatedBosses, regionId: region.id, threat, bridgeRef: progressionBridgeRef });
+  const { progressionState, progressionStateRef, progressionDisplay, skills, recordProgressionEvent,
+    acceptGuildContract, claimGuildContract, equipMasterySkill, equipMasteryPassive, upgradeMasterySkill,
+    recordMasterySkillUse, acceptSpecialQuest, claimSpecialQuest, replaceProgressionState, createProgressionState,
+    normalizeProgressionState, syncProgressionPlayer } = progression;
   const missionDefs = useMemo(() => generateMissions(region), [region]);
   const missionDefMap = useMemo(() => { const m = {}; for (const s of ["campamento", "pueblo", "ciudad"]) for (const d of missionDefs[s]) m[d.id] = d; return m; }, [missionDefs]);
   const allMissionsDone = useMemo(() => Object.keys(missionDefMap).every(id => missions[id]?.status === "done"), [missions, missionDefMap]);
@@ -460,6 +465,9 @@ export default function useAtlasSession() {
     setTimeout(() => setToasts(current => current.filter(item => item.id !== id)), duration);
   };
 
+  progressionBridgeRef.current.toast = toast;
+  progressionBridgeRef.current.pushLog = pushLog;
+
   // ── Centralización del descanso ──
   // Única fuente de recuperación al descansar. Restaura HP y Energía al máximo,
   // limpia estados negativos temporales y NO repone consumibles ni repara equipo.
@@ -496,12 +504,15 @@ export default function useAtlasSession() {
       currentRegionId: targetRegionId, currentNodeId: targetNodeId,
       regionStates: extra.regionStates || regionStatesRef.current,
       dailyState: extra.dailyState || dailyStateRef.current,
+      progressionState: extra.progressionState || progressionStateRef.current,
       playTimeMs: playTimeRef.current, savedAt: now,
       missionsByRegion: missionsByRegionRef.current,
       ...extra,
       worldState: nextWorldState,
     });
   };
+
+  progressionBridgeRef.current.persist = persistSession;
 
   const recentThreatEventsRef = useRef(new Map());
   const THREAT_DEDUP_MS = 1000;
@@ -517,33 +528,7 @@ export default function useAtlasSession() {
     });
   };
 
-  // Contador de combates normales ganados: +1 cada 3. Se reinicia al descansar en santuario.
-  const combatWinCounterRef = useRef(0);
-  // Aplica un único cambio de Amenaza con causa visible en el HUD (mín 0, máx THREAT_MAX).
-  const applyThreatDelta = (delta, cause) => {
-    if (!delta || !cause) return;
-    setThreat(t => Math.max(0, Math.min(THREAT_MAX, t + delta)));
-    const sign = delta > 0 ? `+${delta}` : `${delta}`;
-    toast(`Amenaza ${sign}: ${cause}`, delta > 0 ? "trap" : "heal");
-    pushLog(`◆ Amenaza ${sign}: ${cause}.`);
-  };
-  // Una sola modificación de Amenaza por combate (evita duplicados).
-  const resolveCombatThreat = (enemy) => {
-    if (isThreatEnemy(enemy)) {
-      const cause = enemy?.boss ? "guardián derrotado"
-        : enemy?.corrupted ? "criatura corrupta"
-        : (enemy?.addsThreat && !enemy?.elite) ? "enemigo de evento"
-        : "enemigo élite";
-      return { delta: 1, cause };
-    }
-    combatWinCounterRef.current += 1;
-    if (combatWinCounterRef.current >= COMBAT_WIN_THRESHOLD) {
-      combatWinCounterRef.current = 0;
-      return { delta: 1, cause: "3 victorias acumuladas" };
-    }
-    const lt = rollLootThreat();
-    return { delta: lt.delta, cause: lt.cause };
-  };
+  const { applyThreatDelta, resolveCombatThreat, resetCombatWinCounter } = useAtlasCombatThreatTracker({ setThreat, toast, pushLog });
 
   const showDice = (diceResult, label, callback, isEnemy = false) => {
     diceCallbackRef.current = callback;
@@ -582,12 +567,14 @@ export default function useAtlasSession() {
     const en = ENERGY[character.class];
     const starterWeaponId = { Guerrero: "starter_espada_recluta", Mago: "starter_baston_aprendiz", "Pícaro": "starter_dagas_bronce" }[character.class];
     const starterArmorId = { Guerrero: "starter_armor_cuero", Mago: "starter_tunica_aprendiz", "Pícaro": "starter_ropaje_ligero" }[character.class];
-    const base = { ...character, level: 1, statPoints: 0, baseAttack: character.attack, baseDefense: character.physicalDefense ?? character.defense, baseMagicalDefense: character.magicalDefense ?? character.defense, baseMaxHp: character.hp, hp: character.hp, accessory: null, accessory2: null, accessoryInventory: [...STARTER_ACCESSORIES], helmet: null, helmetInventory: [], equipmentUnlocks: { helmet: false, accessory2: false }, weapon: null, armor: starterArmorId, armorInventory: [starterArmorId], weaponInventory: [], classWeapon: starterWeaponId, classWeaponInventory: [starterWeaponId], weaponUpgrades: {}, armorUpgrades: {}, helmetUpgrades: {}, materials: {}, baseMaxMp: maxMp, xp: 0, gold: 0, maxMp, mp: maxMp, energyType: en?.id, energyName: en?.name, potions: 3, consumables: {}, questItems: {}, relics: {}, equipmentCondition: 100, weaponDurability: 100, weaponDurabilityMax: 100 };
-    setPlayer(recomputePlayer(base));
+    const initialProgressionState = createProgressionState();
+    replaceProgressionState(initialProgressionState, { syncPlayer: false });
+    const base = { ...character, level: 1, statPoints: 0, baseAttack: character.attack, baseDefense: character.physicalDefense ?? character.defense, baseMagicalDefense: character.magicalDefense ?? character.defense, baseMaxHp: character.hp, hp: character.hp, accessory: null, accessory2: null, accessoryInventory: [...STARTER_ACCESSORIES], helmet: null, helmetInventory: [], equipmentUnlocks: { helmet: false, accessory2: false }, weapon: null, armor: starterArmorId, armorInventory: [starterArmorId], weaponInventory: [], classWeapon: starterWeaponId, classWeaponInventory: [starterWeaponId], weaponUpgrades: {}, armorUpgrades: {}, helmetUpgrades: {}, materials: {}, baseMaxMp: maxMp, xp: 0, gold: 0, maxMp, mp: maxMp, energyType: en?.id, energyName: en?.name, potions: 3, consumables: {}, questItems: {}, relics: {}, equipmentCondition: 100, weaponDurability: 100, weaponDurabilityMax: 100, masteryLoadout: { learnedSkillIds: [], equippedActive: {}, equippedPassive: {} } };
+    setPlayer(recomputePlayer(syncProgressionPlayer(base, initialProgressionState)));
     setRegionIndex(0);
     setBlockIndex(startCoords.col);
     setLocation(newMaps[0][0].spawnId);
-    setThreat(0); combatWinCounterRef.current = 0; setEnemy(null); setStatus("playing"); setLastResult(null); setBonusMove(false);
+    setThreat(0); resetCombatWinCounter(); setEnemy(null); setStatus("playing"); setLastResult(null); setBonusMove(false);
     setDefeatedBosses(new Set()); setPendingMoves(0); setDiceAnim(null);
     const initialMissions = initMissionsFromDefs(generateMissions(r0));
     const startFirstId = activateFirstMissionInFresh(r0.id, initialMissions);
@@ -733,6 +720,7 @@ export default function useAtlasSession() {
     const ns = { ...s, dungeonCompleted: !!completed };
     setDungeonSession(ns);
     dungeonSessionRef.current = ns;
+    if (completed && !s.dungeonCompleted) recordProgressionEvent({ type: "dungeon_complete", amount: 1 });
     if (completed && !worldFlagsRef.current[TUTORIAL_DONE_FLAG]) {
       const nf = { ...worldFlagsRef.current, [TUTORIAL_DONE_FLAG]: true };
       worldFlagsRef.current = nf; setWorldFlags(nf);
@@ -839,6 +827,11 @@ export default function useAtlasSession() {
     if (save.worldFlags?.["fria:boss_defeated"]) defeatedBossIds.add("aurel_portador");
     if (save.worldFlags?.["desierto:boss_defeated"]) defeatedBossIds.add("amon_solar");
     const defeatedBossList = [...defeatedBossIds];
+    const restoredProgressionState = normalizeProgressionState(save.progressionState, {
+      worldFlags: save.worldState?.globalFlags || save.worldFlags || {},
+      defeatedBossIds: defeatedBossList,
+    });
+    replaceProgressionState(restoredProgressionState, { syncPlayer: false });
     const bossUnlocks = equipmentUnlocksFromBosses(defeatedBossList);
     const equipmentUnlocks = {
       helmet: !!(save.player.equipmentUnlocks?.helmet || bossUnlocks.helmet),
@@ -862,7 +855,7 @@ export default function useAtlasSession() {
       armorUpgrades: save.player.armorUpgrades || {},
       helmetUpgrades: save.player.helmetUpgrades || {},
     };
-    const reconciledPlayer = reconcileRegionalBossRelics(migratedPlayer, defeatedBossList);
+    const reconciledPlayer = syncProgressionPlayer(reconcileRegionalBossRelics(migratedPlayer, defeatedBossList), restoredProgressionState);
     if (reconciledPlayer.accessory2 && reconciledPlayer.accessory2 === reconciledPlayer.accessory) reconciledPlayer.accessory2 = null;
     setPlayer(recomputePlayer(reconciledPlayer));
     setRegionIndex(resumeRegionIndex);
@@ -1382,7 +1375,7 @@ export default function useAtlasSession() {
     if (enemy || status !== "playing") return;
     restorePlayerAtRest("sanctuary");
     setThreat(0);
-    combatWinCounterRef.current = 0;
+    resetCombatWinCounter();
     pushLog("Descansas en el santuario: vida y energía al máximo, estados negativos limpiados. Amenaza eliminada.");
     toast("Amenaza eliminada por santuario", "heal");
     persistSession();
@@ -1900,6 +1893,7 @@ export default function useAtlasSession() {
     scheduleEnemyTurn,
     enemyTurn,
     onKillEnergy,
+    onMasterySkillUsed: recordMasterySkillUse,
   });
 
   const onEnemyDead = () => {
@@ -1977,6 +1971,7 @@ export default function useAtlasSession() {
       pushLog(`Derrotas a ${deadEnemy?.name || "enemigo"}.`);
       toast(`Derrotas a ${deadEnemy?.name || "enemigo"}`, "kill");
     }
+    recordProgressionEvent({ type: "combat_win", amount: 1, boss: !!deadEnemy?.boss, regionId: region.id });
     // Amenaza: una sola modificación por combate (especial / 3 victorias / dado de botín).
     const _tr = resolveCombatThreat(deadEnemy);
     if (_tr.delta) applyThreatDelta(_tr.delta, _tr.cause);
@@ -2082,7 +2077,9 @@ export default function useAtlasSession() {
     }
 
     const done = Object.keys(missionDefMap).every(id2 => chainedMissions[id2]?.status === "done");
-    if (done && regionIndex >= REGIONS.length - 1) setStatus("victory");
+    if (done && regionIndex >= REGIONS.length - 1) {
+      pushLog("✦ El prólogo de las tres regiones queda completo. El mundo permanece abierto y el Gremio inicia la siguiente etapa.");
+    }
     toast(`Recompensa obtenida${r.gold ? `: ${r.gold} oro` : ""}`, "gold");
     if (id === getBossMissionId(region.id) && regionIndex < REGIONS.length - 1) unlockNextRegion();
   };
@@ -2340,6 +2337,9 @@ export default function useAtlasSession() {
     onStartCombatThreat: startCombatThreat, onThreatEvent, onExploreThreat, onIdleThreat, onStrangerMeet,
     skills, skillCosts: skills ? { classAbility: skills.classAbility?.cost, hybrid: skills.hybrid?.cost } : {}, onSkill: handleSkill, onItem: useCombatConsumable,
     playerStatuses, respawnDaily,
+    progressionState, progressionDisplay,
+    acceptGuildContract, claimGuildContract, equipMasterySkill, equipMasteryPassive, upgradeMasterySkill,
+    acceptSpecialQuest, claimSpecialQuest,
     inDungeon, currentDungeonId, currentDungeon, enterDungeon, exitDungeon, descendDungeon, dungeonFloor, dungeonBossDefeated, startDungeonBossCombat, activateDungeonFinalSanctuary,
     onDungeonPlayerDamage, onDungeonSpendEnergy, onDungeonEnemyKilled,
     hireAdventurer, dismissCompanion, onCompanionUpdate,

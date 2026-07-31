@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, ChevronLeft, Coins, Backpack, Sword, FlaskConical, ScrollText, User, Settings as SettingsIcon } from "lucide-react";
+import { X, ChevronLeft, Coins, Backpack, Sword, FlaskConical, ScrollText, User, Settings as SettingsIcon, Shield, Sparkles } from "lucide-react";
 import { ENERGY } from "@/lib/atlasSkillDesign";
 import { xpToNext } from "@/lib/atlasProgression";
 import ChibiSprite from "@/components/atlas/ChibiSprite";
@@ -9,6 +9,8 @@ import HubConsumables from "@/components/atlas/hub/HubConsumables";
 import HubMissions from "@/components/atlas/hub/HubMissions";
 import HubSheet from "@/components/atlas/hub/HubSheet";
 import HubSettings from "@/components/atlas/hub/HubSettings";
+import HubGuild from "@/components/atlas/hub/HubGuild";
+import HubMasteries from "@/components/atlas/hub/HubMasteries";
 import { defaultSettings } from "@/lib/atlasSettings";
 
 const CARDS = [
@@ -17,6 +19,8 @@ const CARDS = [
   { id: "consumables", label: "Consumibles", desc: "Pociones y objetos de uso", Icon: FlaskConical, color: "text-rose-300", ring: "hover:border-rose-500/60" },
   { id: "missions", label: "Misiones", desc: "Encargos activos y progreso", Icon: ScrollText, color: "text-violet-300", ring: "hover:border-violet-500/60" },
   { id: "sheet", label: "Hoja de personaje", desc: "Atributos, habilidades y pasivas", Icon: User, color: "text-emerald-300", ring: "hover:border-emerald-500/60" },
+  { id: "guild", label: "Gremio", desc: "Contratos, rumores y ascensos", Icon: Shield, color: "text-amber-300", ring: "hover:border-amber-500/60" },
+  { id: "masteries", label: "Maestrías", desc: "Aprender, equipar y evolucionar", Icon: Sparkles, color: "text-violet-300", ring: "hover:border-violet-500/60" },
   { id: "settings", label: "Configuración", desc: "Pantalla, sonido y controles", Icon: SettingsIcon, color: "text-slate-300", ring: "hover:border-slate-500/60" },
 ];
 
@@ -39,6 +43,15 @@ export default function PlayerHub({
   onSellMaterial,
   onEquipClassWeapon,
   onSellClassWeapon,
+  progressionState,
+  progressionDisplay,
+  onAcceptGuildContract,
+  onClaimGuildContract,
+  onEquipMasterySkill,
+  onEquipMasteryPassive,
+  onUpgradeMasterySkill,
+  onAcceptSpecialQuest,
+  onClaimSpecialQuest,
   onClose,
 }) {
   const [view, setView] = useState("home");
@@ -124,6 +137,8 @@ export default function PlayerHub({
             {view === "consumables" && <HubConsumables player={player} onUseConsumable={onUseConsumable} />}
             {view === "missions" && <HubMissions missions={missions} missionDefs={missionDefs} region={region} />}
             {view === "sheet" && <HubSheet player={player} />}
+            {view === "guild" && <HubGuild progressionState={progressionState} progressionDisplay={progressionDisplay} onAcceptContract={onAcceptGuildContract} onClaimContract={onClaimGuildContract} onAcceptSpecialQuest={onAcceptSpecialQuest} onClaimSpecialQuest={onClaimSpecialQuest} />}
+            {view === "masteries" && <HubMasteries progressionState={progressionState} progressionDisplay={progressionDisplay} onEquipActive={onEquipMasterySkill} onEquipPassive={onEquipMasteryPassive} onUpgradeSkill={onUpgradeMasterySkill} />}
             {view === "settings" && <HubSettings settings={settings} onChange={onUpdateSettings} onReset={() => onUpdateSettings(defaultSettings())} />}
             <div className="mx-auto w-full max-w-2xl px-4 pt-4">
               <button type="button" onClick={goHome} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 py-3 text-sm font-medium text-slate-100 active:bg-slate-700">

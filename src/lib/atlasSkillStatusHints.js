@@ -10,10 +10,10 @@ const EXTRA = Object.freeze({
 const NAME_HINTS = Object.freeze([
   [/Bola de Fuego|Forja Primigenia|Cataclismo Arcano/, ["quemadura"]],
   [/Corte Múltiple|Estocada Sombría|Estocada Salvaje|Danza Final|Mil Cortes/, ["sangrado"]],
-  [/Tormenta Eléctrica/, ["paralisis"]],
+  [/Tormenta Eléctrica|Pulso de Sobrecarga/, ["paralisis"]],
   [/Furia de la Montaña|Aniquilación Mecánica|Impacto Sísmico/, ["aturdido"]],
-  [/Revienta Escudos|Estandarte Imperial|Golpe Firme|Torbellino|Golpe Brutal|Perforación Mortal/, ["vulnerable"]],
-  [/Bomba de Humo|Tornado Cortante|Juicio de la Luna|Rayo Arcano|Chispa Arcana|Invocar Familiar/, ["debilitado"]],
+  [/Revienta Escudos|Estandarte Imperial|Golpe Firme|Torbellino|Golpe Brutal|Perforación Mortal|Golpe Quebrador|Marca del Cazador/, ["vulnerable"]],
+  [/Bomba de Humo|Tornado Cortante|Juicio de la Luna|Rayo Arcano|Chispa Arcana|Invocar Familiar|Canal Concentrado/, ["debilitado"]],
   [/Castigo Nocturno|Juramento Sombra/, ["lento"]],
   [/Clones de Sombra/, ["clones"]],
   [/Gólem de Roca/, ["invocacion"]],

@@ -3,6 +3,7 @@ import { WEAPONS, ARMORS, HELMETS } from "@/lib/atlasLoot";
 import { CLASS_WEAPONS } from "@/lib/atlasWeapons";
 import { resolveWeaponDefId, resolveWeaponInstance } from "@/lib/atlasWeaponInstances";
 import { applyAccessoryCatalog } from "@/lib/atlasRegionalEquipment";
+import { getEquippedMasteryPassiveBonuses } from "@/lib/atlasPostRegion3Progression";
 
 export const CLASS_OFF_TYPE = { Guerrero: "atk", Mago: "arcane", "Pícaro": "precision" };
 
@@ -184,6 +185,16 @@ export function getBonuses(player) {
     magDef += Math.floor(helmetUpgrade / 2);
     if (h.passive) passives.push(h.passive);
   }
+
+  const mastery = getEquippedMasteryPassiveBonuses(player);
+  atk += mastery.atk || 0;
+  def += mastery.physDef || 0;
+  magDef += mastery.magDef || 0;
+  maxHp += mastery.maxHp || 0;
+  maxMp += mastery.maxMp || 0;
+  crit += mastery.crit || 0;
+  speed += mastery.speed || 0;
+  if (mastery.passives?.length) passives.push(...mastery.passives);
 
   return { atk, def, magDef, maxHp, maxMp, crit, speed, passives };
 }

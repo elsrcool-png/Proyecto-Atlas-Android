@@ -95,8 +95,8 @@ await ok("guardado v6 migra a v7 con región y nodo estables", () => {
     worldFlags: { "fria:unlocked": true },
   };
   const migrated = saveApi.migrateSaveV7(oldSave);
-  assert.equal(migrated.saveVersion, 7);
-  assert.equal(migrated.schemaVersion, 7);
+  assert.equal(migrated.saveVersion, saveApi.ATLAS_SAVE_VERSION);
+  assert.equal(migrated.schemaVersion, saveApi.ATLAS_SAVE_VERSION);
   assert.equal(migrated.lastRegionId, "fria");
   assert.equal(migrated.lastSectorId, "C2");
   assert.equal(migrated.worldState.currentRegionId, "fria");
@@ -124,7 +124,7 @@ await ok("ranuras escriben v7 y conservan respaldo", () => {
   assert.equal(saveApi.saveToSlot(1, { player: { race: "Enano", class: "Pícaro" }, regionIndex: 0, blockIndex: 0, sectorRow: 1 }), true);
   const firstRaw = localStorage.getItem("atlas_save_slot_1");
   assert.ok(firstRaw);
-  assert.equal(JSON.parse(firstRaw).saveVersion, 7);
+  assert.equal(JSON.parse(firstRaw).saveVersion, saveApi.ATLAS_SAVE_VERSION);
   assert.equal(saveApi.saveToSlot(1, { player: { race: "Enano", class: "Guerrero" }, lastRegionId: "fria", lastSectorId: "B1" }), true);
   assert.equal(localStorage.getItem("atlas_save_slot_1_bak"), firstRaw);
   const loaded = saveApi.loadSlot(1);

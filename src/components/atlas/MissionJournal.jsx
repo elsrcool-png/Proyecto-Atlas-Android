@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { X, ScrollText, Star, Circle, Trophy, MapPin, Coins, CheckCircle2 } from "lucide-react";
+import { X, ScrollText, Star, Circle, Trophy, MapPin, Coins, CheckCircle2, AlertTriangle } from "lucide-react";
 import { getNpcNameByRole } from "@/lib/atlasSettlementNpcs";
 import { getRegionLayout } from "@/lib/atlasRegionSectors";
 import { getCurrentObjective, getCurrentObjectiveText, getMissionProgressLabel } from "@/lib/atlasMissionEngine";
 
-export default function MissionJournal({ missions, missionDefs, region, priorityMissionId, onSetActive, onSetPriority, onClose }) {
+export default function MissionJournal({ missions, missionDefs, region, priorityMissionId, onSetActive, onSetPriority, specialQuests = [], onAcceptSpecialQuest, onClaimSpecialQuest, onClose }) {
   const flat = useMemo(() => {
     const m = {};
     for (const sec of Object.keys(missionDefs || {})) for (const d of missionDefs[sec]) m[d.id] = d;
@@ -16,6 +16,7 @@ export default function MissionJournal({ missions, missionDefs, region, priority
   const active = all.filter(x => x.m.active && x.m.status !== "done");
   const available = all.filter(x => x.m.accepted && !x.m.active && x.m.status !== "done");
   const completed = all.filter(x => x.m.status === "done");
+  const visibleSpecialQuests = (specialQuests || []).filter((entry) => entry?.state?.status && entry.state.status !== "LOCKED");
 
   const rewardText = (r) => {
     if (!r) return "—";
@@ -78,6 +79,23 @@ export default function MissionJournal({ missions, missionDefs, region, priority
     );
   };
 
+  const SpecialRow = ({ entry }) => {
+    const { def, state } = entry;
+    return (
+      <div className="rounded-lg border border-fuchsia-700/50 bg-fuchsia-950/15 p-2.5">
+        <div className="flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-fuchsia-300" /><span className="text-xs font-semibold text-fuchsia-100">{def.title}</span></div>
+        <p className="mt-1 text-[10px] italic leading-snug text-fuchsia-200/70">{def.rumorText}</p>
+        <div className="mt-1 flex flex-wrap gap-2 text-[9px] text-slate-400"><span>{def.objective?.text}: {state.progress || 0}/{def.objective?.count || 1}</span><span>Recompensa: desconocida</span><span>{def.persistenceType === "persistent" ? "Persistente" : "Condicional"}</span></div>
+        <div className="mt-2">
+          {state.status === "AVAILABLE" && <button onClick={() => onAcceptSpecialQuest?.(def.id)} className="rounded bg-fuchsia-700 px-2 py-1 text-[10px] text-white">Investigar</button>}
+          {state.status === "ACTIVE" && <span className="text-[10px] text-fuchsia-200">Activa</span>}
+          {state.status === "READY" && <button onClick={() => onClaimSpecialQuest?.(def.id)} className="rounded bg-emerald-600 px-2 py-1 text-[10px] text-white">Completar</button>}
+          {state.status === "COMPLETED" && <span className="flex items-center gap-1 text-[10px] text-emerald-300"><CheckCircle2 className="h-3 w-3" /> Completada</span>}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-slate-950/92 backdrop-blur flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 shrink-0">
@@ -93,6 +111,10 @@ export default function MissionJournal({ missions, missionDefs, region, priority
           <h3 className="text-[11px] font-semibold text-sky-300 mb-1.5 flex items-center gap-1"><Circle className="w-3 h-3" /> Disponibles</h3>
           <div className="space-y-1.5">{available.length ? available.map(x => <Row key={x.id} x={x} />) : <p className="text-[10px] text-slate-500">Acepta misiones hablando con los NPCs de los asentamientos.</p>}</div>
         </section>
+        {visibleSpecialQuests.length > 0 && <section>
+          <h3 className="text-[11px] font-semibold text-fuchsia-300 mb-1.5 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Especiales / Amenaza</h3>
+          <div className="space-y-1.5">{visibleSpecialQuests.map((entry) => <SpecialRow key={entry.def.id} entry={entry} />)}</div>
+        </section>}
         <section>
           <h3 className="text-[11px] font-semibold text-emerald-300 mb-1.5 flex items-center gap-1"><Trophy className="w-3 h-3" /> Completadas ({completed.length})</h3>
           <div className="space-y-1.5">{completed.map(x => <Row key={x.id} x={x} />)}</div>

@@ -254,6 +254,15 @@ export default function Game() {
     activeStoryPointIds: s.activeStoryPointIds,
     getMissionLockReason: s.getMissionLockReason,
     playerStatuses: s.playerStatuses,
+    progressionState: s.progressionState,
+    progressionDisplay: s.progressionDisplay,
+    acceptGuildContract: s.acceptGuildContract,
+    claimGuildContract: s.claimGuildContract,
+    equipMasterySkill: s.equipMasterySkill,
+    equipMasteryPassive: s.equipMasteryPassive,
+    upgradeMasterySkill: s.upgradeMasterySkill,
+    acceptSpecialQuest: s.acceptSpecialQuest,
+    claimSpecialQuest: s.claimSpecialQuest,
   };
 
   return (

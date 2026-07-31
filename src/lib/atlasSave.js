@@ -1,7 +1,8 @@
 // Persistencia de la aventura — Sistema de 3 ranuras independientes.
-// Esquema v7: IDs regionales estables, posición nodal y estados separados.
+// Esquema v8: arquitectura regional v7 + Gremio, Maestrías y misiones especiales persistentes.
 
 import { ATLAS_REGION_REGISTRY, normalizeRegionId } from "@/lib/atlasRegionRegistry";
+import { normalizePostRegion3State, syncPlayerMasteryLoadout } from "@/lib/atlasPostRegion3Progression";
 
 const SLOT_KEYS = ["atlas_save_slot_1", "atlas_save_slot_2", "atlas_save_slot_3"];
 const BACKUP_KEYS = ["atlas_save_slot_1_bak", "atlas_save_slot_2_bak", "atlas_save_slot_3_bak"];
@@ -10,7 +11,7 @@ const LEGACY_MIGRATED_KEY = "atlas_save_legacy_migrated";
 const LEGACY_KEYS = ["atlas_adventure_save_v4", "atlas_adventure_save_v3", "atlas_adventure_save_v2", "atlas_adventure_save_v1"];
 const LEGACY_RUNTIME_REGION_IDS = ["verde", "fria", "desierto"];
 
-export const ATLAS_SAVE_VERSION = 7;
+export const ATLAS_SAVE_VERSION = 8;
 
 const VISUAL_DEFAULTS_V5 = Object.freeze({
   Humano: { raceBase: "humano_neutral_v1", profileId: "appearance_humano_brown_tousled_v1" },
@@ -120,7 +121,7 @@ function buildRegionStates(save, currentRegionId) {
   return result;
 }
 
-export function migrateSaveV7(input) {
+export function migrateSaveV8(input) {
   if (!input || typeof input !== "object") return input;
   const sourceVersion = Number(input.saveVersion ?? input.schemaVersion) || 0;
   const currentRegionId = legacyRegionId(input);
@@ -140,13 +141,18 @@ export function migrateSaveV7(input) {
     globalSanctuaryUseDay: input?.dailyState?.globalSanctuaryUseDay ?? input.globalSanctuaryUseDay ?? null,
     flags: { ...((input?.dailyState?.flags && typeof input.dailyState.flags === "object") ? input.dailyState.flags : {}) },
   };
+  const progressionState = normalizePostRegion3State(input.progressionState, {
+    worldFlags: globalFlags,
+    defeatedBossIds: input.defeatedBosses || [],
+  });
+  const migratedPlayer = syncPlayerMasteryLoadout(migratePlayerV6(input.player), progressionState);
 
   return {
     ...input,
     saveVersion: ATLAS_SAVE_VERSION,
     schemaVersion: ATLAS_SAVE_VERSION,
     migratedFromVersion: sourceVersion < ATLAS_SAVE_VERSION ? sourceVersion : (input.migratedFromVersion ?? null),
-    player: migratePlayerV6(input.player),
+    player: migratedPlayer,
     lastRegionId: currentRegionId,
     lastSectorId: currentNodeId,
     currentRegionId,
@@ -163,6 +169,7 @@ export function migrateSaveV7(input) {
     },
     regionStates,
     dailyState,
+    progressionState,
     compatibility: {
       legacyRegionIndex: Number.isInteger(Number(input.regionIndex)) ? Number(input.regionIndex) : 0,
       legacyBlockIndex: Number.isInteger(Number(input.blockIndex)) ? Number(input.blockIndex) : 0,
@@ -172,7 +179,8 @@ export function migrateSaveV7(input) {
   };
 }
 
-export const migrateSave = migrateSaveV7;
+export function migrateSaveV7(input) { return migrateSaveV8(input); }
+export const migrateSave = migrateSaveV8;
 
 let activeSaveSlot = null;
 
@@ -216,7 +224,7 @@ function isValidSave(parsed) {
 export function saveToSlot(n, data) {
   const slot = clampSlot(n);
   if (!slot) return false;
-  const payload = JSON.stringify(migrateSaveV7({ savedAt: Date.now(), ...data, saveVersion: ATLAS_SAVE_VERSION }));
+  const payload = JSON.stringify(migrateSaveV8({ savedAt: Date.now(), ...data, saveVersion: ATLAS_SAVE_VERSION }));
   return safeWrite(SLOT_KEYS[slot - 1], BACKUP_KEYS[slot - 1], payload);
 }
 
@@ -229,14 +237,14 @@ export function loadSlot(n) {
     const parsed = JSON.parse(raw);
     if (!isValidSave(parsed)) {
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV7(bp); }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV8(bp); }
       return null;
     }
-    return migrateSaveV7(parsed);
+    return migrateSaveV8(parsed);
   } catch (e) {
     try {
       const bak = localStorage.getItem(BACKUP_KEYS[slot - 1]);
-      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV7(bp); }
+      if (bak) { const bp = JSON.parse(bak); if (isValidSave(bp)) return migrateSaveV8(bp); }
     } catch (e2) { }
     return null;
   }

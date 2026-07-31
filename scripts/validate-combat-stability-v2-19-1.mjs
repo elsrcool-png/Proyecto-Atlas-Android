@@ -17,6 +17,7 @@ const transactionsPath = "src/lib/atlasCombatTransactions.js";
 const directorPath = "src/lib/atlasCombatDirector.js";
 const explorePath = "src/components/atlas/ExploreMode.jsx";
 const actionsPath = "src/lib/createAtlasCombatActions.js";
+const progressionPath = "src/hooks/useAtlasPostRegion3Progression.js";
 
 const session = read(sessionPath);
 const view = read(viewPath);
@@ -27,6 +28,7 @@ const transactions = read(transactionsPath);
 const director = read(directorPath);
 const explore = read(explorePath);
 const actions = read(actionsPath);
+const progression = read(progressionPath);
 
 const lineCount = (text) => text.split(/\r?\n/).length;
 
@@ -56,10 +58,10 @@ ok("Acciones del jugador se extrajeron del hook monolítico", session.includes("
 ok("useAtlasSession bajó de 2.684 a menos de 2.350 líneas", lineCount(session) < 2350, `${lineCount(session)} líneas`);
 ok("Ganancia de energía actualiza playerRef inmediatamente", passives.includes("playerRef.current = updated") && passives.includes("setPlayer(updated)"));
 ok("Daño enemigo conserva energía ganada por pasivas", session.includes("const playerAfterPassive = playerRef.current || currentPlayer") && (session.match(/playerAfterPassive/g) || []).length >= 4);
-ok("skills está memoizado", session.includes("const skills = useMemo"));
+ok("skills está memoizado", session.includes("const skills = useMemo") || progression.includes("const skills = useMemo"));
 
 // Compilación sintáctica aislada. No necesita node_modules ni resolver imports.
-for (const path of [sessionPath, viewPath, audioPath, runtimePath, passivesPath, transactionsPath, directorPath, explorePath, actionsPath]) {
+for (const path of [sessionPath, viewPath, audioPath, runtimePath, passivesPath, transactionsPath, directorPath, explorePath, actionsPath, progressionPath]) {
   const source = read(path);
   const jsx = path.endsWith(".jsx");
   const output = ts.transpileModule(source, {

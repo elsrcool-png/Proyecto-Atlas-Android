@@ -62,6 +62,7 @@ export function createAtlasCombatActions({
   scheduleEnemyTurn,
   enemyTurn,
   onKillEnergy,
+  onMasterySkillUsed,
 }) {
   const tickPlayerStatusTurn = () => {
     const sr = tickPlayerStatuses(combatRef.current.playerStatuses);
@@ -384,6 +385,7 @@ export function createAtlasCombatActions({
     if (stChk.died) return;
     const actingPlayer = stChk.playerAfterTick;
     if (!stChk.canAct) { resolveBlockedPlayerAction(stChk, `la habilidad ${skills[key].name}`); return; }
+    if (skills[key]?.id) onMasterySkillUsed?.(skills[key].id);
     damageWeapon(1);
     const groupId = key === "classAbility" ? "tecnica" : key === "hybrid" ? "fuerza" : "basico";
     const dr = rollDiceGroup(groupId);
