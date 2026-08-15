@@ -1,5 +1,0 @@
-ATLAS v2.19.4 — VALIDACIÓN SINTÁCTICA DE ARCHIVOS MODIFICADOS
-CORRECTO: src/lib/atlasCombatScenes.js
-CORRECTO: scripts/lib/ogg-vorbis-duration.mjs
-CORRECTO: scripts/validate-audio-green-v2-19.mjs
-CORRECTO: scripts/validate-guardian-audio-v2-19-4.mjs
