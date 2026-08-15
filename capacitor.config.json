@@ -1,0 +1,8 @@
+{
+  "appId": "com.tittor.atlas.qa",
+  "appName": "Atlas QA",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#07110c"
+  }
+}
