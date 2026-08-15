@@ -1,7 +1,0 @@
-
-> base44-app@2.19.7 validate:syntax-imports
-> node scripts/validate-syntax-imports-v2-19-7.mjs
-
-✓ 238 archivos JS/JSX/MJS sin errores sintácticos
-✓ 504 imports locales resueltos
-VALIDACIÓN DE SINTAXIS E IMPORTS v2.19.7 CORRECTA
