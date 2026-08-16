@@ -1,0 +1,105 @@
+name: Atlas QA Remote Compiler
+run-name: Atlas QA ${{ inputs.request_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      source_release_tag:
+        description: Temporary release tag containing FULL.zip
+        required: true
+        type: string
+      source_asset_name:
+        description: FULL zip asset name
+        required: true
+        type: string
+      version_label:
+        description: Atlas version label
+        required: true
+        type: string
+      request_id:
+        description: Unique Atlas QA request id
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  build-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Descargar fuente FULL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_TAG: ${{ inputs.source_release_tag }}
+          SOURCE_ASSET: ${{ inputs.source_asset_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/atlas-source
+          gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" -p "$SOURCE_ASSET" -D /tmp/atlas-source
+          test -s "/tmp/atlas-source/$SOURCE_ASSET"
+          mkdir -p /tmp/atlas-work
+          unzip -q "/tmp/atlas-source/$SOURCE_ASSET" -d /tmp/atlas-work
+      - name: Localizar proyecto
+        id: project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t candidates < <(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -printf '%d %h\n' | sort -n | awk '!seen[$2]++{print $2}')
+          (( ${#candidates[@]} > 0 )) || { echo 'No package.json found in FULL.zip'; exit 1; }
+          root="${candidates[0]}"
+          test -f "$root/package.json"
+          echo "root=$root" >> "$GITHUB_OUTPUT"
+          echo "Atlas source root: $root"
+      - name: Instalar dependencias
+        working-directory: ${{ steps.project.outputs.root }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+      - name: Compilar Atlas
+        working-directory: ${{ steps.project.outputs.root }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          test -f dist/index.html
+          if grep -Eqi '(/src/main\.(jsx|tsx)|src/main\.(jsx|tsx))' dist/index.html; then
+            echo 'dist/index.html still references Vite source entry'
+            exit 1
+          fi
+      - name: Empaquetar QA
+        env:
+          ROOT: ${{ steps.project.outputs.root }}
+          VERSION_LABEL: ${{ inputs.version_label }}
+          REQUEST_ID: ${{ inputs.request_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          safe="$(printf '%s' "$VERSION_LABEL" | tr -cs 'A-Za-z0-9._-' '_' | sed 's/^_*//;s/_*$//')"
+          [ -n "$safe" ] || safe="$REQUEST_ID"
+          out="ProyectoAtlas_${safe}_QA.zip"
+          cat > /tmp/atlas-qa-manifest.json <<JSON
+          {"format":"atlas-qa-build","formatVersion":2,"atlasVersion":"$VERSION_LABEL","label":"Atlas $VERSION_LABEL","channel":"qa","requestId":"$REQUEST_ID","entry":"dist/index.html"}
+          JSON
+          cd "$ROOT"
+          zip -qr "/tmp/$out" dist
+          cd /tmp
+          zip -q "$out" atlas-qa-manifest.json
+          echo "QA_FILE=$out" >> "$GITHUB_ENV"
+          test -s "/tmp/$out"
+      - name: Publicar QA en transporte temporal
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_TAG: ${{ inputs.source_release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$SOURCE_TAG" "/tmp/$QA_FILE" --repo "$GITHUB_REPOSITORY" --clobber
