@@ -1,3 +1,0 @@
-Archivos JS/JSX/MJS revisados: 235
-Errores sintácticos: 0
-VALIDACIÓN SINTÁCTICA CORRECTA

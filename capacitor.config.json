@@ -1,0 +1,7 @@
+{
+  "appId":"com.tittor.atlas.qa",
+  "appName":"Atlas QA Studio",
+  "webDir":"dist",
+  "server":{"allowNavigation":["127.0.0.1","localhost"]},
+  "android":{"allowMixedContent":true,"backgroundColor":"#07110c"}
+}

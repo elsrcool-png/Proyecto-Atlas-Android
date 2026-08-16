@@ -1,16 +1,1 @@
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#020617" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Proyecto Atlas</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/><meta name="theme-color" content="#07110c"/><title>Atlas QA Studio</title></head><body><main id="app"><header><div class="mark">ATLAS</div><h1>Atlas QA</h1><p class="sub">Versiones de prueba + Character Studio</p></header><section id="studio" class="card studioCard"><div class="eyebrow">CHARACTER STUDIO</div><h2>Personajes, equipo y animaciones</h2><p class="muted">Prueba GLB/GLTF/FBX, materiales, skins, sockets, equipamiento, animaciones, retarget y exportación para Atlas.</p><button id="studioBtn" class="primary studioBtn">🧩 Abrir Character Studio</button></section><section id="importStatus" class="card status" hidden><div class="row"><div><div class="eyebrow">IMPORTANDO</div><strong id="importMsg">Preparando…</strong></div><b id="importPct">0%</b></div><div class="bar"><i id="importBar"></i></div><p class="hint">Puedes dejar la app en segundo plano. Android te avisará al terminar.</p></section><section id="suggested" class="card" hidden><div class="eyebrow">VERSIÓN SUGERIDA</div><h2 id="suggestedName">—</h2><p id="suggestedMeta" class="muted"></p><div class="actions"><button id="runSuggested" class="primary">▶ Ejecutar</button><button id="favSuggested" class="ghost">☆ Fijar</button></div></section><section id="empty" class="card" hidden><div class="eyebrow">SIN VERSIONES</div><h2>Importa tu primera build QA</h2><p class="muted">La build queda guardada dentro de Atlas QA y después se ejecuta sin Termux.</p></section><div class="actions topActions"><button id="importBtn" class="primary">＋ Importar</button><button id="refreshBtn" class="ghost">↻ Actualizar</button></div><section class="libraryHead"><div><div class="eyebrow">BIBLIOTECA</div><strong id="libraryMeta">0 versiones</strong></div><button id="selectAll" class="linkBtn">Seleccionar todo</button></section><section id="batch" class="batch" hidden><span id="batchText">0 seleccionadas</span><div><button id="clearSel" class="mini">Limpiar</button><button id="deleteSel" class="mini danger">Borrar</button></div></section><section id="versions"></section><footer>Atlas QA Studio 3.2.0 · base QA Manager 3.1.1</footer></main><script type="module" src="/src/main.js"></script></body></html>

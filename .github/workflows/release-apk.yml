@@ -11,6 +11,8 @@ permissions:
 
 jobs:
   build-release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -126,13 +128,13 @@ jobs:
           cp "$APK" "$OUT"
           sha256sum "$OUT" > "${OUT}.sha256"
 
-      - name: Guardar APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Atlas-release
-          path: |
-            Atlas-v*-release.apk
-            Atlas-v*-release.apk.sha256
-            Atlas-v*-signature.txt
-          if-no-files-found: error
-          retention-days: 30
+      - name: Publicar APK temporal
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QA_RELEASE_TAG: qa-manager-v3.2.0-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(Atlas-v*-release.apk Atlas-v*-release.apk.sha256 Atlas-v*-signature.txt)
+          (( ${#files[@]} > 0 )) || { echo "No encontré salida"; exit 1; }
+          gh release create "$QA_RELEASE_TAG" "${files[@]}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Atlas QA Studio temporal ${{ github.run_id }}" --notes "Salida temporal" --prerelease
