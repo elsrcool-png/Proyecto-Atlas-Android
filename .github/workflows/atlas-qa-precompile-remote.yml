@@ -54,6 +54,44 @@ jobs:
           test -f "$root/package.json"
           echo "root=$root" >> "$GITHUB_OUTPUT"
           echo "Atlas source root: $root"
+      - name: Instrumentar Atlas QA Live Link
+        env:
+          ROOT: ${{ steps.project.outputs.root }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$ROOT" <<'PYLIVE'
+          from pathlib import Path
+          import sys
+          root=Path(sys.argv[1])
+          p=root/'src/components/atlas/AtlasSector3DRuntime.jsx'
+          if not p.is_file():
+              print('AtlasSector3DRuntime.jsx no existe; Live Link básico sigue activo')
+              raise SystemExit(0)
+          s=p.read_text(encoding='utf-8')
+          if 'ATLAS_QA_LIVE_SCENE_EXPORT_V1' in s:
+              print('Live Link runtime ya instrumentado')
+              raise SystemExit(0)
+          imp='import * as THREE from "three";'
+          if imp not in s:
+              print('No encontré import THREE; omito snapshot para no romper build')
+              raise SystemExit(0)
+          s=s.replace(imp, imp+'\nimport { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";',1)
+          anchor='function initialCameraViewIndex() {'
+          if anchor not in s:
+              print('No encontré ancla helper; omito snapshot')
+              raise SystemExit(0)
+          helper='// ATLAS_QA_LIVE_SCENE_EXPORT_V1\nfunction atlasQaExportSceneSnapshot(scene, regionId, sectorId) {\n  if (typeof window === "undefined" || !window.AtlasQaLiveLink || !scene) return;\n  window.setTimeout(() => {\n    try {\n      const exporter = new GLTFExporter();\n      exporter.parse(scene, (result) => {\n        if (!(result instanceof ArrayBuffer)) return;\n        fetch("/__atlas/live-scene", {\n          method: "POST",\n          headers: { "Content-Type": "model/gltf-binary", "X-Atlas-Region": String(regionId || ""), "X-Atlas-Node": String(sectorId || "") },\n          body: result,\n        }).catch(() => {});\n      }, () => {}, { binary: true, onlyVisible: true, trs: true });\n    } catch (error) {\n      console.warn("[Atlas QA Live Link] snapshot omitido", error);\n    }\n  }, 120);\n}\n\n'
+          s=s.replace(anchor,helper+anchor,1)
+          bind='sectorSceneRef.current = sectorScene;'
+          if bind not in s:
+              print('No encontré sectorSceneRef; omito snapshot')
+              raise SystemExit(0)
+          inject='sectorSceneRef.current = sectorScene;\n    try {\n      window.AtlasQaLiveLink?.bindScene?.({ scene, sectorScene, regionId, sectorId, THREE });\n      window.dispatchEvent(new CustomEvent("atlas-qa-map-state", { detail: { regionId, sectorId } }));\n      atlasQaExportSceneSnapshot(scene, regionId, sectorId);\n    } catch (error) {\n      console.warn("[Atlas QA Live Link] bind omitido", error);\n    }'
+          s=s.replace(bind,inject,1)
+          p.write_text(s,encoding='utf-8')
+          print('Live Link runtime instrumentado:',p)
+          PYLIVE
       - name: Instalar dependencias
         working-directory: ${{ steps.project.outputs.root }}
         shell: bash
