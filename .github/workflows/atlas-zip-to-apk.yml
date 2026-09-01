@@ -1,0 +1,198 @@
+name: Atlas ZIP to APK
+run-name: Atlas APK ${{ inputs.request_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_release_tag:
+        description: Temporary release tag containing the source ZIP
+        required: true
+        type: string
+      source_asset_name:
+        description: Source ZIP asset name
+        required: true
+        type: string
+      version_label:
+        description: Human-readable version label
+        required: true
+        type: string
+      request_id:
+        description: Unique build request ID
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-unsigned:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout builder
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Prepare Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Download source ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_TAG: ${{ inputs.source_release_tag }}
+          SOURCE_ASSET: ${{ inputs.source_asset_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/atlas-source /tmp/atlas-work
+          gh release download "$SOURCE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$SOURCE_ASSET" \
+            --dir /tmp/atlas-source
+          test -s "/tmp/atlas-source/$SOURCE_ASSET"
+          unzip -q "/tmp/atlas-source/$SOURCE_ASSET" -d /tmp/atlas-work
+
+      - name: Locate project
+        id: project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t candidates < <(
+            find /tmp/atlas-work -type f -name package.json \
+              -not -path '*/node_modules/*' \
+              -printf '%d %h\n' | sort -n | awk '!seen[$2]++{print $2}'
+          )
+          (( ${#candidates[@]} > 0 )) || { echo 'No package.json found in ZIP'; exit 1; }
+          root="${candidates[0]}"
+          test -f "$root/package.json"
+          echo "root=$root" >> "$GITHUB_OUTPUT"
+          echo "Source root: $root"
+
+      - name: Install dependencies
+        working-directory: ${{ steps.project.outputs.root }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Build web application
+        working-directory: ${{ steps.project.outputs.root }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          test -f dist/index.html
+
+      - name: Prepare Android
+        working-directory: ${{ steps.project.outputs.root }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Build unsigned release APK
+        working-directory: ${{ steps.project.outputs.root }}/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          test -f app/build/outputs/apk/release/app-release.apk
+          cp app/build/outputs/apk/release/app-release.apk /tmp/Atlas-unsigned.apk
+
+      - name: Upload unsigned APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-unsigned-${{ inputs.request_id }}
+          path: /tmp/Atlas-unsigned.apk
+          retention-days: 1
+
+  sign-release:
+    needs: build-unsigned
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Download unsigned APK
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-unsigned-${{ inputs.request_id }}
+          path: /tmp/unsigned
+
+      - name: Restore Atlas master signing key
+        env:
+          ATLAS_KEYSTORE_BASE64: ${{ secrets.ATLAS_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ATLAS_KEYSTORE_BASE64"
+          printf '%s' "$ATLAS_KEYSTORE_BASE64" | base64 --decode > /tmp/atlas-release.p12
+          test -s /tmp/atlas-release.p12
+
+      - name: Verify master signing key
+        env:
+          ATLAS_STORE_PASSWORD: ${{ secrets.ATLAS_STORE_PASSWORD }}
+          ATLAS_KEY_ALIAS: ${{ secrets.ATLAS_KEY_ALIAS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -list -storetype PKCS12 \
+            -keystore /tmp/atlas-release.p12 \
+            -storepass "$ATLAS_STORE_PASSWORD" \
+            -alias "$ATLAS_KEY_ALIAS" >/dev/null
+
+      - name: Sign APK with Atlas key
+        env:
+          ATLAS_STORE_PASSWORD: ${{ secrets.ATLAS_STORE_PASSWORD }}
+          ATLAS_KEY_PASSWORD: ${{ secrets.ATLAS_KEY_PASSWORD }}
+          ATLAS_KEY_ALIAS: ${{ secrets.ATLAS_KEY_ALIAS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=/tmp/unsigned/Atlas-unsigned.apk
+          ALIGNED=/tmp/Atlas-aligned.apk
+          OUT="Atlas-v${{ inputs.version_label }}-release.apk"
+          ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n 1)
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          test -n "$ZIPALIGN"
+          test -n "$APKSIGNER"
+          "$ZIPALIGN" -f -p 4 "$APK" "$ALIGNED"
+          "$APKSIGNER" sign \
+            --ks /tmp/atlas-release.p12 \
+            --ks-type PKCS12 \
+            --ks-pass "pass:$ATLAS_STORE_PASSWORD" \
+            --key-pass "pass:$ATLAS_KEY_PASSWORD" \
+            --ks-key-alias "$ATLAS_KEY_ALIAS" \
+            --out "$OUT" "$ALIGNED"
+          "$APKSIGNER" verify --verbose --print-certs "$OUT" | tee "Atlas-v${{ inputs.version_label }}-signature.txt"
+          sha256sum "$OUT" > "${OUT}.sha256"
+
+      - name: Publish signed APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Atlas-release-${{ inputs.request_id }}
+          path: |
+            Atlas-v${{ inputs.version_label }}-release.apk
+            Atlas-v${{ inputs.version_label }}-release.apk.sha256
+            Atlas-v${{ inputs.version_label }}-signature.txt
+          retention-days: 7
