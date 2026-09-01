@@ -1,0 +1,11 @@
+{
+  "name": "Atlas APK Builder",
+  "short_name": "Atlas Builder",
+  "description": "Generador remoto de APK de Atlas desde ZIP.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b0e13",
+  "theme_color": "#10131a",
+  "lang": "es",
+  "icons": []
+}
