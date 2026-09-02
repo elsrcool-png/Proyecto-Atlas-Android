@@ -36,8 +36,10 @@ jobs:
           test -s "$APK"
           SIZE=$(stat -c%s "$APK")
           echo "Atlas APK Builder size: $SIZE bytes"
-          test "$SIZE" -gt 100000
-          file "$APK" || true
+          unzip -t "$APK" >/dev/null
+          unzip -l "$APK" | grep -q 'AndroidManifest.xml'
+          unzip -l "$APK" | grep -q 'classes.dex'
+          echo "APK structure: OK"
       - uses: actions/upload-artifact@v4
         with:
           name: Atlas-APK-Builder-v2
