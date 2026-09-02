@@ -54,14 +54,55 @@ jobs:
           gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$SOURCE_ASSET" --dir /tmp/atlas-source
           test -s "/tmp/atlas-source/$SOURCE_ASSET"
           unzip -q "/tmp/atlas-source/$SOURCE_ASSET" -d /tmp/atlas-work
-      - name: Locate project
+      - name: Analyze source and detect external hosts
+        shell: bash
+        run: |
+          set -u
+          REPORT=/tmp/atlas-source-analysis.txt
+          {
+            echo "ATLAS ZIP SOURCE ANALYSIS"
+            echo "Request: ${{ inputs.request_id }}"
+            echo "ZIP: ${{ inputs.source_asset_name }}"
+            echo
+            echo "PACKAGE.JSON FILES"
+            find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print | sort || true
+            echo
+            echo "CAPACITOR CONFIG FILES"
+            find /tmp/atlas-work -type f \( -name 'capacitor.config.*' -o -name 'capacitor.config' \) -not -path '*/node_modules/*' -print | sort || true
+            echo
+            echo "EXTERNAL HOST REFERENCES"
+            grep -RniI -E 'https?://[^[:space:]"'"'<>]+' /tmp/atlas-work --exclude-dir=node_modules --exclude-dir=android --exclude='*.map' 2>/dev/null | head -n 250 || true
+            echo
+            echo "GIFTShut CHECK"
+            grep -RniI 'api\.giftshut\.com\|giftshut' /tmp/atlas-work --exclude-dir=node_modules --exclude-dir=android --exclude='*.map' 2>/dev/null | head -n 100 || true
+          } | tee "$REPORT"
+          test -s "$REPORT"
+      - name: Upload source analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-source-analysis-${{ inputs.request_id }}
+          path: /tmp/atlas-source-analysis.txt
+          retention-days: 7
+      - name: Locate project root
         id: project
         shell: bash
         run: |
           set -euo pipefail
-          root="$(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print -quit | xargs -r dirname)"
+          root=""
+          while IFS= read -r pkg; do
+            dir="$(dirname "$pkg")"
+            if find "$dir" -maxdepth 1 -type f \( -name 'capacitor.config.*' -o -name 'capacitor.config' \) -print -quit | grep -q .; then
+              root="$dir"
+              break
+            fi
+          done < <(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print | sort)
+          if [ -z "$root" ]; then
+            root="$(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print -quit | xargs -r dirname)"
+          fi
           test -n "$root"
+          test -f "$root/package.json"
           echo "root=$root" >> "$GITHUB_OUTPUT"
+          echo "Detected project root: $root"
       - name: Install and build
         working-directory: ${{ steps.project.outputs.root }}
         shell: bash
@@ -130,10 +171,14 @@ jobs:
           OUT="Atlas-v${{ inputs.version_label }}-release.apk"
           ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n 1)
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          test -n "$ZIPALIGN"
+          test -n "$APKSIGNER"
           "$ZIPALIGN" -f -p 4 "$APK" "$ALIGNED"
           "$APKSIGNER" sign --ks /tmp/atlas-release.p12 --ks-type PKCS12 --ks-pass "pass:$ATLAS_STORE_PASSWORD" --key-pass "pass:$ATLAS_KEY_PASSWORD" --ks-key-alias "$ATLAS_KEY_ALIAS" --out "$OUT" "$ALIGNED"
           "$APKSIGNER" verify --verbose --print-certs "$OUT" | tee "Atlas-v${{ inputs.version_label }}-signature.txt"
           sha256sum "$OUT" > "${OUT}.sha256"
+          test -s "$OUT"
+          test "$(stat -c%s "$OUT")" -gt 100000
       - name: Publish signed APK to source release
         env:
           GH_TOKEN: ${{ github.token }}
