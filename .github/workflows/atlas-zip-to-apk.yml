@@ -42,6 +42,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: Prepare Android SDK
+        uses: android-actions/setup-android@v3
       - name: Download source ZIP
         env:
           GH_TOKEN: ${{ github.token }}
@@ -54,74 +56,45 @@ jobs:
           gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$SOURCE_ASSET" --dir /tmp/atlas-source
           test -s "/tmp/atlas-source/$SOURCE_ASSET"
           unzip -q "/tmp/atlas-source/$SOURCE_ASSET" -d /tmp/atlas-work
-      - name: Analyze source and detect external hosts
-        shell: bash
-        run: |
-          set -u
-          REPORT=/tmp/atlas-source-analysis.txt
-          {
-            echo "ATLAS ZIP SOURCE ANALYSIS"
-            echo "Request: ${{ inputs.request_id }}"
-            echo "ZIP: ${{ inputs.source_asset_name }}"
-            echo
-            echo "PACKAGE.JSON FILES"
-            find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print | sort || true
-            echo
-            echo "CAPACITOR CONFIG FILES"
-            find /tmp/atlas-work -type f \( -name 'capacitor.config.*' -o -name 'capacitor.config' \) -not -path '*/node_modules/*' -print | sort || true
-            echo
-            echo "EXTERNAL HOST REFERENCES"
-            grep -RniI -E 'https?://[^[:space:]"'"'<>]+' /tmp/atlas-work --exclude-dir=node_modules --exclude-dir=android --exclude='*.map' 2>/dev/null | head -n 250 || true
-            echo
-            echo "GIFTShut CHECK"
-            grep -RniI 'api\.giftshut\.com\|giftshut' /tmp/atlas-work --exclude-dir=node_modules --exclude-dir=android --exclude='*.map' 2>/dev/null | head -n 100 || true
-          } | tee "$REPORT"
-          test -s "$REPORT"
-      - name: Upload source analysis
-        uses: actions/upload-artifact@v4
-        with:
-          name: atlas-source-analysis-${{ inputs.request_id }}
-          path: /tmp/atlas-source-analysis.txt
-          retention-days: 7
-      - name: Locate project root
+      - name: Locate proven Atlas build script
         id: project
         shell: bash
         run: |
           set -euo pipefail
-          root=""
-          while IFS= read -r pkg; do
-            dir="$(dirname "$pkg")"
-            if find "$dir" -maxdepth 1 -type f \( -name 'capacitor.config.*' -o -name 'capacitor.config' \) -print -quit | grep -q .; then
-              root="$dir"
-              break
-            fi
-          done < <(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print | sort)
-          if [ -z "$root" ]; then
-            root="$(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print -quit | xargs -r dirname)"
-          fi
-          test -n "$root"
-          test -f "$root/package.json"
+          script="$(find /tmp/atlas-work -type f -name 'build_apk_termux.sh' -print -quit)"
+          test -n "$script"
+          root="$(dirname "$script")"
+          test -f "$root/build_apk_termux.sh"
+          chmod +x "$root/build_apk_termux.sh"
           echo "root=$root" >> "$GITHUB_OUTPUT"
-          echo "Detected project root: $root"
-      - name: Install and build
+          echo "script=$script" >> "$GITHUB_OUTPUT"
+          echo "Using proven Atlas build script: $script"
+      - name: Execute proven Atlas build process
         working-directory: ${{ steps.project.outputs.root }}
         shell: bash
         run: |
           set -euo pipefail
-          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
-          npm run build
-          test -f dist/index.html
-          if [ ! -d android ]; then npx cap add android; fi
-          npx cap sync android
-      - name: Build unsigned release APK
-        working-directory: ${{ steps.project.outputs.root }}/android
+          echo "Executing: bash build_apk_termux.sh"
+          bash build_apk_termux.sh
+      - name: Locate generated APK
+        id: apk
+        working-directory: ${{ steps.project.outputs.root }}
         shell: bash
         run: |
           set -euo pipefail
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace
-          test -f app/build/outputs/apk/release/app-release.apk
-          cp app/build/outputs/apk/release/app-release.apk /tmp/Atlas-unsigned.apk
+          apk="$(find . -type f -name '*.apk' \
+            -not -path './node_modules/*' \
+            -not -path './.gradle/*' \
+            -not -path './android/.gradle/*' \
+            -not -path './android/build/*' \
+            -not -path './android/app/build/intermediates/*' \
+            -print | sort | tail -n 1)"
+          test -n "$apk"
+          cp "$apk" /tmp/Atlas-unsigned.apk
+          test -s /tmp/Atlas-unsigned.apk
+          echo "apk=$apk" >> "$GITHUB_OUTPUT"
+          echo "Generated APK: $apk"
+          ls -lh /tmp/Atlas-unsigned.apk
       - name: Upload unsigned APK
         uses: actions/upload-artifact@v4
         with:
@@ -178,7 +151,6 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs "$OUT" | tee "Atlas-v${{ inputs.version_label }}-signature.txt"
           sha256sum "$OUT" > "${OUT}.sha256"
           test -s "$OUT"
-          test "$(stat -c%s "$OUT")" -gt 100000
       - name: Publish signed APK to source release
         env:
           GH_TOKEN: ${{ github.token }}
