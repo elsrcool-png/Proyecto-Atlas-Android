@@ -42,7 +42,7 @@ jobs:
           echo "APK structure: OK"
       - uses: actions/upload-artifact@v4
         with:
-          name: Atlas-APK-Builder-v2
+          name: Atlas-APK-Builder-v2.1
           path: atlas-apk-builder/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
