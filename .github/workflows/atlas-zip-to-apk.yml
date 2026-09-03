@@ -72,19 +72,43 @@ jobs:
           done < <(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print0)
           test -n "$root"
           echo "root=$root" >> "$GITHUB_OUTPUT"
-          echo "Atlas project root: $root"
+          echo "Atlas web project root: $root"
           test -f "$root/package.json"
+
+          android_root=""
+          if test -f "$root/android/gradlew"; then
+            android_root="$root/android"
+          else
+            candidate="$(find "$(dirname "$root")" -type f -path '*/android/gradlew' -print -quit 2>/dev/null || true)"
+            if test -n "$candidate"; then
+              android_root="$(dirname "$candidate")"
+            fi
+          fi
+          if test -z "$android_root"; then
+            candidate="$(find /tmp/atlas-work -type f -path '*/android/gradlew' -print -quit 2>/dev/null || true)"
+            if test -n "$candidate"; then
+              android_root="$(dirname "$candidate")"
+            fi
+          fi
+          test -n "$android_root" || { echo "ERROR: no se encontró Android/gradlew"; find /tmp/atlas-work -name gradlew -print; exit 1; }
+          echo "android_root=$android_root" >> "$GITHUB_OUTPUT"
+          echo "Atlas Android project root: $android_root"
       - name: Audit AtlasQa native integration
         working-directory: ${{ steps.project.outputs.root }}
+        env:
+          ANDROID_ROOT: ${{ steps.project.outputs.android_root }}
         shell: bash
         run: |
           set -euo pipefail
           echo "=== AtlasQa native integration audit ==="
-          test -f android/app/src/main/java/*/*/AtlasQaPlugin.java || test -f android/app/src/main/java/*/AtlasQaPlugin.java || { echo "ERROR: AtlasQaPlugin.java not found"; find android -name 'AtlasQaPlugin.java' -print; exit 1; }
-          grep -R -q '@CapacitorPlugin(name="AtlasQa")' android/app/src/main/java || { echo "ERROR: @CapacitorPlugin(name=\"AtlasQa\") not found"; exit 1; }
-          grep -R -q 'AtlasQaPlugin.class' android/app/src/main/java || { echo "ERROR: MainActivity does not register AtlasQaPlugin.class"; exit 1; }
+          PLUGIN="$(find "$ANDROID_ROOT/app/src/main/java" -type f -name 'AtlasQaPlugin.java' -print -quit 2>/dev/null || true)"
+          test -n "$PLUGIN" || { echo "ERROR: AtlasQaPlugin.java not found"; find "$ANDROID_ROOT" -name 'AtlasQaPlugin.java' -print; exit 1; }
+          grep -q '@CapacitorPlugin(name="AtlasQa")' "$PLUGIN" || { echo "ERROR: @CapacitorPlugin(name=\"AtlasQa\") not found"; exit 1; }
+          grep -R -q 'AtlasQaPlugin.class' "$ANDROID_ROOT/app/src/main/java" || { echo "ERROR: MainActivity does not register AtlasQaPlugin.class"; exit 1; }
           grep -R -q "registerPlugin('AtlasQa')\|registerPlugin(\"AtlasQa\")" . --exclude-dir=node_modules --exclude-dir=dist || { echo "ERROR: web registerPlugin('AtlasQa') not found"; exit 1; }
           echo "AtlasQa native/web integration: PASS"
+          echo "Plugin: $PLUGIN"
+          echo "Android root: $ANDROID_ROOT"
       - name: Install project dependencies
         working-directory: ${{ steps.project.outputs.root }}
         shell: bash
@@ -105,20 +129,24 @@ jobs:
           echo "Web bundle: PASS"
       - name: Prepare Capacitor Android
         working-directory: ${{ steps.project.outputs.root }}
+        env:
+          ANDROID_ROOT: ${{ steps.project.outputs.android_root }}
         shell: bash
         run: |
           set -euo pipefail
+          echo "=== Preparing Capacitor Android ==="
+          if test "$ANDROID_ROOT" != "$PWD/android"; then
+            rm -rf android
+            mkdir -p android
+            cp -a "$ANDROID_ROOT/." android/
+            echo "Copied separate Android project into web/android"
+          fi
+          test -f android/gradlew
           PLUGIN_CATALOG="android/app/src/main/assets/capacitor.plugins.json"
           BACKUP="/tmp/atlas-capacitor.plugins.json"
           if test -f "$PLUGIN_CATALOG"; then
             cp "$PLUGIN_CATALOG" "$BACKUP"
             echo "Preserved source capacitor.plugins.json"
-          fi
-          if test -d android && test -f android/gradlew; then
-            echo "Existing Android project detected"
-          else
-            echo "Adding Android platform with Capacitor"
-            npx cap add android
           fi
           npx cap sync android
           if test -f "$BACKUP"; then
@@ -127,7 +155,9 @@ jobs:
           fi
           test -f "$PLUGIN_CATALOG"
           grep -q 'AtlasQa' "$PLUGIN_CATALOG" || { echo "ERROR: AtlasQa missing from capacitor.plugins.json after sync/restore"; exit 1; }
-          echo "Capacitor plugin catalog: PASS"
+          test -f android/app/src/main/java/*/*/AtlasQaPlugin.java || test -f android/app/src/main/java/*/AtlasQaPlugin.java
+          grep -R -q 'AtlasQaPlugin.class' android/app/src/main/java
+          echo "Capacitor Android preparation: PASS"
       - name: Build unsigned Android APK
         working-directory: ${{ steps.project.outputs.root }}/android
         shell: bash
@@ -136,7 +166,6 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
       - name: Locate generated APK
-        id: apk
         working-directory: ${{ steps.project.outputs.root }}
         shell: bash
         run: |
