@@ -12,6 +12,10 @@ on:
         description: Source ZIP asset name
         required: true
         type: string
+      source_sha256:
+        description: Expected SHA-256 of the source ZIP
+        required: true
+        type: string
       version_label:
         description: Exact Atlas QA Studio version to build
         required: true
@@ -53,6 +57,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_TAG: ${{ inputs.source_release_tag }}
           SOURCE_ASSET: ${{ inputs.source_asset_name }}
+          SOURCE_SHA256: ${{ inputs.source_sha256 }}
         shell: bash
         run: |
           set -euo pipefail
@@ -60,6 +65,14 @@ jobs:
           mkdir -p /tmp/atlas-source /tmp/atlas-work
           gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$SOURCE_ASSET" --dir /tmp/atlas-source
           test -s "/tmp/atlas-source/$SOURCE_ASSET"
+          ACTUAL_SHA="$(sha256sum "/tmp/atlas-source/$SOURCE_ASSET" | awk '{print $1}')"
+          test "$ACTUAL_SHA" = "$SOURCE_SHA256" || {
+            echo "ERROR: source ZIP SHA256 mismatch"
+            echo "Expected: $SOURCE_SHA256"
+            echo "Actual:   $ACTUAL_SHA"
+            exit 1
+          }
+          echo "Source ZIP SHA256: PASS ($ACTUAL_SHA)"
           unzip -q "/tmp/atlas-source/$SOURCE_ASSET" -d /tmp/atlas-work
 
       - name: Locate and audit source package
@@ -108,7 +121,7 @@ jobs:
           test -f "$native/AndroidManifest.xml"
           test -f "$native/strings.xml"
           java_count=$(find "$native" -type f -name '*.java' | wc -l)
-          test "$java_count" -ge 12 || { echo "ERROR: expected native Java layer, found $java_count files"; exit 1; }
+          test "$java_count" -ge 15 || { echo "ERROR: expected native Java layer, found $java_count files"; exit 1; }
           for f in AtlasQaPlugin.java MainActivity.java AtlasStorage.java AtlasVersion.java AtlasZipImporter.java AtlasTaskEngine.java BuildConfigStore.java BuildService.java CharacterStorage.java GitHubApi.java ImportService.java LocalHttpServer.java MapLiveLink.java AssetLibrary.java VersionUtil.java; do test -f "$native/com/tittor/atlas/qa/manager/$f" || { echo "ERROR: missing native/$f"; exit 1; }; done
           grep -q '@CapacitorPlugin(name="AtlasQa")' "$native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
           grep -q 'class AtlasQaPlugin extends Plugin' "$native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
@@ -331,6 +344,15 @@ jobs:
         with:
           name: atlas-unsigned-${{ inputs.request_id }}
           path: /tmp/unsigned
+
+      - name: Prepare Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install signing build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "platform-tools" "build-tools;35.0.0" >/dev/null
 
       - name: Restore Atlas master signing key
         env:
