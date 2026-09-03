@@ -101,6 +101,7 @@ jobs:
         working-directory: ${{ steps.project.outputs.root }}
         env:
           ANDROID_ROOT: ${{ steps.project.outputs.android_root }}
+          ATLAS_WEB_ROOT: ${{ steps.project.outputs.root }}
         shell: bash
         run: |
           set -euo pipefail
@@ -115,7 +116,7 @@ jobs:
           if test -z "$MAIN" && test -n "$ANDROID_ROOT"; then MAIN="$(find "$ANDROID_ROOT" -type f -name 'MainActivity.java' -print -quit 2>/dev/null || true)"; fi
           test -n "$MAIN" || { echo "ERROR: MainActivity.java not found in ZIP"; exit 1; }
           grep -q 'AtlasQaPlugin.class' "$MAIN" || { echo "ERROR: MainActivity does not register AtlasQaPlugin.class"; exit 1; }
-          grep -R -q "registerPlugin('AtlasQa')\|registerPlugin(\"AtlasQa\")" "$root" --exclude-dir=node_modules --exclude-dir=dist || { echo "ERROR: web registerPlugin('AtlasQa') not found"; exit 1; }
+          grep -R -q "registerPlugin('AtlasQa')\|registerPlugin(\"AtlasQa\")" "$ATLAS_WEB_ROOT" --exclude-dir=node_modules --exclude-dir=dist || { echo "ERROR: web registerPlugin('AtlasQa') not found"; exit 1; }
           echo "AtlasQa native/web integration: PASS"
           echo "Plugin: $PLUGIN"
           echo "MainActivity: $MAIN"
