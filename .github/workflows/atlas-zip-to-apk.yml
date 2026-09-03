@@ -168,27 +168,46 @@ jobs:
           APK=/tmp/unsigned/Atlas-unsigned.apk
           ALIGNED=/tmp/Atlas-aligned.apk
           OUT="Atlas-v${{ inputs.version_label }}-release.apk"
+          TXT="Atlas-v${{ inputs.version_label }}-release.txt"
+          SHA="${OUT}.sha256"
           ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n 1)
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
           test -n "$ZIPALIGN"
           test -n "$APKSIGNER"
           "$ZIPALIGN" -f -p 4 "$APK" "$ALIGNED"
           "$APKSIGNER" sign --ks /tmp/atlas-release.p12 --ks-type PKCS12 --ks-pass "pass:$ATLAS_STORE_PASSWORD" --key-pass "pass:$ATLAS_KEY_PASSWORD" --ks-key-alias "$ATLAS_KEY_ALIAS" --out "$OUT" "$ALIGNED"
-          "$APKSIGNER" verify --verbose --print-certs "$OUT" | tee "Atlas-v${{ inputs.version_label }}-signature.txt"
-          sha256sum "$OUT" > "${OUT}.sha256"
+          {
+            echo "Atlas QA Character Studio"
+            echo "Version: ${{ inputs.version_label }}"
+            echo "Build request: ${{ inputs.request_id }}"
+            echo "Source release: ${{ inputs.source_release_tag }}"
+            echo "Repository: $GITHUB_REPOSITORY"
+            echo "Commit: $GITHUB_SHA"
+            echo "Workflow run: $GITHUB_RUN_ID"
+            echo "Signed: yes"
+            echo "Signing alias: $ATLAS_KEY_ALIAS"
+            echo ""
+            echo "APK signature verification:"
+            "$APKSIGNER" verify --verbose --print-certs "$OUT"
+          } > "$TXT"
+          sha256sum "$OUT" > "$SHA"
           test -s "$OUT"
-      - name: Publish signed APK to source release
+          test -s "$TXT"
+          test -s "$SHA"
+          echo "=== THREE-FILE RELEASE ==="
+          ls -lh "$OUT" "$SHA" "$TXT"
+      - name: Publish signed package to source release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release upload '${{ inputs.source_release_tag }}' "Atlas-v${{ inputs.version_label }}-release.apk" "Atlas-v${{ inputs.version_label }}-release.apk.sha256" "Atlas-v${{ inputs.version_label }}-signature.txt" --repo "$GITHUB_REPOSITORY" --clobber
-      - name: Publish signed APK artifact
+          gh release upload '${{ inputs.source_release_tag }}' "Atlas-v${{ inputs.version_label }}-release.apk" "Atlas-v${{ inputs.version_label }}-release.apk.sha256" "Atlas-v${{ inputs.version_label }}-release.txt" --repo "$GITHUB_REPOSITORY" --clobber
+      - name: Publish three-file signed artifact
         uses: actions/upload-artifact@v4
         with:
           name: Atlas-release-${{ inputs.request_id }}
           path: |
             Atlas-v${{ inputs.version_label }}-release.apk
             Atlas-v${{ inputs.version_label }}-release.apk.sha256
-            Atlas-v${{ inputs.version_label }}-signature.txt
+            Atlas-v${{ inputs.version_label }}-release.txt
           retention-days: 7
