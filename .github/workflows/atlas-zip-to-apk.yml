@@ -74,6 +74,17 @@ jobs:
           echo "root=$root" >> "$GITHUB_OUTPUT"
           echo "Atlas project root: $root"
           test -f "$root/package.json"
+      - name: Audit AtlasQa native integration
+        working-directory: ${{ steps.project.outputs.root }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== AtlasQa native integration audit ==="
+          test -f android/app/src/main/java/*/*/AtlasQaPlugin.java || test -f android/app/src/main/java/*/AtlasQaPlugin.java || { echo "ERROR: AtlasQaPlugin.java not found"; find android -name 'AtlasQaPlugin.java' -print; exit 1; }
+          grep -R -q '@CapacitorPlugin(name="AtlasQa")' android/app/src/main/java || { echo "ERROR: @CapacitorPlugin(name=\"AtlasQa\") not found"; exit 1; }
+          grep -R -q 'AtlasQaPlugin.class' android/app/src/main/java || { echo "ERROR: MainActivity does not register AtlasQaPlugin.class"; exit 1; }
+          grep -R -q "registerPlugin('AtlasQa')\|registerPlugin(\"AtlasQa\")" . --exclude-dir=node_modules --exclude-dir=dist || { echo "ERROR: web registerPlugin('AtlasQa') not found"; exit 1; }
+          echo "AtlasQa native/web integration: PASS"
       - name: Install project dependencies
         working-directory: ${{ steps.project.outputs.root }}
         shell: bash
@@ -90,11 +101,19 @@ jobs:
         run: |
           set -euo pipefail
           npm run build
+          test -s dist/index.html
+          echo "Web bundle: PASS"
       - name: Prepare Capacitor Android
         working-directory: ${{ steps.project.outputs.root }}
         shell: bash
         run: |
           set -euo pipefail
+          PLUGIN_CATALOG="android/app/src/main/assets/capacitor.plugins.json"
+          BACKUP="/tmp/atlas-capacitor.plugins.json"
+          if test -f "$PLUGIN_CATALOG"; then
+            cp "$PLUGIN_CATALOG" "$BACKUP"
+            echo "Preserved source capacitor.plugins.json"
+          fi
           if test -d android && test -f android/gradlew; then
             echo "Existing Android project detected"
           else
@@ -102,6 +121,13 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
+          if test -f "$BACKUP"; then
+            cp "$BACKUP" "$PLUGIN_CATALOG"
+            echo "Restored source capacitor.plugins.json after cap sync"
+          fi
+          test -f "$PLUGIN_CATALOG"
+          grep -q 'AtlasQa' "$PLUGIN_CATALOG" || { echo "ERROR: AtlasQa missing from capacitor.plugins.json after sync/restore"; exit 1; }
+          echo "Capacitor plugin catalog: PASS"
       - name: Build unsigned Android APK
         working-directory: ${{ steps.project.outputs.root }}/android
         shell: bash
@@ -176,6 +202,7 @@ jobs:
           test -n "$APKSIGNER"
           "$ZIPALIGN" -f -p 4 "$APK" "$ALIGNED"
           "$APKSIGNER" sign --ks /tmp/atlas-release.p12 --ks-type PKCS12 --ks-pass "pass:$ATLAS_STORE_PASSWORD" --key-pass "pass:$ATLAS_KEY_PASSWORD" --ks-key-alias "$ATLAS_KEY_ALIAS" --out "$OUT" "$ALIGNED"
+          "$APKSIGNER" verify --verbose --print-certs "$OUT" > /tmp/atlas-signature.txt
           {
             echo "Atlas QA Character Studio"
             echo "Version: ${{ inputs.version_label }}"
@@ -187,8 +214,7 @@ jobs:
             echo "Signed: yes"
             echo "Signing alias: $ATLAS_KEY_ALIAS"
             echo ""
-            echo "APK signature verification:"
-            "$APKSIGNER" verify --verbose --print-certs "$OUT"
+            cat /tmp/atlas-signature.txt
           } > "$TXT"
           sha256sum "$OUT" > "$SHA"
           test -s "$OUT"
