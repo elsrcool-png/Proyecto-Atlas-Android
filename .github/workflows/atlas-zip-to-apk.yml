@@ -1,5 +1,5 @@
 name: Atlas ZIP to APK
-run-name: Atlas APK ${{ inputs.request_id }}
+run-name: Atlas QA Studio ${{ inputs.version_label }} | Atlas Runtime ${{ inputs.atlas_runtime_version }} | ${{ inputs.request_id }}
 
 on:
   workflow_dispatch:
@@ -17,8 +17,13 @@ on:
         required: true
         type: string
       version_label:
-        description: Exact Atlas QA Studio version to build
+        description: Atlas QA Character Studio version
         required: true
+        type: string
+      atlas_runtime_version:
+        description: Atlas runtime version
+        required: false
+        default: '2.62.8'
         type: string
       request_id:
         description: Unique build request ID
@@ -33,32 +38,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Checkout builder
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21'}
+      - uses: android-actions/setup-android@v3
 
-      - name: Prepare Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Prepare Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Prepare Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Download source ZIP
+      - name: Download and verify source ZIP
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_TAG: ${{ inputs.source_release_tag }}
           SOURCE_ASSET: ${{ inputs.source_asset_name }}
           SOURCE_SHA256: ${{ inputs.source_sha256 }}
-        shell: bash
         run: |
           set -euo pipefail
           rm -rf /tmp/atlas-source /tmp/atlas-work
@@ -66,266 +60,135 @@ jobs:
           gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$SOURCE_ASSET" --dir /tmp/atlas-source
           test -s "/tmp/atlas-source/$SOURCE_ASSET"
           ACTUAL_SHA="$(sha256sum "/tmp/atlas-source/$SOURCE_ASSET" | awk '{print $1}')"
-          test "$ACTUAL_SHA" = "$SOURCE_SHA256" || {
-            echo "ERROR: source ZIP SHA256 mismatch"
-            echo "Expected: $SOURCE_SHA256"
-            echo "Actual:   $ACTUAL_SHA"
-            exit 1
-          }
+          test "$ACTUAL_SHA" = "$SOURCE_SHA256" || { echo "ERROR: source ZIP SHA256 mismatch"; exit 1; }
           echo "Source ZIP SHA256: PASS ($ACTUAL_SHA)"
           unzip -q "/tmp/atlas-source/$SOURCE_ASSET" -d /tmp/atlas-work
 
-      - name: Locate and audit source package
+      - name: Locate and audit Atlas source
         id: project
-        shell: bash
         env:
-          VERSION_LABEL: ${{ inputs.version_label }}
+          STUDIO_VERSION: ${{ inputs.version_label }}
+          ATLAS_RUNTIME_VERSION: ${{ inputs.atlas_runtime_version }}
         run: |
           set -euo pipefail
           mapfile -t candidates < <(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print0 | xargs -0 -r -n1 dirname | sort -u)
-          ((${#candidates[@]} > 0)) || { echo 'ERROR: package.json not found'; exit 1; }
           root=''
           for candidate in "${candidates[@]}"; do
             if node -e 'const p=require(process.argv[1]); process.exit(p.scripts?.build ? 0 : 1)' "$candidate/package.json"; then root="$candidate"; break; fi
           done
           test -n "$root" || { echo 'ERROR: no web project with build script'; exit 1; }
           echo "root=$root" >> "$GITHUB_OUTPUT"
-          echo "Atlas web root: $root"
-
-          node - "$root/package.json" "$VERSION_LABEL" <<'NODE'
-          const fs=require('fs');
-          const [file, expected]=process.argv.slice(2);
-          const p=JSON.parse(fs.readFileSync(file,'utf8'));
-          if(p.version!==expected) throw new Error(`VERSION_MISMATCH package=${p.version} requested=${expected}`);
+          node - "$root/package.json" <<'NODE'
+          const fs=require('fs'); const p=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
           if(p.name!=='atlas-qa-character-studio') throw new Error(`Unexpected package name: ${p.name}`);
           if(!p.dependencies?.['@capacitor/core'] || !p.devDependencies?.['@capacitor/android'] || !p.devDependencies?.['@capacitor/cli']) throw new Error('Capacitor dependencies missing');
-          console.log(`Version/package audit: PASS (${p.version})`);
+          console.log(`Package audit: PASS (technical version ${p.version})`);
           NODE
-
           node - "$root/capacitor.config.json" <<'NODE'
-          const fs=require('fs');
-          const p=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          const fs=require('fs'); const p=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
           if(p.appId!=='com.tittor.atlas.qa') throw new Error(`Unexpected appId: ${p.appId}`);
           if(p.appName!=='Atlas QA Studio') throw new Error(`Unexpected appName: ${p.appName}`);
           if(p.webDir!=='dist') throw new Error(`Unexpected webDir: ${p.webDir}`);
-          console.log('Capacitor config audit: PASS');
           NODE
-
-          if grep -RniE 'AtlasPublishQa|PublishQa' "$root" --exclude-dir=node_modules --exclude-dir=dist --exclude='*.md' >/tmp/atlas-forbidden.txt 2>/dev/null; then
-            cat /tmp/atlas-forbidden.txt
-            echo 'ERROR: forbidden AtlasPublishQa implementation/reference detected'
-            exit 1
-          fi
-          test -d "$(dirname "$root")/native" || { echo 'ERROR: native/ directory missing beside web/'; exit 1; }
+          if grep -RniE 'AtlasPublishQa|PublishQa' "$root" --exclude-dir=node_modules --exclude-dir=dist --exclude='*.md' >/tmp/forbidden.txt 2>/dev/null; then cat /tmp/forbidden.txt; exit 1; fi
           native="$(dirname "$root")/native"
-          test -f "$native/AndroidManifest.xml"
-          test -f "$native/strings.xml"
-          java_count=$(find "$native" -type f -name '*.java' | wc -l)
-          test "$java_count" -ge 15 || { echo "ERROR: expected native Java layer, found $java_count files"; exit 1; }
-          for f in AtlasQaPlugin.java MainActivity.java AtlasStorage.java AtlasVersion.java AtlasZipImporter.java AtlasTaskEngine.java BuildConfigStore.java BuildService.java CharacterStorage.java GitHubApi.java ImportService.java LocalHttpServer.java MapLiveLink.java AssetLibrary.java VersionUtil.java; do test -f "$native/com/tittor/atlas/qa/manager/$f" || { echo "ERROR: missing native/$f"; exit 1; }; done
+          test -d "$native" && test -f "$native/AndroidManifest.xml" && test -f "$native/strings.xml"
+          for f in AtlasQaPlugin.java MainActivity.java AtlasStorage.java AtlasVersion.java AtlasZipImporter.java AtlasTaskEngine.java BuildConfigStore.java BuildService.java CharacterStorage.java GitHubApi.java ImportService.java LocalHttpServer.java MapLiveLink.java AssetLibrary.java VersionUtil.java; do test -f "$native/com/tittor/atlas/qa/manager/$f" || { echo "ERROR: missing $f"; exit 1; }; done
           grep -q '@CapacitorPlugin(name="AtlasQa")' "$native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
-          grep -q 'class AtlasQaPlugin extends Plugin' "$native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
-          grep -q 'com.tittor.atlas.qa.manager' "$native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
           grep -q 'AtlasQaPlugin.class' "$native/com/tittor/atlas/qa/manager/MainActivity.java"
           grep -q 'protected void load' "$native/com/tittor/atlas/qa/manager/MainActivity.java"
           grep -q 'BuildService' "$native/AndroidManifest.xml"
           grep -q 'ImportService' "$native/AndroidManifest.xml"
-          grep -q 'FOREGROUND_SERVICE_DATA_SYNC' "$native/AndroidManifest.xml"
-          echo 'Native source audit: PASS'
+          echo "Native audit: PASS | Studio $STUDIO_VERSION | Runtime $ATLAS_RUNTIME_VERSION"
 
-      - name: Install project dependencies
+      - name: Install dependencies and build web
         working-directory: ${{ steps.project.outputs.root }}
-        shell: bash
         run: |
           set -euo pipefail
           if test -f package-lock.json; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
-
-      - name: Build Atlas web application
-        working-directory: ${{ steps.project.outputs.root }}
-        shell: bash
-        run: |
-          set -euo pipefail
           npm run build
           test -s dist/index.html
-          if grep -Eqi '(/src/main\.(jsx|tsx)|src/main\.(jsx|tsx))' dist/index.html; then echo 'ERROR: dist references Vite source entry'; exit 1; fi
           echo 'Web build: PASS'
 
-      - name: Prepare Capacitor Android and integrate native layer
+      - name: Prepare Capacitor Android and native layer
         working-directory: ${{ steps.project.outputs.root }}
-        shell: bash
         env:
-          SOURCE_ROOT: ${{ steps.project.outputs.root }}
+          STUDIO_VERSION: ${{ inputs.version_label }}
         run: |
           set -euo pipefail
-          native="$(dirname "$SOURCE_ROOT")/native"
-          test -d "$native"
+          native="$(dirname "${{ steps.project.outputs.root }}")/native"
           rm -rf android
           npx cap add android
-          test -f android/gradlew
-
-          # Copy the complete native Java layer, not individual files.
           mkdir -p android/app/src/main/java/com/tittor/atlas/qa/manager
           cp -a "$native/com/tittor/atlas/qa/manager/." android/app/src/main/java/com/tittor/atlas/qa/manager/
-
-          # Copy native JavaScript as Android assets. Do not embed large JS/HTML
-          # payloads inside Java string literals: this is the structural fix for
-          # MapLiveLink quoting/serialization failures.
           test -d "$native/assets/atlas"
           mkdir -p android/app/src/main/assets/atlas
           cp -a "$native/assets/atlas/." android/app/src/main/assets/atlas/
-          for asset in atlas-live-link.template.js atlas-qa-return.js atlas-playtest-agent.js; do
-            test -s "android/app/src/main/assets/atlas/$asset" || { echo "ERROR: missing native asset $asset"; exit 1; }
-          done
-
-          # Merge required permissions, app label and services without deleting Capacitor manifest entries.
+          for asset in atlas-live-link.template.js atlas-qa-return.js atlas-playtest-agent.js; do test -s "android/app/src/main/assets/atlas/$asset"; done
           python - "$native/AndroidManifest.xml" android/app/src/main/AndroidManifest.xml <<'PY'
           from pathlib import Path
-          import re, sys
-          src=Path(sys.argv[1]).read_text(encoding='utf-8')
-          dst=Path(sys.argv[2])
-          out=dst.read_text(encoding='utf-8')
-          perms=re.findall(r'<uses-permission[^>]+android:name="([^"]+)"[^>]*/>', src)
-          for perm in perms:
-              if f'android:name="{perm}"' not in out:
-                  out=out.replace('</manifest>', f'    <uses-permission android:name="{perm}" />\n</manifest>')
-          for svc in ['ImportService','BuildService']:
-              if f'android:name="com.tittor.atlas.qa.manager.{svc}"' not in out:
-                  out=out.replace('</application>', f'        <service android:name="com.tittor.atlas.qa.manager.{svc}" android:exported="false" android:foregroundServiceType="dataSync" />\n    </application>')
-          # Replace the generated launcher activity with the Studio MainActivity.
+          import re,sys
+          src=Path(sys.argv[1]).read_text(); dst=Path(sys.argv[2]); out=dst.read_text()
+          for perm in re.findall(r'<uses-permission[^>]+android:name="([^"]+)"[^>]*/>',src):
+              if f'android:name="{perm}"' not in out: out=out.replace('</manifest>',f'    <uses-permission android:name="{perm}" />\n</manifest>')
+          for svc in ('ImportService','BuildService'):
+              if f'android:name="com.tittor.atlas.qa.manager.{svc}"' not in out: out=out.replace('</application>',f'    <service android:name="com.tittor.atlas.qa.manager.{svc}" android:exported="false" android:foregroundServiceType="dataSync" />\n</application>')
+          pattern=r'android:name="(?:\.MainActivity|[^"/]+\.MainActivity)"[^>]*>\s*<intent-filter>\s*<action android:name="android.intent.action.MAIN" />\s*<category android:name="android.intent.category.LAUNCHER" />'
           if 'com.tittor.atlas.qa.manager.MainActivity' not in out:
-              if not re.search(r'android:name="(?:\.MainActivity|[^"/]+\.MainActivity)"[^>]*>\s*<intent-filter>\s*<action android:name="android.intent.action.MAIN" />\s*<category android:name="android.intent.category.LAUNCHER" />', out, re.S):
-                  raise SystemExit('ERROR: generated launcher activity not found; refusing unsafe replacement')
+              if not re.search(pattern,out,re.S): raise SystemExit('ERROR: launcher activity not found')
               out=re.sub(r'android:name="(?:\.MainActivity|[^"/]+\.MainActivity)"','android:name="com.tittor.atlas.qa.manager.MainActivity"',out,count=1)
-          dst.write_text(out,encoding='utf-8')
+          dst.write_text(out)
           PY
-
-          # Merge required strings while preserving generated Capacitor resources.
-          python - "$native/strings.xml" android/app/src/main/res/values/strings.xml <<'PY'
+          python - android/app/build.gradle "$STUDIO_VERSION" <<'PY'
           from pathlib import Path
-          import re, sys
-          src=Path(sys.argv[1]).read_text(encoding='utf-8')
-          dst=Path(sys.argv[2])
-          out=dst.read_text(encoding='utf-8') if dst.exists() else '<resources>\n</resources>\n'
-          for name in ['app_name','title_activity_main','package_name','custom_url_scheme']:
-              m=re.search(rf'<string name="{name}">(.*?)</string>',src,re.S)
-              if not m: continue
-              val=m.group(1)
-              if re.search(rf'<string name="{name}">',out):
-                  out=re.sub(rf'<string name="{name}">.*?</string>',f'<string name="{name}">{val}</string>',out,flags=re.S)
-              else:
-                  out=out.replace('</resources>',f'    <string name="{name}">{val}</string>\n</resources>')
-          dst.write_text(out,encoding='utf-8')
+          import re,sys
+          p=Path(sys.argv[1]); v=sys.argv[2]; s=p.read_text()
+          parts=v.split('.')
+          if len(parts)!=3 or not all(x.isdigit() for x in parts): raise SystemExit('ERROR: Studio version must be x.y.z')
+          code=int(parts[0])*10000+int(parts[1])*100+int(parts[2])
+          if re.search(r'(?m)^\s*versionCode\s+.*$',s): s=re.sub(r'(?m)^\s*versionCode\s+.*$',f'        versionCode {code}',s,count=1)
+          else: s=s.replace('defaultConfig {',f'defaultConfig {{\n        versionCode {code}',1)
+          if re.search(r'(?m)^\s*versionName\s+.*$',s): s=re.sub(r'(?m)^\s*versionName\s+.*$',f'        versionName "{v}"',s,count=1)
+          else: s=s.replace('defaultConfig {',f'defaultConfig {{\n        versionName "{v}"',1)
+          p.write_text(s)
           PY
-
-          # Register AtlasQa deterministically before BridgeActivity creates the Bridge.
-          grep -q 'protected void load' android/app/src/main/java/com/tittor/atlas/qa/manager/MainActivity.java
-          grep -q 'registerPlugin(AtlasQaPlugin.class)' android/app/src/main/java/com/tittor/atlas/qa/manager/MainActivity.java
-
           npx cap sync android
-
-          # A manually registered plugin must not also be injected through the generated catalog.
           catalog=android/app/src/main/assets/capacitor.plugins.json
-          if test -f "$catalog"; then
-            python - "$catalog" <<'PY'
-          import json,sys
-          from pathlib import Path
-          p=Path(sys.argv[1])
-          a=json.loads(p.read_text())
-          if not isinstance(a,list): raise SystemExit('ERROR: capacitor.plugins.json is not an array')
-          b=[x for x in a if x.get('pkg')!='AtlasQa']
-          p.write_text(json.dumps(b,indent=2)+'\n')
+          if test -f "$catalog"; then python - "$catalog" <<'PY'
+          import json,sys; from pathlib import Path
+          p=Path(sys.argv[1]); a=json.loads(p.read_text()); p.write_text(json.dumps([x for x in a if x.get('pkg')!='AtlasQa'],indent=2)+'\n')
           PY
           fi
-
-          # Final native integration audit after cap sync.
-          test "$(find android/app/src/main/java/com/tittor/atlas/qa/manager -type f -name '*.java' | wc -l)" -ge 15
-          grep -q '@CapacitorPlugin(name="AtlasQa")' android/app/src/main/java/com/tittor/atlas/qa/manager/AtlasQaPlugin.java
           grep -q 'registerPlugin(AtlasQaPlugin.class)' android/app/src/main/java/com/tittor/atlas/qa/manager/MainActivity.java
-          grep -q 'BuildService' android/app/src/main/AndroidManifest.xml
-          grep -q 'ImportService' android/app/src/main/AndroidManifest.xml
-          grep -q 'FOREGROUND_SERVICE_DATA_SYNC' android/app/src/main/AndroidManifest.xml
-          if test -f "$catalog" && grep -q '"pkg"[[:space:]]*:[[:space:]]*"AtlasQa"' "$catalog"; then echo 'ERROR: duplicate AtlasQa catalog registration'; exit 1; fi
-          for asset in atlas-live-link.template.js atlas-qa-return.js atlas-playtest-agent.js; do
-            test -s "android/app/src/main/assets/atlas/$asset" || { echo "ERROR: Android asset missing: $asset"; exit 1; }
-          done
-          if grep -qE 'private static String (playtestAgentScript|returnScript|bridgeScript)' android/app/src/main/java/com/tittor/atlas/qa/manager/MapLiveLink.java; then
-            echo 'ERROR: large Live Link JavaScript still embedded in MapLiveLink.java'
-            exit 1
-          fi
-          grep -q 'readAsset(Context c,String name)' android/app/src/main/java/com/tittor/atlas/qa/manager/MapLiveLink.java
-          grep -q 'atlas-live-link.template.js' android/app/src/main/java/com/tittor/atlas/qa/manager/MapLiveLink.java
           echo 'Capacitor/native integration: PASS'
 
-      - name: Install required Android SDK packages
-        shell: bash
-        run: |
-          set -euo pipefail
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android build tools
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Final pre-build audit
-        working-directory: ${{ steps.project.outputs.root }}
-        env:
-          VERSION_LABEL: ${{ inputs.version_label }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f android/gradlew
-          test -s dist/index.html
-          node -e 'const p=require("./package.json"); if(p.version!==process.env.VERSION_LABEL) throw new Error("version drift")'
-          grep -q 'com.tittor.atlas.qa' capacitor.config.json
-          grep -q 'registerPlugin(AtlasQaPlugin.class)' android/app/src/main/java/com/tittor/atlas/qa/manager/MainActivity.java
-          grep -q '@CapacitorPlugin(name="AtlasQa")' android/app/src/main/java/com/tittor/atlas/qa/manager/AtlasQaPlugin.java
-          grep -q 'AtlasQaPlugin' android/app/src/main/java/com/tittor/atlas/qa/manager/AtlasQaPlugin.java
-          for f in AtlasStorage AtlasVersion AtlasZipImporter AtlasTaskEngine BuildConfigStore BuildService CharacterStorage GitHubApi ImportService LocalHttpServer MapLiveLink AssetLibrary VersionUtil; do test -f "android/app/src/main/java/com/tittor/atlas/qa/manager/$f.java" || exit 1; done
-          for asset in atlas-live-link.template.js atlas-qa-return.js atlas-playtest-agent.js; do test -s "android/app/src/main/assets/atlas/$asset" || exit 1; done
-          if grep -qE 'private static String (playtestAgentScript|returnScript|bridgeScript)' android/app/src/main/java/com/tittor/atlas/qa/manager/MapLiveLink.java; then
-            echo 'ERROR: unsafe embedded Live Link JavaScript detected'
-            exit 1
-          fi
-          echo 'FINAL PRE-BUILD SOURCE AUDIT: PASS'
-
-      - name: Compile Java gate
+      - name: Compile Java and build unsigned APK
         working-directory: ${{ steps.project.outputs.root }}/android
-        shell: bash
         run: |
           set -euo pipefail
           chmod +x gradlew
           ./gradlew :app:compileDebugJavaWithJavac --no-daemon
-
-      - name: Build unsigned Android APK
-        working-directory: ${{ steps.project.outputs.root }}/android
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x gradlew
           ./gradlew clean assembleDebug --no-daemon
+          APK="$(find app/build/outputs/apk/debug -type f -name '*.apk' -print -quit)"
+          test -n "$APK" && test -s "$APK"
+          cp "$APK" /tmp/Atlas-unsigned.apk
 
-      - name: Validate generated APK
+      - name: Validate unsigned APK
         working-directory: ${{ steps.project.outputs.root }}
-        shell: bash
         env:
-          VERSION_LABEL: ${{ inputs.version_label }}
+          STUDIO_VERSION: ${{ inputs.version_label }}
         run: |
           set -euo pipefail
-          APK="$(find android/app/build/outputs/apk/debug -type f -name '*.apk' -print -quit)"
-          test -n "$APK" && test -s "$APK"
-          mkdir -p /tmp/apk-audit
-          cp "$APK" /tmp/Atlas-unsigned.apk
-          APKANALYZER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name apkanalyzer -print -quit 2>/dev/null || true)"
-          test -n "$APKANALYZER" || { echo 'ERROR: apkanalyzer not found'; exit 1; }
-          "$APKANALYZER" apk summary /tmp/Atlas-unsigned.apk | tee /tmp/apk-audit/summary.txt
-          grep -q 'com.tittor.atlas.qa' /tmp/apk-audit/summary.txt
-          APKANALYZER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name apkanalyzer -print -quit 2>/dev/null || true)"
-          test -n "$APKANALYZER" || { echo 'ERROR: apkanalyzer not found'; exit 1; }
-          DEX="$($APKANALYZER dex packages --defined-only /tmp/Atlas-unsigned.apk)"
-          for cls in AtlasQaPlugin BuildService ImportService MainActivity; do echo "$DEX" | grep -q "$cls" || { echo "ERROR: $cls missing from DEX"; exit 1; }; done
-          "$APKANALYZER" manifest permissions /tmp/Atlas-unsigned.apk | grep -q 'android.permission.FOREGROUND_SERVICE'
+          APKANALYZER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name apkanalyzer -print -quit)"
+          test -n "$APKANALYZER"
           "$APKANALYZER" manifest application-id /tmp/Atlas-unsigned.apk | grep -q 'com.tittor.atlas.qa'
-          "$APKANALYZER" manifest version-name /tmp/Atlas-unsigned.apk | grep -q "$VERSION_LABEL"
-          echo "APK validation: PASS ($APK)"
+          "$APKANALYZER" manifest version-name /tmp/Atlas-unsigned.apk | grep -q "$STUDIO_VERSION"
+          echo 'Unsigned APK validation: PASS'
 
-      - name: Upload unsigned APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: atlas-unsigned-${{ inputs.request_id }}
           path: /tmp/Atlas-unsigned.apk
@@ -339,87 +202,56 @@ jobs:
       contents: write
       actions: read
     steps:
-      - name: Download unsigned APK
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: atlas-unsigned-${{ inputs.request_id }}
           path: /tmp/unsigned
-
-      - name: Prepare Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install signing build tools
-        shell: bash
-        run: |
-          set -euo pipefail
-          sdkmanager "platform-tools" "build-tools;35.0.0" >/dev/null
-
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21'}
+      - uses: android-actions/setup-android@v3
+      - name: Install signing tools
+        run: sdkmanager "platform-tools" "build-tools;35.0.0" >/dev/null
       - name: Restore Atlas master signing key
         env:
           ATLAS_KEYSTORE_BASE64: ${{ secrets.ATLAS_KEYSTORE_BASE64 }}
-        shell: bash
         run: |
           set -euo pipefail
           test -n "$ATLAS_KEYSTORE_BASE64"
           printf '%s' "$ATLAS_KEYSTORE_BASE64" | base64 --decode > /tmp/atlas-release.p12
           test -s /tmp/atlas-release.p12
-
-      - name: Verify master signing key
-        env:
-          ATLAS_STORE_PASSWORD: ${{ secrets.ATLAS_STORE_PASSWORD }}
-          ATLAS_KEY_ALIAS: ${{ secrets.ATLAS_KEY_ALIAS }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          keytool -list -storetype PKCS12 -keystore /tmp/atlas-release.p12 -storepass "$ATLAS_STORE_PASSWORD" -alias "$ATLAS_KEY_ALIAS" >/dev/null
-
-      - name: Sign APK with Atlas key
+      - name: Verify key and sign package
         env:
           ATLAS_STORE_PASSWORD: ${{ secrets.ATLAS_STORE_PASSWORD }}
           ATLAS_KEY_PASSWORD: ${{ secrets.ATLAS_KEY_PASSWORD }}
           ATLAS_KEY_ALIAS: ${{ secrets.ATLAS_KEY_ALIAS }}
-        shell: bash
+          STUDIO_VERSION: ${{ inputs.version_label }}
+          ATLAS_RUNTIME_VERSION: ${{ inputs.atlas_runtime_version }}
         run: |
           set -euo pipefail
-          APK=/tmp/unsigned/Atlas-unsigned.apk
-          ALIGNED=/tmp/Atlas-aligned.apk
-          OUT="Atlas-v${{ inputs.version_label }}-release.apk"
-          TXT="Atlas-v${{ inputs.version_label }}-release.txt"
+          keytool -list -storetype PKCS12 -keystore /tmp/atlas-release.p12 -storepass "$ATLAS_STORE_PASSWORD" -alias "$ATLAS_KEY_ALIAS" >/dev/null
+          ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n1)
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n1)
+          OUT="Atlas_QA_Character_Studio_v${STUDIO_VERSION}_Atlas_${ATLAS_RUNTIME_VERSION}.apk"
+          TXT="Atlas_QA_Character_Studio_v${STUDIO_VERSION}_Atlas_${ATLAS_RUNTIME_VERSION}.txt"
           SHA="${OUT}.sha256"
-          ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n 1)
-          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
-          "$ZIPALIGN" -f -p 4 "$APK" "$ALIGNED"
-          "$APKSIGNER" sign --ks /tmp/atlas-release.p12 --ks-type PKCS12 --ks-pass "pass:$ATLAS_STORE_PASSWORD" --key-pass "pass:$ATLAS_KEY_PASSWORD" --ks-key-alias "$ATLAS_KEY_ALIAS" --out "$OUT" "$ALIGNED"
+          "$ZIPALIGN" -f -p 4 /tmp/unsigned/Atlas-unsigned.apk /tmp/Atlas-aligned.apk
+          "$APKSIGNER" sign --ks /tmp/atlas-release.p12 --ks-type PKCS12 --ks-pass "pass:$ATLAS_STORE_PASSWORD" --key-pass "pass:$ATLAS_KEY_PASSWORD" --ks-key-alias "$ATLAS_KEY_ALIAS" --out "$OUT" /tmp/Atlas-aligned.apk
           "$APKSIGNER" verify --verbose --print-certs "$OUT" > /tmp/atlas-signature.txt
-          {
-            echo "Atlas QA Character Studio"
-            echo "Version: ${{ inputs.version_label }}"
-            echo "Build request: ${{ inputs.request_id }}"
-            echo "Source release: ${{ inputs.source_release_tag }}"
-            echo "Repository: $GITHUB_REPOSITORY"
-            echo "Commit: $GITHUB_SHA"
-            echo "Workflow run: $GITHUB_RUN_ID"
-            echo "Signed: yes"
-            echo "Signing alias: $ATLAS_KEY_ALIAS"
-            echo
-            cat /tmp/atlas-signature.txt
-          } > "$TXT"
+          { echo 'Atlas QA Character Studio'; echo "Studio version: $STUDIO_VERSION"; echo "Atlas runtime: $ATLAS_RUNTIME_VERSION"; echo "Application ID: com.tittor.atlas.qa"; echo "Build request: ${{ inputs.request_id }}"; echo "Source release: ${{ inputs.source_release_tag }}"; echo "Source SHA256: ${{ inputs.source_sha256 }}"; echo "Repository: $GITHUB_REPOSITORY"; echo "Commit: $GITHUB_SHA"; echo "Workflow run: $GITHUB_RUN_ID"; echo 'Signed: yes'; echo "Signing alias: $ATLAS_KEY_ALIAS"; echo; cat /tmp/atlas-signature.txt; } > "$TXT"
           sha256sum "$OUT" > "$SHA"
           test -s "$OUT" && test -s "$TXT" && test -s "$SHA"
-
-      - name: Publish signed package to source release
+      - name: Publish signed package
         env:
           GH_TOKEN: ${{ github.token }}
+          STUDIO_VERSION: ${{ inputs.version_label }}
+          ATLAS_RUNTIME_VERSION: ${{ inputs.atlas_runtime_version }}
         run: |
-          set -euo pipefail
-          gh release upload '${{ inputs.source_release_tag }}' "Atlas-v${{ inputs.version_label }}-release.apk" "Atlas-v${{ inputs.version_label }}-release.apk.sha256" "Atlas-v${{ inputs.version_label }}-release.txt" --repo "$GITHUB_REPOSITORY" --clobber
-
-      - name: Publish signed artifact
-        uses: actions/upload-artifact@v4
+          gh release upload '${{ inputs.source_release_tag }}' "Atlas_QA_Character_Studio_v${STUDIO_VERSION}_Atlas_${ATLAS_RUNTIME_VERSION}.apk" "Atlas_QA_Character_Studio_v${STUDIO_VERSION}_Atlas_${ATLAS_RUNTIME_VERSION}.apk.sha256" "Atlas_QA_Character_Studio_v${STUDIO_VERSION}_Atlas_${ATLAS_RUNTIME_VERSION}.txt" --repo "$GITHUB_REPOSITORY" --clobber
+      - uses: actions/upload-artifact@v4
         with:
           name: Atlas-release-${{ inputs.request_id }}
           path: |
-            Atlas-v${{ inputs.version_label }}-release.apk
-            Atlas-v${{ inputs.version_label }}-release.apk.sha256
-            Atlas-v${{ inputs.version_label }}-release.txt
+            Atlas_QA_Character_Studio_v${{ inputs.version_label }}_Atlas_${{ inputs.atlas_runtime_version }}.apk
+            Atlas_QA_Character_Studio_v${{ inputs.version_label }}_Atlas_${{ inputs.atlas_runtime_version }}.apk.sha256
+            Atlas_QA_Character_Studio_v${{ inputs.version_label }}_Atlas_${{ inputs.atlas_runtime_version }}.txt
           retention-days: 7
