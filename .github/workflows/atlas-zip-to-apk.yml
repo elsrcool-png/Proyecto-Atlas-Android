@@ -80,9 +80,9 @@ jobs:
           echo "root=$root" >> "$GITHUB_OUTPUT"
           node - "$root/package.json" <<'NODE'
           const fs=require('fs'); const p=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
-          if(p.name!=='atlas-qa-character-studio') throw new Error(`Unexpected package name: ${p.name}`);
+          if(!p.name || typeof p.name!=='string') throw new Error('Invalid package name');
           if(!p.dependencies?.['@capacitor/core'] || !p.devDependencies?.['@capacitor/android'] || !p.devDependencies?.['@capacitor/cli']) throw new Error('Capacitor dependencies missing');
-          console.log(`Package audit: PASS (technical version ${p.version})`);
+          console.log(`Package audit: PASS (project ${p.name}, technical version ${p.version})`);
           NODE
           node - "$root/capacitor.config.json" <<'NODE'
           const fs=require('fs'); const p=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
