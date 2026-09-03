@@ -161,6 +161,34 @@ jobs:
             echo "Using supplied Android project with Gradle wrapper"
           fi
           test -f android/gradlew
+
+          # Integrate the complete native Java source tree from the Atlas ZIP.
+          NATIVE_ROOT="$(find /tmp/atlas-work -type d -path '*/native' -print -quit 2>/dev/null || true)"
+          if test -n "$NATIVE_ROOT"; then
+            echo "Atlas native source root: $NATIVE_ROOT"
+            NATIVE_JAVA_COUNT=0
+            while IFS= read -r -d '' src; do
+              rel="${src#$NATIVE_ROOT/}"
+              dest="android/app/src/main/java/$rel"
+              mkdir -p "$(dirname "$dest")"
+              cp "$src" "$dest"
+              NATIVE_JAVA_COUNT=$((NATIVE_JAVA_COUNT + 1))
+            done < <(find "$NATIVE_ROOT" -type f -name '*.java' -print0)
+            echo "Integrated native Java sources: $NATIVE_JAVA_COUNT"
+            test "$NATIVE_JAVA_COUNT" -gt 0 || { echo "ERROR: native directory exists but contains no Java sources"; exit 1; }
+            if test -d "$NATIVE_ROOT/res"; then
+              mkdir -p android/app/src/main/res
+              cp -a "$NATIVE_ROOT/res/." android/app/src/main/res/
+            fi
+            if test -d "$NATIVE_ROOT/assets"; then
+              mkdir -p android/app/src/main/assets
+              cp -a "$NATIVE_ROOT/assets/." android/app/src/main/assets/
+            fi
+          else
+            echo "WARNING: native/ directory not found; falling back to explicit AtlasQa/MainActivity copy"
+          fi
+
+          # Always ensure the two entry-point classes are present.
           PLUGIN_SOURCE="$(find /tmp/atlas-work -type f -name 'AtlasQaPlugin.java' -print -quit 2>/dev/null || true)"
           MAIN_SOURCE="$(find /tmp/atlas-work -type f -name 'MainActivity.java' -print -quit 2>/dev/null || true)"
           if test -n "$PLUGIN_SOURCE"; then
@@ -175,6 +203,7 @@ jobs:
             mkdir -p "android/app/src/main/java/$PKG_PATH"
             cp "$MAIN_SOURCE" "android/app/src/main/java/$PKG_PATH/MainActivity.java"
           fi
+
           PLUGIN_CATALOG="android/app/src/main/assets/capacitor.plugins.json"
           BACKUP="/tmp/atlas-capacitor.plugins.json"
           if test -f "$PLUGIN_CATALOG"; then cp "$PLUGIN_CATALOG" "$BACKUP"; fi
@@ -293,4 +322,4 @@ jobs:
             Atlas-v${{ inputs.version_label }}-release.apk
             Atlas-v${{ inputs.version_label }}-release.apk.sha256
             Atlas-v${{ inputs.version_label }}-release.txt
-          retention-days: 7
+          retention-days: 14
