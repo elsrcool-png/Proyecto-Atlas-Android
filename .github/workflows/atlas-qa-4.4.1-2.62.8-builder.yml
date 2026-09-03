@@ -1,0 +1,287 @@
+name: Atlas QA 4.4.1 + Atlas 2.62.8 | Dedicated Builder
+run-name: Atlas QA 4.4.1 + Atlas 2.62.8 | ${{ inputs.request_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_release_tag:
+        description: Release tag containing the verified Studio ZIP
+        required: true
+        type: string
+      source_asset_name:
+        description: Exact verified Studio ZIP filename
+        required: true
+        type: string
+      source_sha256:
+        description: SHA-256 of the verified Studio ZIP
+        required: true
+        type: string
+      request_id:
+        description: Unique build identifier
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: atlas-qa-4.4.1-2.62.8-${{ inputs.request_id }}
+  cancel-in-progress: false
+
+env:
+  STUDIO_VERSION: '4.4.1'
+  ATLAS_RUNTIME_VERSION: '2.62.8'
+  APPLICATION_ID: 'com.tittor.atlas.qa'
+  NODE_VERSION: '22'
+  JAVA_VERSION: '21'
+  ANDROID_PLATFORM: 'android-36'
+  ANDROID_BUILD_TOOLS: '36.0.0'
+
+jobs:
+  build:
+    name: Build and validate APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout builder repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;${{ env.ANDROID_PLATFORM }} build-tools;${{ env.ANDROID_BUILD_TOOLS }}'
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+
+      - name: Download verified Studio source ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/atlas-source /tmp/atlas-work /tmp/atlas-artifacts
+          mkdir -p /tmp/atlas-source /tmp/atlas-work /tmp/atlas-artifacts
+          gh release download '${{ inputs.source_release_tag }}' \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern '${{ inputs.source_asset_name }}' \
+            --dir /tmp/atlas-source
+          ZIP="/tmp/atlas-source/${{ inputs.source_asset_name }}"
+          test -s "$ZIP"
+          ACTUAL_SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
+          test "$ACTUAL_SHA" = '${{ inputs.source_sha256 }}'
+          unzip -q "$ZIP" -d /tmp/atlas-work
+          echo "SOURCE_SHA256=$ACTUAL_SHA" >> "$GITHUB_ENV"
+          echo "SOURCE_ZIP=$ZIP" >> "$GITHUB_ENV"
+          echo "SOURCE SHA256 PASS: $ACTUAL_SHA"
+
+      - name: Discover and lock Studio root
+        id: studio
+        run: |
+          set -euo pipefail
+          roots=()
+          while IFS= read -r -d '' p; do
+            roots+=("$(dirname "$p")")
+          done < <(find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print0)
+          test "${#roots[@]}" -gt 0
+          root=""
+          for candidate in "${roots[@]}"; do
+            if test -d "$candidate/native" && test -f "$candidate/native/AndroidManifest.xml" && test -f "$candidate/native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"; then
+              root="$candidate"
+              break
+            fi
+          done
+          test -n "$root" || { echo 'ERROR: verified Studio native layout not found'; printf '%s\n' "${roots[@]}"; exit 1; }
+          echo "root=$root" >> "$GITHUB_OUTPUT"
+          echo "STUDIO ROOT: $root"
+
+      - name: Assert dedicated target contract
+        working-directory: ${{ steps.studio.outputs.root }}
+        run: |
+          set -euo pipefail
+          test -f ATLAS_INTEGRATION_VERSION.txt
+          test "$(tr -d '\r\n' < ATLAS_INTEGRATION_VERSION.txt)" = "$ATLAS_RUNTIME_VERSION"
+          test -f ATLAS_INTEGRATION_LABEL.txt
+          grep -Fqx "Atlas $ATLAS_RUNTIME_VERSION" ATLAS_INTEGRATION_LABEL.txt
+          test -d atlas-integrated-source
+          test -f atlas-integrated-source/package.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+          if (p.scripts?.build === undefined) throw new Error('Studio package.json has no build script');
+          const ip=JSON.parse(fs.readFileSync('atlas-integrated-source/package.json','utf8'));
+          if (!ip.scripts?.build) throw new Error('Integrated Atlas package has no build script');
+          console.log('TARGET CONTRACT PASS');
+          NODE
+
+      - name: Install Studio web dependencies
+        working-directory: ${{ steps.studio.outputs.root }}/web
+        run: |
+          set -euo pipefail
+          if test -f package-lock.json; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+
+      - name: Build integrated Atlas 2.62.8
+        working-directory: ${{ steps.studio.outputs.root }}/atlas-integrated-source
+        run: |
+          set -euo pipefail
+          if test -f package-lock.json; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+          npm run build
+          test -s dist/index.html
+          echo 'ATLAS 2.62.8 WEB BUILD PASS'
+
+      - name: Stage Atlas runtime into Studio bundle
+        working-directory: ${{ steps.studio.outputs.root }}
+        run: |
+          set -euo pipefail
+          rm -rf web/public/bundled-game/site
+          mkdir -p web/public/bundled-game/site
+          cp -a atlas-integrated-source/dist/. web/public/bundled-game/site/
+          test -s web/public/bundled-game/site/index.html
+          test -f web/public/bundled-game/site/index.html
+          echo 'ATLAS BUNDLE STAGE PASS'
+
+      - name: Build Studio web application
+        working-directory: ${{ steps.studio.outputs.root }}/web
+        run: |
+          set -euo pipefail
+          npm run build
+          test -s dist/index.html
+          echo 'STUDIO WEB BUILD PASS'
+
+      - name: Prepare Capacitor Android project
+        working-directory: ${{ steps.studio.outputs.root }}/web
+        run: |
+          set -euo pipefail
+          test -x node_modules/.bin/cap || npm install @capacitor/core @capacitor/android @capacitor/cli --no-audit --no-fund
+          npx cap --version
+          rm -rf android
+          npx cap add android
+          test -d android/app/src/main
+
+      - name: Integrate frozen 4.4.0 native QA layer
+        working-directory: ${{ steps.studio.outputs.root }}/web
+        run: |
+          set -euo pipefail
+          NATIVE="$(dirname "$PWD")/native"
+          DEST="android/app/src/main/java/com/tittor/atlas/qa/manager"
+          test -f "$NATIVE/AndroidManifest.xml"
+          test -f "$NATIVE/com/tittor/atlas/qa/manager/MainActivity.java"
+          test -f "$NATIVE/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
+          grep -q '@CapacitorPlugin(name="AtlasQa")' "$NATIVE/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
+          mkdir -p "$DEST"
+          cp -a "$NATIVE/com/tittor/atlas/qa/manager/." "$DEST/"
+          if test -d "$NATIVE/assets"; then
+            mkdir -p android/app/src/main/assets
+            cp -a "$NATIVE/assets/." android/app/src/main/assets/
+          fi
+          python - "$NATIVE/AndroidManifest.xml" android/app/src/main/AndroidManifest.xml <<'PY'
+          from pathlib import Path
+          import re,sys
+          src=Path(sys.argv[1]).read_text()
+          dst=Path(sys.argv[2])
+          out=dst.read_text()
+          perms=re.findall(r'<uses-permission[^>]+android:name="([^"]+)"[^>]*/>',src)
+          for perm in perms:
+              if f'android:name="{perm}"' not in out:
+                  out=out.replace('</manifest>',f'    <uses-permission android:name="{perm}" />\n</manifest>')
+          out=out.replace('android:name=".MainActivity"','android:name="com.tittor.atlas.qa.manager.MainActivity"')
+          out=out.replace('android:name="MainActivity"','android:name="com.tittor.atlas.qa.manager.MainActivity"')
+          dst.write_text(out)
+          PY
+          grep -q 'com.tittor.atlas.qa.manager.MainActivity' android/app/src/main/AndroidManifest.xml
+          grep -q 'AtlasQaPlugin.class' android/app/src/main/java/com/tittor/atlas/qa/manager/MainActivity.java
+          echo 'NATIVE 4.4.0 QA LAYER PASS'
+
+      - name: Configure exact Studio version
+        working-directory: ${{ steps.studio.outputs.root }}/web/android
+        run: |
+          set -euo pipefail
+          test -f app/build.gradle
+          python - app/build.gradle "$STUDIO_VERSION" "$APPLICATION_ID" <<'PY'
+          from pathlib import Path
+          import re,sys
+          p=Path(sys.argv[1]); version=sys.argv[2]; appid=sys.argv[3]
+          parts=version.split('.')
+          if len(parts)!=3 or not all(x.isdigit() for x in parts): raise SystemExit('Invalid fixed Studio version')
+          code=int(parts[0])*10000+int(parts[1])*100+int(parts[2])
+          s=p.read_text()
+          s=re.sub(r'(?m)^\s*versionCode\s+.*$',f'        versionCode {code}',s,count=1)
+          s=re.sub(r'(?m)^\s*versionName\s+.*$',f'        versionName "{version}"',s,count=1)
+          if 'namespace' in s:
+              s=re.sub(r'(?m)^\s*namespace\s+["\'][^"\']+["\']',f'    namespace "{appid}"',s,count=1)
+          s=re.sub(r'(?m)^\s*applicationId\s+["\'][^"\']+["\']',f'        applicationId "{appid}"',s,count=1)
+          p.write_text(s)
+          PY
+          chmod +x gradlew
+          ./gradlew --version
+
+      - name: Capacitor sync and Gradle preflight
+        working-directory: ${{ steps.studio.outputs.root }}/web
+        run: |
+          set -euo pipefail
+          npx cap sync android
+          cd android
+          ./gradlew :app:tasks --no-daemon >/tmp/gradle-tasks.txt
+          grep -q 'assembleDebug' /tmp/gradle-tasks.txt
+          echo 'CAPACITOR + GRADLE PREFLIGHT PASS'
+
+      - name: Compile and assemble debug APK
+        working-directory: ${{ steps.studio.outputs.root }}/web/android
+        run: |
+          set -euo pipefail
+          ./gradlew :app:compileDebugJavaWithJavac --no-daemon --stacktrace
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          APK="$(find app/build/outputs/apk/debug -type f -name '*.apk' -print -quit)"
+          test -s "$APK"
+          cp "$APK" /tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
+          echo 'APK BUILD PASS'
+
+      - name: Validate APK identity and QA layer
+        run: |
+          set -euo pipefail
+          APK=/tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
+          APKANALYZER="$(find "$ANDROID_HOME" -type f -name apkanalyzer -print -quit)"
+          test -x "$APKANALYZER"
+          "$APKANALYZER" manifest application-id "$APK" | grep -Fxq "$APPLICATION_ID"
+          "$APKANALYZER" manifest version-name "$APK" | grep -Fxq "$STUDIO_VERSION"
+          "$APKANALYZER" dex packages "$APK" | grep -q 'com.tittor.atlas.qa.manager'
+          unzip -l "$APK" | grep -q 'assets/index.html'
+          echo 'APK IDENTITY + QA VALIDATION PASS'
+
+      - name: Write build manifest
+        run: |
+          set -euo pipefail
+          APK=/tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
+          SHA="$(sha256sum "$APK" | awk '{print $1}')"
+          cat > /tmp/atlas-artifacts/BUILD_INFO.txt <<EOF
+          Atlas QA Character Studio dedicated builder
+          Studio version: $STUDIO_VERSION
+          Atlas runtime: $ATLAS_RUNTIME_VERSION
+          Application ID: $APPLICATION_ID
+          Source SHA256: $SOURCE_SHA256
+          APK SHA256: $SHA
+          Workflow run: $GITHUB_RUN_ID
+          Builder: atlas-qa-4.4.1-2.62.8-builder.yml
+          Playtest Agent: NOT INCLUDED
+          EOF
+          sha256sum "$APK" > /tmp/atlas-artifacts/APK_SHA256.txt
+          echo 'BUILD MANIFEST PASS'
+
+      - name: Upload unsigned validation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-qa-4.4.1-2.62.8-${{ inputs.request_id }}
+          path: /tmp/atlas-artifacts/*
+          retention-days: 30
