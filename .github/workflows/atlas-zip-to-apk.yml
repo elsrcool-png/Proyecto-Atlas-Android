@@ -77,7 +77,6 @@ jobs:
           echo "root=$root" >> "$GITHUB_OUTPUT"
           echo "Atlas web project root: $root"
           test -f "$root/package.json"
-
           android_root=""
           if test -f "$root/android/gradlew"; then
             android_root="$root/android"
@@ -152,9 +151,7 @@ jobs:
             cp -a "$SOURCE_ANDROID" /tmp/atlas-native-source
             rm -rf android
             npx cap add android
-            if test -d /tmp/atlas-native-source/app/src/main; then
-              cp -a /tmp/atlas-native-source/app/src/main/. android/app/src/main/
-            fi
+            if test -d /tmp/atlas-native-source/app/src/main; then cp -a /tmp/atlas-native-source/app/src/main/. android/app/src/main/; fi
             if test -f /tmp/atlas-native-source/app/build.gradle; then cp /tmp/atlas-native-source/app/build.gradle android/app/build.gradle; fi
             if test -f /tmp/atlas-native-source/app/build.gradle.kts; then cp /tmp/atlas-native-source/app/build.gradle.kts android/app/build.gradle.kts; fi
             if test -f /tmp/atlas-native-source/variables.gradle; then cp /tmp/atlas-native-source/variables.gradle android/variables.gradle; fi
@@ -165,13 +162,18 @@ jobs:
           fi
           test -f android/gradlew
           PLUGIN_SOURCE="$(find /tmp/atlas-work -type f -name 'AtlasQaPlugin.java' -print -quit 2>/dev/null || true)"
+          MAIN_SOURCE="$(find /tmp/atlas-work -type f -name 'MainActivity.java' -print -quit 2>/dev/null || true)"
           if test -n "$PLUGIN_SOURCE"; then
-            REL="${PLUGIN_SOURCE#/tmp/atlas-work/}"
-            if [[ "$REL" == */app/src/main/java/* ]]; then
-              DEST="android/app/src/main/java/${REL#*/app/src/main/java/}"
-              mkdir -p "$(dirname "$DEST")"
-              cp "$PLUGIN_SOURCE" "$DEST"
-            fi
+            PKG_PATH="$(sed -n 's/^package[[:space:]]\+\([^;]*\);.*/\1/p' "$PLUGIN_SOURCE" | head -n1 | tr '.' '/')"
+            test -n "$PKG_PATH" || { echo "ERROR: could not determine AtlasQaPlugin Java package"; exit 1; }
+            mkdir -p "android/app/src/main/java/$PKG_PATH"
+            cp "$PLUGIN_SOURCE" "android/app/src/main/java/$PKG_PATH/AtlasQaPlugin.java"
+          fi
+          if test -n "$MAIN_SOURCE"; then
+            PKG_PATH="$(sed -n 's/^package[[:space:]]\+\([^;]*\);.*/\1/p' "$MAIN_SOURCE" | head -n1 | tr '.' '/')"
+            test -n "$PKG_PATH" || { echo "ERROR: could not determine MainActivity Java package"; exit 1; }
+            mkdir -p "android/app/src/main/java/$PKG_PATH"
+            cp "$MAIN_SOURCE" "android/app/src/main/java/$PKG_PATH/MainActivity.java"
           fi
           PLUGIN_CATALOG="android/app/src/main/assets/capacitor.plugins.json"
           BACKUP="/tmp/atlas-capacitor.plugins.json"
@@ -179,7 +181,10 @@ jobs:
           npx cap sync android
           if test -f "$BACKUP"; then cp "$BACKUP" "$PLUGIN_CATALOG"; fi
           test -f "$PLUGIN_CATALOG"
-          grep -q 'AtlasQa' "$PLUGIN_CATALOG" || { echo "ERROR: AtlasQa missing from capacitor.plugins.json"; exit 1; }
+          PLUGIN_CLASS="$(sed -n 's/^package[[:space:]]\+\([^;]*\);.*/\1/p' "$PLUGIN_SOURCE" | head -n1).AtlasQaPlugin"
+          test -n "$PLUGIN_CLASS" || { echo "ERROR: AtlasQaPlugin class path could not be determined"; exit 1; }
+          node -e 'const fs=require("fs"); const f=process.argv[1], cls=process.argv[2]; let a=JSON.parse(fs.readFileSync(f,"utf8")); if(!Array.isArray(a)) throw new Error("capacitor.plugins.json is not an array"); if(!a.some(p=>p.pkg==="AtlasQa")){a.push({pkg:"AtlasQa",classpath:cls}); fs.writeFileSync(f,JSON.stringify(a,null,2)+"\n");}' "$PLUGIN_CATALOG" "$PLUGIN_CLASS"
+          grep -q '"pkg"[[:space:]]*:[[:space:]]*"AtlasQa"' "$PLUGIN_CATALOG" || { echo "ERROR: AtlasQa missing from capacitor.plugins.json"; exit 1; }
           grep -R -q 'AtlasQaPlugin.class' android/app/src/main/java || { echo "ERROR: AtlasQaPlugin registration missing after sync"; exit 1; }
           echo "Capacitor Android preparation: PASS"
       - name: Install required Android SDK packages
