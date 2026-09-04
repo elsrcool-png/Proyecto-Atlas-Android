@@ -1,0 +1,194 @@
+name: Atlas Observer v2 | Automatic Build Intelligence
+
+on:
+  workflow_run:
+    workflows:
+      - "Atlas QA 4.4.1 + Atlas 2.62.8 | Dedicated Builder FIXED"
+    types: [completed]
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Optional GitHub Actions run ID. Leave empty to auto-detect the latest builder run.
+        required: false
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: atlas-observer-v2
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    name: Observe latest Atlas builder run
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve target run automatically
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MANUAL_RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ github.repository }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          if [ -n "$MANUAL_RUN_ID" ]; then
+            RUN_ID="$MANUAL_RUN_ID"
+            echo "Source: manual run_id"
+          elif [ -n "$EVENT_RUN_ID" ]; then
+            RUN_ID="$EVENT_RUN_ID"
+            echo "Source: workflow_run event"
+          else
+            echo "Source: automatic latest-run discovery"
+            RUN_ID="$(gh api "repos/$REPO/actions/workflows/atlas-qa-4.4.1-2.62.8-builder-fixed.yml/runs?per_page=20" --jq '.workflow_runs | sort_by(.id) | reverse | .[0].id')"
+          fi
+          test -n "$RUN_ID"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "Observing builder run: $RUN_ID"
+
+      - name: Collect complete run data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ steps.resolve.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p observer
+          gh api "repos/$REPO/actions/runs/$RUN_ID" > observer/run.json
+          gh api "repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100" > observer/jobs.json
+          gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" > observer/artifacts.json
+
+      - name: Generate canonical JSON report
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=Path('observer')
+          run=json.loads((b/'run.json').read_text())
+          jobs=json.loads((b/'jobs.json').read_text()).get('jobs',[])
+          artifacts=json.loads((b/'artifacts.json').read_text()).get('artifacts',[])
+          failed=[]
+          job_rows=[]
+          for j in jobs:
+              step_rows=[]
+              for s in j.get('steps') or []:
+                  row={k:s.get(k) for k in ('number','name','status','conclusion','started_at','completed_at')}
+                  step_rows.append(row)
+                  if s.get('conclusion') == 'failure':
+                      failed.append({'job':j.get('name'),'job_id':j.get('id'),'step':s.get('name'),'number':s.get('number')})
+              job_rows.append({'id':j.get('id'),'name':j.get('name'),'status':j.get('status'),'conclusion':j.get('conclusion'),'steps':step_rows})
+          conclusion=run.get('conclusion') or run.get('status') or 'unknown'
+          report={
+              'observer_version':'2.0',
+              'observed_at':__import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+              'repository':run.get('repository',{}).get('full_name'),
+              'workflow':run.get('name'),
+              'run_id':run.get('id'),
+              'run_number':run.get('run_number'),
+              'status':run.get('status'),
+              'conclusion':conclusion,
+              'branch':run.get('head_branch'),
+              'commit':run.get('head_sha'),
+              'event':run.get('event'),
+              'created_at':run.get('created_at'),
+              'updated_at':run.get('updated_at'),
+              'html_url':run.get('html_url'),
+              'failed_steps':failed,
+              'jobs':job_rows,
+              'artifacts':[{'id':a.get('id'),'name':a.get('name'),'size_in_bytes':a.get('size_in_bytes'),'expired':a.get('expired'),'created_at':a.get('created_at')} for a in artifacts],
+              'automation':{
+                  'automatic_discovery': True,
+                  'workflow_run_trigger': True,
+                  'scheduled_fallback_minutes': 10,
+                  'playtest_agent_included': False
+              }
+          }
+          (b/'latest.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
+          print(json.dumps(report,indent=2,ensure_ascii=False))
+          PY
+
+      - name: Generate dashboard
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('observer/latest.json').read_text())
+          c=r.get('conclusion','unknown')
+          label={'success':'PASS','failure':'FAIL','cancelled':'CANCELLED','skipped':'SKIPPED','neutral':'NEUTRAL'}.get(c,c.upper())
+          lines=[
+            '# Atlas Observer v2', '',
+            f'**Result:** `{label}`',
+            f'**Workflow:** `{r.get("workflow")}`',
+            f'**Run ID:** `{r.get("run_id")}`',
+            f'**Run number:** `{r.get("run_number")}`',
+            f'**Commit:** `{r.get("commit")}`',
+            f'**Branch:** `{r.get("branch")}`',
+            f'**Created:** `{r.get("created_at")}`',
+            f'**Observed:** `{r.get("observed_at")}`',
+            f'**Run:** {r.get("html_url")}', '',
+            '## Failed steps', ''
+          ]
+          if r.get('failed_steps'):
+              for x in r['failed_steps']:
+                  lines.append(f'- **{x["job"]}** → `{x["step"]}` (step {x["number"]})')
+          else:
+              lines.append('- None')
+          lines += ['', '## Jobs', '', '| Job | Status | Conclusion |', '|---|---|---|']
+          for j in r.get('jobs',[]):
+              lines.append(f'| {j["name"]} | {j["status"]} | {j["conclusion"]} |')
+          lines += ['', '## Artifacts', '', '| Name | Size | Expired |', '|---|---:|---|']
+          for a in r.get('artifacts',[]):
+              lines.append(f'| `{a["name"]}` | {a["size_in_bytes"]:,} bytes | {a["expired"]} |')
+          lines += ['', '## Automation', '', '- Workflow-run trigger: enabled', '- Scheduled fallback: every 10 minutes', '- Manual run inspection: supported', '- Playtest Agent: intentionally excluded']
+          Path('observer/latest.md').write_text('\n'.join(lines)+'\n')
+          PY
+
+      - name: Publish stable observation surface
+        run: |
+          set -euo pipefail
+          mkdir -p docs/atlas-observer
+          cp observer/latest.json docs/atlas-observer/latest.json
+          cp observer/latest.md docs/atlas-observer/latest.md
+          cat > docs/atlas-observer/README.md <<'EOF'
+          # Atlas Observer v2
+
+          Stable observation surface for the Atlas 4.4.1 + 2.62.8 builder.
+
+          - `latest.json` is the canonical machine-readable state.
+          - `latest.md` is the human-readable dashboard.
+          - The observer reacts to builder completion and also polls every 10 minutes as a recovery path.
+          - Manual inspection can target a specific run ID.
+          - Playtest Agent is not part of this pipeline.
+          EOF
+
+      - name: Upload per-run observer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-observer-v2-${{ steps.resolve.outputs.run_id }}
+          path: observer/
+          retention-days: 30
+
+      - name: Commit stable observation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/atlas-observer
+          if git diff --cached --quiet; then
+            echo "Observation already current."
+          else
+            git commit -m "Update Atlas Observer v2 latest result"
+            git push
+          fi
