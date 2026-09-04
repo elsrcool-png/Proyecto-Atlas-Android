@@ -1,0 +1,249 @@
+{
+  "observer_version": "2.0",
+  "observed_at": "2026-09-04T11:31:54.054977+00:00",
+  "repository": "elsrcool-png/Proyecto-Atlas-Android",
+  "workflow": "Atlas QA 4.4.1 + Atlas 2.62.8 | build-4.4.1-2628-005",
+  "run_id": 33844420864,
+  "run_number": 6,
+  "status": "completed",
+  "conclusion": "failure",
+  "branch": "main",
+  "commit": "01aed085d6058f090a942fec1349858fe538f3a9",
+  "event": "workflow_dispatch",
+  "created_at": "2026-09-04T06:27:19Z",
+  "updated_at": "2026-09-04T06:28:03Z",
+  "html_url": "https://github.com/elsrcool-png/Proyecto-Atlas-Android/actions/runs/33844420864",
+  "failed_steps": [
+    {
+      "job": "Build and validate unsigned APK",
+      "job_id": 100933135427,
+      "step": "Discover and lock Studio root",
+      "number": 7
+    }
+  ],
+  "jobs": [
+    {
+      "id": 100933135427,
+      "name": "Build and validate unsigned APK",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:24Z",
+          "completed_at": "2026-09-04T06:27:26Z"
+        },
+        {
+          "number": 2,
+          "name": "Checkout builder repository",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:26Z",
+          "completed_at": "2026-09-04T06:27:29Z"
+        },
+        {
+          "number": 3,
+          "name": "Setup Node",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:29Z",
+          "completed_at": "2026-09-04T06:27:29Z"
+        },
+        {
+          "number": 4,
+          "name": "Setup Java",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:29Z",
+          "completed_at": "2026-09-04T06:27:40Z"
+        },
+        {
+          "number": 5,
+          "name": "Setup Android SDK",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:40Z",
+          "completed_at": "2026-09-04T06:27:56Z"
+        },
+        {
+          "number": 6,
+          "name": "Download and verify source ZIP",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:56Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 7,
+          "name": "Discover and lock Studio root",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 8,
+          "name": "Assert exact target contract",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 9,
+          "name": "Install Studio dependencies",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 10,
+          "name": "Build Atlas 2.62.8",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 11,
+          "name": "Replace Studio bundled runtime with Atlas 2.62.8",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 12,
+          "name": "Build Studio web application",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 13,
+          "name": "Prepare Capacitor Android",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 14,
+          "name": "Integrate frozen 4.4.0 native QA layer",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 15,
+          "name": "Configure exact Android identity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 16,
+          "name": "Capacitor sync and Gradle preflight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 17,
+          "name": "Compile and assemble debug APK",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 18,
+          "name": "Validate unsigned APK",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 19,
+          "name": "Upload unsigned validation artifact",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 20,
+          "name": "Upload build metadata",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 21,
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 40,
+          "name": "Post Setup Java",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 41,
+          "name": "Post Setup Node",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:58Z"
+        },
+        {
+          "number": 42,
+          "name": "Post Checkout builder repository",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:58Z",
+          "completed_at": "2026-09-04T06:27:59Z"
+        },
+        {
+          "number": 43,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-04T06:27:59Z",
+          "completed_at": "2026-09-04T06:27:59Z"
+        }
+      ]
+    },
+    {
+      "id": 100933274808,
+      "name": "Sign and publish APK",
+      "status": "completed",
+      "conclusion": "skipped",
+      "steps": []
+    }
+  ],
+  "artifacts": [],
+  "automation": {
+    "automatic_discovery": true,
+    "workflow_run_trigger": true,
+    "scheduled_fallback_minutes": 10,
+    "manual_run_inspection": true,
+    "playtest_agent_included": false
+  }
+}
