@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: Optional GitHub Actions run ID. Leave empty to auto-detect the latest builder run.
+        description: Optional GitHub Actions run ID. Leave empty to auto-detect the latest completed builder run.
         required: false
         type: string
 
@@ -47,10 +47,13 @@ jobs:
             RUN_ID="$EVENT_RUN_ID"
             echo "Source: workflow_run event"
           else
-            echo "Source: automatic latest-run discovery"
-            RUN_ID="$(gh api "repos/$REPO/actions/workflows/atlas-qa-4.4.1-2.62.8-builder-fixed.yml/runs?per_page=20" --jq '.workflow_runs | sort_by(.id) | reverse | .[0].id')"
+            echo "Source: automatic latest completed-run discovery"
+            RUN_ID="$(gh api "repos/$REPO/actions/workflows/atlas-qa-4.4.1-2.62.8-builder-fixed.yml/runs?status=completed&per_page=20" --jq '.workflow_runs | sort_by(.id) | reverse | .[0].id')"
           fi
-          test -n "$RUN_ID"
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo 'ERROR: no completed Atlas builder run found' >&2
+            exit 1
+          fi
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           echo "Observing builder run: $RUN_ID"
 
@@ -71,6 +74,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
+          from datetime import datetime, timezone
           from pathlib import Path
           b=Path('observer')
           run=json.loads((b/'run.json').read_text())
@@ -89,7 +93,7 @@ jobs:
           conclusion=run.get('conclusion') or run.get('status') or 'unknown'
           report={
               'observer_version':'2.0',
-              'observed_at':__import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+              'observed_at':datetime.now(timezone.utc).isoformat(),
               'repository':run.get('repository',{}).get('full_name'),
               'workflow':run.get('name'),
               'run_id':run.get('id'),
@@ -109,6 +113,7 @@ jobs:
                   'automatic_discovery': True,
                   'workflow_run_trigger': True,
                   'scheduled_fallback_minutes': 10,
+                  'manual_run_inspection': True,
                   'playtest_agent_included': False
               }
           }
@@ -126,7 +131,7 @@ jobs:
           c=r.get('conclusion','unknown')
           label={'success':'PASS','failure':'FAIL','cancelled':'CANCELLED','skipped':'SKIPPED','neutral':'NEUTRAL'}.get(c,c.upper())
           lines=[
-            '# Atlas Observer v2', '',
+            '# Atlas Observer v2','',
             f'**Result:** `{label}`',
             f'**Workflow:** `{r.get("workflow")}`',
             f'**Run ID:** `{r.get("run_id")}`',
@@ -135,21 +140,18 @@ jobs:
             f'**Branch:** `{r.get("branch")}`',
             f'**Created:** `{r.get("created_at")}`',
             f'**Observed:** `{r.get("observed_at")}`',
-            f'**Run:** {r.get("html_url")}', '',
-            '## Failed steps', ''
+            f'**Run:** {r.get("html_url")}','',
+            '## Failed steps',''
           ]
           if r.get('failed_steps'):
-              for x in r['failed_steps']:
-                  lines.append(f'- **{x["job"]}** → `{x["step"]}` (step {x["number"]})')
+              lines += [f'- **{x["job"]}** → `{x["step"]}` (step {x["number"]})' for x in r['failed_steps']]
           else:
               lines.append('- None')
-          lines += ['', '## Jobs', '', '| Job | Status | Conclusion |', '|---|---|---|']
-          for j in r.get('jobs',[]):
-              lines.append(f'| {j["name"]} | {j["status"]} | {j["conclusion"]} |')
-          lines += ['', '## Artifacts', '', '| Name | Size | Expired |', '|---|---:|---|']
-          for a in r.get('artifacts',[]):
-              lines.append(f'| `{a["name"]}` | {a["size_in_bytes"]:,} bytes | {a["expired"]} |')
-          lines += ['', '## Automation', '', '- Workflow-run trigger: enabled', '- Scheduled fallback: every 10 minutes', '- Manual run inspection: supported', '- Playtest Agent: intentionally excluded']
+          lines += ['', '## Jobs', '', '| Job | Status | Conclusion |','|---|---|---|']
+          lines += [f'| {j["name"]} | {j["status"]} | {j["conclusion"]} |' for j in r['jobs']]
+          lines += ['', '## Artifacts', '', '| Name | Size | Expired |','|---|---:|---|']
+          lines += [f'| `{a["name"]}` | {(a["size_in_bytes"] or 0):,} bytes | {a["expired"]} |' for a in r['artifacts']]
+          lines += ['', '## Automation', '', '- Builder completion trigger: enabled', '- Scheduled fallback: every 10 minutes', '- Latest-run discovery: completed runs only', '- Manual run inspection: supported', '- Playtest Agent: intentionally excluded']
           Path('observer/latest.md').write_text('\n'.join(lines)+'\n')
           PY
 
@@ -166,7 +168,8 @@ jobs:
 
           - `latest.json` is the canonical machine-readable state.
           - `latest.md` is the human-readable dashboard.
-          - The observer reacts to builder completion and also polls every 10 minutes as a recovery path.
+          - The observer reacts to builder completion and polls every 10 minutes as a recovery path.
+          - Automatic fallback selects the newest completed run only.
           - Manual inspection can target a specific run ID.
           - Playtest Agent is not part of this pipeline.
           EOF
