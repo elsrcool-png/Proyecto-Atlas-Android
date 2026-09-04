@@ -1,0 +1,171 @@
+name: Atlas Observer | Build Intelligence
+
+on:
+  workflow_run:
+    workflows:
+      - "Atlas QA 4.4.1 + Atlas 2.62.8 | Dedicated Builder FIXED"
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: GitHub Actions run ID to inspect
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  observe:
+    name: Observe and publish build report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve run ID
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.run_id }}" ]; then
+            RUN_ID="${{ inputs.run_id }}"
+          else
+            RUN_ID="${{ github.event.workflow_run.id }}"
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "Observing workflow run: $RUN_ID"
+
+      - name: Collect workflow metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.run.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/atlas-observer
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}" > /tmp/atlas-observer/run.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" > /tmp/atlas-observer/jobs.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" > /tmp/atlas-observer/artifacts.json
+
+      - name: Generate machine-readable observation
+        env:
+          RUN_ID: ${{ steps.run.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          base=Path('/tmp/atlas-observer')
+          run=json.loads((base/'run.json').read_text())
+          jobs=json.loads((base/'jobs.json').read_text())
+          artifacts=json.loads((base/'artifacts.json').read_text())
+          job_rows=[]
+          failed_steps=[]
+          for j in jobs.get('jobs',[]):
+              steps=[]
+              for s in j.get('steps') or []:
+                  row={'name':s.get('name'),'status':s.get('status'),'conclusion':s.get('conclusion'),'number':s.get('number')}
+                  steps.append(row)
+                  if s.get('conclusion')=='failure': failed_steps.append({'job':j.get('name'),'step':s.get('name'),'number':s.get('number')})
+              job_rows.append({'name':j.get('name'),'status':j.get('status'),'conclusion':j.get('conclusion'),'steps':steps})
+          report={
+            'repository':run.get('repository',{}).get('full_name'),
+            'run_id':run.get('id'),
+            'run_number':run.get('run_number'),
+            'workflow':run.get('name'),
+            'event':run.get('event'),
+            'status':run.get('status'),
+            'conclusion':run.get('conclusion'),
+            'branch':run.get('head_branch'),
+            'commit':run.get('head_sha'),
+            'html_url':run.get('html_url'),
+            'created_at':run.get('created_at'),
+            'updated_at':run.get('updated_at'),
+            'failed_steps':failed_steps,
+            'jobs':job_rows,
+            'artifacts':[{'name':a.get('name'),'size_in_bytes':a.get('size_in_bytes'),'expired':a.get('expired'),'created_at':a.get('created_at')} for a in artifacts.get('artifacts',[])],
+          }
+          (base/'atlas-build-report.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
+          print(json.dumps(report,indent=2,ensure_ascii=False))
+          PY
+
+      - name: Generate human-readable dashboard
+        env:
+          RUN_ID: ${{ steps.run.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          base=Path('/tmp/atlas-observer')
+          r=json.loads((base/'atlas-build-report.json').read_text())
+          status=r.get('conclusion') or r.get('status') or 'UNKNOWN'
+          icon={'success':'PASS','failure':'FAIL','cancelled':'CANCELLED','skipped':'SKIPPED'}.get(status,status.upper())
+          lines=[
+            '# Atlas Build Observation', '',
+            f'**Result:** `{icon}`',
+            f'**Workflow:** `{r.get("workflow")}`',
+            f'**Run:** `{r.get("run_id")}`',
+            f'**Run number:** `{r.get("run_number")}`',
+            f'**Commit:** `{r.get("commit")}`',
+            f'**Branch:** `{r.get("branch")}`',
+            f'**GitHub run:** {r.get("html_url")}', '',
+            '## Failed steps', ''
+          ]
+          if r.get('failed_steps'):
+              for x in r['failed_steps']:
+                  lines.append(f'- **{x["job"]}** → `{x["step"]}` (step {x["number"]})')
+          else:
+              lines.append('- None')
+          lines += ['', '## Jobs', '', '| Job | Status | Conclusion |', '|---|---|---|']
+          for j in r.get('jobs',[]):
+              lines.append(f'| {j["name"]} | {j["status"]} | {j["conclusion"]} |')
+          lines += ['', '## Artifacts', '', '| Name | Size | Expired |', '|---|---:|---|']
+          for a in r.get('artifacts',[]):
+              size=a.get('size_in_bytes') or 0
+              lines.append(f'| `{a["name"]}` | {size:,} bytes | {a["expired"]} |')
+          (base/'ATLAS_BUILD_OBSERVATION.md').write_text('\n'.join(lines)+'\n')
+          PY
+
+      - name: Publish latest observation
+        run: |
+          set -euo pipefail
+          mkdir -p docs/atlas-observer
+          cp /tmp/atlas-observer/atlas-build-report.json docs/atlas-observer/latest.json
+          cp /tmp/atlas-observer/ATLAS_BUILD_OBSERVATION.md docs/atlas-observer/latest.md
+          cat > docs/atlas-observer/README.md <<'EOF'
+          # Atlas Build Observation
+
+          This directory is the machine-readable observation surface for Atlas Android CI.
+
+          - `latest.md` = latest human-readable result
+          - `latest.json` = latest machine-readable result
+
+          The observer records workflow result, failed step, jobs, commit and available artifacts.
+          Playtest Agent is intentionally outside this observation pipeline until the APK build is validated.
+          EOF
+
+      - name: Upload observation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-observation-${{ steps.run.outputs.run_id }}
+          path: /tmp/atlas-observer/*
+          retention-days: 30
+
+      - name: Commit latest observation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/atlas-observer
+          if git diff --cached --quiet; then
+            echo 'No observation changes to commit.'
+          else
+            git commit -m "Update Atlas build observation"
+            git push
+          fi
