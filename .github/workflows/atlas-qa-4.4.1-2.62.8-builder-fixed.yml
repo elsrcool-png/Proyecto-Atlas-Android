@@ -212,9 +212,33 @@ jobs:
           APK=/tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
           APKANALYZER="$(find "$ANDROID_HOME" -type f -name apkanalyzer -print -quit)"
           test -x "$APKANALYZER"
-          "$APKANALYZER" manifest application-id "$APK" | grep -Fxq "$APPLICATION_ID"
-          "$APKANALYZER" manifest version-name "$APK" | grep -Fxq "$STUDIO_VERSION"
-          unzip -l "$APK" | grep -q 'assets/index.html'
+          echo '=== APK VALIDATION ==='
+          echo "APK: $APK"
+          echo "APK SIZE: $(stat -c%s "$APK") bytes"
+          echo "APK ANALYZER: $APKANALYZER"
+          APP_ID_ACTUAL="$("$APKANALYZER" manifest application-id "$APK" | tr -d '\r' | sed -n '1p' | sed 's/[[:space:]]*$//')"
+          VERSION_ACTUAL="$("$APKANALYZER" manifest version-name "$APK" | tr -d '\r' | sed -n '1p' | sed 's/[[:space:]]*$//')"
+          echo "APPLICATION_ID EXPECTED: $APPLICATION_ID"
+          echo "APPLICATION_ID ACTUAL:   $APP_ID_ACTUAL"
+          echo "VERSION EXPECTED:        $STUDIO_VERSION"
+          echo "VERSION ACTUAL:          $VERSION_ACTUAL"
+          if test "$APP_ID_ACTUAL" != "$APPLICATION_ID"; then
+            echo 'ERROR: applicationId validation failed'
+            echo 'Raw applicationId output:'
+            "$APKANALYZER" manifest application-id "$APK" || true
+            exit 1
+          fi
+          if test "$VERSION_ACTUAL" != "$STUDIO_VERSION"; then
+            echo 'ERROR: versionName validation failed'
+            echo 'Raw versionName output:'
+            "$APKANALYZER" manifest version-name "$APK" || true
+            exit 1
+          fi
+          if ! unzip -l "$APK" | grep -q 'assets/index.html'; then
+            echo 'ERROR: assets/index.html missing from APK'
+            exit 1
+          fi
+          echo 'ASSETS INDEX PASS'
           echo 'UNSIGNED APK VALIDATION PASS'
 
       - uses: actions/upload-artifact@v4
