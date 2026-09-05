@@ -1,244 +1,333 @@
 {
   "observer_version": "2.0",
-  "observed_at": "2026-09-05T05:25:49.158550+00:00",
+  "observed_at": "2026-09-05T09:15:27.535246+00:00",
   "repository": "elsrcool-png/Proyecto-Atlas-Android",
-  "workflow": "Atlas QA 4.4.1 + Atlas 2.62.8 | build-4.4.1-2628-005",
-  "run_id": 33844420864,
-  "run_number": 6,
+  "workflow": "Atlas QA 4.4.1 + Atlas 2.62.8 | Atlas_4.4.1_2.62.8_SIGN_FINAL_20260905_034604",
+  "run_id": 33953454707,
+  "run_number": 13,
   "status": "completed",
-  "conclusion": "failure",
+  "conclusion": "success",
   "branch": "main",
-  "commit": "01aed085d6058f090a942fec1349858fe538f3a9",
+  "commit": "83d9373fe31ee35917c448594e2dc8cbc80226a4",
   "event": "workflow_dispatch",
-  "created_at": "2026-09-04T06:27:19Z",
-  "updated_at": "2026-09-04T06:28:03Z",
-  "html_url": "https://github.com/elsrcool-png/Proyecto-Atlas-Android/actions/runs/33844420864",
-  "failed_steps": [
-    {
-      "job": "Build and validate unsigned APK",
-      "job_id": 100933135427,
-      "step": "Discover and lock Studio root",
-      "number": 7
-    }
-  ],
+  "created_at": "2026-09-05T07:46:07Z",
+  "updated_at": "2026-09-05T07:50:39Z",
+  "html_url": "https://github.com/elsrcool-png/Proyecto-Atlas-Android/actions/runs/33953454707",
+  "failed_steps": [],
   "jobs": [
     {
-      "id": 100933135427,
+      "id": 101272390217,
       "name": "Build and validate unsigned APK",
       "status": "completed",
-      "conclusion": "failure",
+      "conclusion": "success",
       "steps": [
         {
           "number": 1,
           "name": "Set up job",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:24Z",
-          "completed_at": "2026-09-04T06:27:26Z"
+          "started_at": "2026-09-05T07:46:13Z",
+          "completed_at": "2026-09-05T07:46:15Z"
         },
         {
           "number": 2,
-          "name": "Checkout builder repository",
+          "name": "Run actions/checkout@v4",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:26Z",
-          "completed_at": "2026-09-04T06:27:29Z"
+          "started_at": "2026-09-05T07:46:15Z",
+          "completed_at": "2026-09-05T07:46:19Z"
         },
         {
           "number": 3,
-          "name": "Setup Node",
+          "name": "Run actions/setup-node@v4",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:29Z",
-          "completed_at": "2026-09-04T06:27:29Z"
+          "started_at": "2026-09-05T07:46:19Z",
+          "completed_at": "2026-09-05T07:46:22Z"
         },
         {
           "number": 4,
-          "name": "Setup Java",
+          "name": "Run actions/setup-java@v5",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:29Z",
-          "completed_at": "2026-09-04T06:27:40Z"
+          "started_at": "2026-09-05T07:46:22Z",
+          "completed_at": "2026-09-05T07:46:33Z"
         },
         {
           "number": 5,
-          "name": "Setup Android SDK",
+          "name": "Run android-actions/setup-android@v3",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:40Z",
-          "completed_at": "2026-09-04T06:27:56Z"
+          "started_at": "2026-09-05T07:46:33Z",
+          "completed_at": "2026-09-05T07:46:47Z"
         },
         {
           "number": 6,
           "name": "Download and verify source ZIP",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:56Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "started_at": "2026-09-05T07:46:47Z",
+          "completed_at": "2026-09-05T07:46:52Z"
         },
         {
           "number": 7,
           "name": "Discover and lock Studio root",
           "status": "completed",
-          "conclusion": "failure",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:46:52Z",
+          "completed_at": "2026-09-05T07:46:52Z"
         },
         {
           "number": 8,
           "name": "Assert exact target contract",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:46:52Z",
+          "completed_at": "2026-09-05T07:46:52Z"
         },
         {
           "number": 9,
           "name": "Install Studio dependencies",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:46:52Z",
+          "completed_at": "2026-09-05T07:47:01Z"
         },
         {
           "number": 10,
           "name": "Build Atlas 2.62.8",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:01Z",
+          "completed_at": "2026-09-05T07:47:39Z"
         },
         {
           "number": 11,
-          "name": "Replace Studio bundled runtime with Atlas 2.62.8",
+          "name": "Replace bundled runtime",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:39Z",
+          "completed_at": "2026-09-05T07:47:39Z"
         },
         {
           "number": 12,
           "name": "Build Studio web application",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:39Z",
+          "completed_at": "2026-09-05T07:47:41Z"
         },
         {
           "number": 13,
           "name": "Prepare Capacitor Android",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:41Z",
+          "completed_at": "2026-09-05T07:47:43Z"
         },
         {
           "number": 14,
           "name": "Integrate frozen 4.4.0 native QA layer",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:43Z",
+          "completed_at": "2026-09-05T07:47:43Z"
         },
         {
           "number": 15,
           "name": "Configure exact Android identity",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:43Z",
+          "completed_at": "2026-09-05T07:47:43Z"
         },
         {
           "number": 16,
           "name": "Capacitor sync and Gradle preflight",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:43Z",
+          "completed_at": "2026-09-05T07:47:57Z"
         },
         {
           "number": 17,
           "name": "Compile and assemble debug APK",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:47:57Z",
+          "completed_at": "2026-09-05T07:48:51Z"
         },
         {
           "number": 18,
           "name": "Validate unsigned APK",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:48:51Z",
+          "completed_at": "2026-09-05T07:49:48Z"
         },
         {
           "number": 19,
-          "name": "Upload unsigned validation artifact",
-          "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
-        },
-        {
-          "number": 20,
-          "name": "Upload build metadata",
-          "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
-        },
-        {
-          "number": 21,
           "name": "Run actions/upload-artifact@v4",
           "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:49:48Z",
+          "completed_at": "2026-09-05T07:49:51Z"
         },
         {
-          "number": 40,
-          "name": "Post Setup Java",
+          "number": 36,
+          "name": "Post Run actions/setup-java@v5",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
+          "started_at": "2026-09-05T07:49:51Z",
+          "completed_at": "2026-09-05T07:49:51Z"
         },
         {
-          "number": 41,
-          "name": "Post Setup Node",
-          "status": "completed",
-          "conclusion": "skipped",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:58Z"
-        },
-        {
-          "number": 42,
-          "name": "Post Checkout builder repository",
+          "number": 37,
+          "name": "Post Run actions/setup-node@v4",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:58Z",
-          "completed_at": "2026-09-04T06:27:59Z"
+          "started_at": "2026-09-05T07:49:51Z",
+          "completed_at": "2026-09-05T07:49:51Z"
         },
         {
-          "number": 43,
+          "number": 38,
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:49:51Z",
+          "completed_at": "2026-09-05T07:49:52Z"
+        },
+        {
+          "number": 39,
           "name": "Complete job",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-09-04T06:27:59Z",
-          "completed_at": "2026-09-04T06:27:59Z"
+          "started_at": "2026-09-05T07:49:52Z",
+          "completed_at": "2026-09-05T07:49:52Z"
         }
       ]
     },
     {
-      "id": 100933274808,
+      "id": 101272843424,
       "name": "Sign and publish APK",
       "status": "completed",
-      "conclusion": "skipped",
-      "steps": []
+      "conclusion": "success",
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:49:57Z",
+          "completed_at": "2026-09-05T07:49:58Z"
+        },
+        {
+          "number": 2,
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:49:58Z",
+          "completed_at": "2026-09-05T07:50:01Z"
+        },
+        {
+          "number": 3,
+          "name": "Run actions/setup-java@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:01Z",
+          "completed_at": "2026-09-05T07:50:01Z"
+        },
+        {
+          "number": 4,
+          "name": "Run android-actions/setup-android@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:01Z",
+          "completed_at": "2026-09-05T07:50:13Z"
+        },
+        {
+          "number": 5,
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:13Z",
+          "completed_at": "2026-09-05T07:50:14Z"
+        },
+        {
+          "number": 6,
+          "name": "Restore signing key",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:14Z",
+          "completed_at": "2026-09-05T07:50:14Z"
+        },
+        {
+          "number": 7,
+          "name": "Sign APK",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:14Z",
+          "completed_at": "2026-09-05T07:50:31Z"
+        },
+        {
+          "number": 8,
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:31Z",
+          "completed_at": "2026-09-05T07:50:33Z"
+        },
+        {
+          "number": 9,
+          "name": "Publish GitHub release",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:33Z",
+          "completed_at": "2026-09-05T07:50:37Z"
+        },
+        {
+          "number": 17,
+          "name": "Post Run actions/setup-java@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:37Z",
+          "completed_at": "2026-09-05T07:50:37Z"
+        },
+        {
+          "number": 18,
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:37Z",
+          "completed_at": "2026-09-05T07:50:37Z"
+        },
+        {
+          "number": 19,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-05T07:50:37Z",
+          "completed_at": "2026-09-05T07:50:37Z"
+        }
+      ]
     }
   ],
-  "artifacts": [],
+  "artifacts": [
+    {
+      "id": 9965636887,
+      "name": "atlas-qa-4.4.1-2.62.8-signed",
+      "size_in_bytes": 59702683,
+      "expired": false,
+      "created_at": "2026-09-05T07:50:33Z"
+    },
+    {
+      "id": 9965627088,
+      "name": "atlas-qa-4.4.1-2.62.8-unsigned",
+      "size_in_bytes": 59622247,
+      "expired": false,
+      "created_at": "2026-09-05T07:49:51Z"
+    }
+  ],
   "automation": {
     "automatic_discovery": true,
     "workflow_run_trigger": true,
