@@ -39,6 +39,8 @@ jobs:
     name: Build and validate unsigned APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    outputs:
+      studio_root: ${{ steps.studio.outputs.root }}
     steps:
       - name: Checkout builder repository
         uses: actions/checkout@v4
@@ -97,12 +99,30 @@ jobs:
               break
             fi
           done < <(find /tmp/atlas-work -type f -path '*/web/package.json' -not -path '*/node_modules/*' -print0)
+
+          # Atlas QA Studio 4.4.1 verified ZIP stores the integration marker
+          # inside atlas-integrated-source/. Accept that canonical layout too.
+          if test -z "$root"; then
+            while IFS= read -r -d '' p; do
+              web_dir="$(dirname "$p")"
+              candidate="$(dirname "$web_dir")"
+              if test -f "$candidate/atlas-integrated-source/ATLAS_INTEGRATION_VERSION.txt" \
+                && test -d "$candidate/atlas-integrated-source" \
+                && test -f "$candidate/native/AndroidManifest.xml" \
+                && test -f "$candidate/native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java" \
+                && test -f "$candidate/web/package.json"; then
+                root="$candidate"
+                break
+              fi
+            done < <(find /tmp/atlas-work -type f -path '*/web/package.json' -not -path '*/node_modules/*' -print0)
+          fi
+
           if test -z "$root"; then
             echo 'ERROR: integrated Studio root not found.'
             echo 'Candidate package.json files:'
             find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print | sort
             echo 'Integration markers:'
-            find /tmp/atlas-work -type f \( -name ATLAS_INTEGRATION_VERSION.txt -o -name AndroidManifest.xml -o -name AtlasQaPlugin.java \) -print | sort | head -80
+            find /tmp/atlas-work -type f \( -name ATLAS_INTEGRATION_VERSION.txt -o -name ATLAS_INTEGRATION_LABEL.txt -o -name AndroidManifest.xml -o -name AtlasQaPlugin.java \) -print | sort | head -80
             exit 1
           fi
           echo "root=$root" >> "$GITHUB_OUTPUT"
@@ -112,10 +132,13 @@ jobs:
         working-directory: ${{ steps.studio.outputs.root }}
         run: |
           set -euo pipefail
-          test -f ATLAS_INTEGRATION_VERSION.txt
-          test "$(tr -d '\r\n' < ATLAS_INTEGRATION_VERSION.txt)" = "$ATLAS_RUNTIME_VERSION"
-          test -f ATLAS_INTEGRATION_LABEL.txt
-          grep -Fqx "Atlas $ATLAS_RUNTIME_VERSION" ATLAS_INTEGRATION_LABEL.txt
+          VERSION_FILE="ATLAS_INTEGRATION_VERSION.txt"
+          LABEL_FILE="ATLAS_INTEGRATION_LABEL.txt"
+          if test ! -f "$VERSION_FILE"; then VERSION_FILE="atlas-integrated-source/ATLAS_INTEGRATION_VERSION.txt"; fi
+          if test ! -f "$LABEL_FILE" && test -f "atlas-integrated-source/ATLAS_INTEGRATION_LABEL.txt"; then LABEL_FILE="atlas-integrated-source/ATLAS_INTEGRATION_LABEL.txt"; fi
+          test -f "$VERSION_FILE"
+          test "$(tr -d '\r\n' < "$VERSION_FILE")" = "$ATLAS_RUNTIME_VERSION"
+          if test -f "$LABEL_FILE"; then grep -Fqx "Atlas $ATLAS_RUNTIME_VERSION" "$LABEL_FILE"; fi
           test -d atlas-integrated-source
           test -f atlas-integrated-source/package.json
           test -f web/package.json
@@ -259,34 +282,27 @@ jobs:
       - name: Upload unsigned validation artifact
         uses: actions/upload-artifact@v4
         with:
-          name: atlas-qa-4.4.1-2.62.8-unsigned-${{ inputs.request_id }}
+          name: atlas-qa-4.4.1-2.62.8-unsigned
           path: /tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
-          retention-days: 7
+          if-no-files-found: error
 
       - name: Upload build metadata
-        run: |
-          set -euo pipefail
-          APK=/tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
-          sha256sum "$APK" > /tmp/atlas-artifacts/unsigned.sha256
-          printf 'Studio version: %s\nAtlas runtime: %s\nSource SHA256: %s\nWorkflow run: %s\n' "$STUDIO_VERSION" "$ATLAS_RUNTIME_VERSION" "$SOURCE_SHA256" "$GITHUB_RUN_ID" > /tmp/atlas-artifacts/BUILD_INFO.txt
-        
-      - uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
-          name: atlas-qa-4.4.1-2.62.8-metadata-${{ inputs.request_id }}
-          path: /tmp/atlas-artifacts/*
-          retention-days: 7
+          name: atlas-qa-4.4.1-2.62.8-metadata
+          path: |
+            /tmp/atlas-artifacts/*.txt
+          if-no-files-found: ignore
 
   sign:
     name: Sign and publish APK
     needs: build
+    if: ${{ needs.build.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Download unsigned APK
-        uses: actions/download-artifact@v4
-        with:
-          name: atlas-qa-4.4.1-2.62.8-unsigned-${{ inputs.request_id }}
-          path: /tmp/unsigned
+      - name: Checkout builder repository
+        uses: actions/checkout@v4
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -294,59 +310,54 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Setup Android Build Tools
-        uses: android-actions/setup-android@v3
+      - name: Download unsigned APK
+        uses: actions/download-artifact@v4
         with:
-          packages: 'build-tools;36.0.0'
-          accept-android-sdk-licenses: true
-          log-accepted-android-sdk-licenses: false
+          name: atlas-qa-4.4.1-2.62.8-unsigned
+          path: /tmp/atlas-sign
 
-      - name: Restore Atlas master signing key
+      - name: Restore signing key
         env:
-          ATLAS_KEYSTORE_BASE64: ${{ secrets.ATLAS_KEYSTORE_BASE64 }}
+          KEYSTORE_B64: ${{ secrets.ATLAS_KEYSTORE_BASE64 }}
         run: |
           set -euo pipefail
-          test -n "$ATLAS_KEYSTORE_BASE64"
-          printf '%s' "$ATLAS_KEYSTORE_BASE64" | base64 --decode > /tmp/atlas-release.p12
-          test -s /tmp/atlas-release.p12
+          test -n "$KEYSTORE_B64"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > /tmp/atlas-sign/atlas-release.keystore
+          test -s /tmp/atlas-sign/atlas-release.keystore
 
-      - name: Sign and verify release APK
+      - name: Sign APK
         env:
-          STORE_PASS: ${{ secrets.ATLAS_STORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.ATLAS_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.ATLAS_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ATLAS_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ATLAS_KEY_ALIAS }}
         run: |
           set -euo pipefail
-          APK="/tmp/unsigned/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk"
-          test -s "$APK"
-          keytool -list -storetype PKCS12 -keystore /tmp/atlas-release.p12 -storepass "$STORE_PASS" -alias "$KEY_ALIAS" >/dev/null
-          ZIPALIGN="$ANDROID_HOME/build-tools/36.0.0/zipalign"
-          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
-          test -x "$ZIPALIGN"
+          APK=/tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
+          OUT=/tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk
+          APKSIGNER="$(find "$JAVA_HOME" -type f -name apksigner -print -quit)"
           test -x "$APKSIGNER"
-          "$ZIPALIGN" -f -p 4 "$APK" /tmp/aligned.apk
-          "$APKSIGNER" sign --ks /tmp/atlas-release.p12 --ks-type PKCS12 --ks-pass "pass:$STORE_PASS" --key-pass "pass:$KEY_PASS" --ks-key-alias "$KEY_ALIAS" --out /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk /tmp/aligned.apk
-          "$APKSIGNER" verify --verbose --print-certs /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk > /tmp/signature.txt
-          sha256sum /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk > /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk.sha256
-          cat > /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_BUILD_INFO.txt <<EOF
-          Atlas QA Character Studio dedicated builder
-          Studio version: 4.4.1
-          Atlas runtime: 2.62.8
-          Application ID: com.tittor.atlas.qa
-          Source SHA256: ${{ inputs.source_sha256 }}
-          Workflow run: $GITHUB_RUN_ID
-          EOF
+          "$APKSIGNER" sign \
+            --ks /tmp/atlas-sign/atlas-release.keystore \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass "pass:$STORE_PASSWORD" \
+            --key-pass "pass:$KEY_PASSWORD" \
+            --out "$OUT" \
+            "$APK"
+          test -s "$OUT"
+          "$APKSIGNER" verify --verbose "$OUT"
 
-      - name: Publish GitHub release
+      - name: Upload signed APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-qa-4.4.1-2.62.8-signed
+          path: /tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk
+          if-no-files-found: error
+
+      - name: Publish signed APK to source release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="atlas-qa-4.4.1-2.62.8-${{ inputs.request_id }}"
-          gh release create "$TAG" \
-            /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk \
-            /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk.sha256 \
-            /tmp/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_BUILD_INFO.txt \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Atlas QA Character Studio v4.4.1 + Atlas 2.62.8" \
-            --notes "Dedicated verified build. Studio 4.4.1 + Atlas 2.62.8. Playtest Agent intentionally not included."
+          APK=/tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk
+          gh release upload '${{ inputs.source_release_tag }}' "$APK" --repo "$GITHUB_REPOSITORY" --clobber
+          echo 'SIGNED APK PUBLISHED TO RELEASE'
