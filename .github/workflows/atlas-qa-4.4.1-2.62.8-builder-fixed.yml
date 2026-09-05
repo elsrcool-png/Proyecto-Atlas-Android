@@ -253,7 +253,14 @@ jobs:
           set -euo pipefail
           npx cap sync android
           cd android
-          ./gradlew :app:tasks --no-daemon >/tmp/gradle-tasks.txt
+          echo '=== GRADLE VERSION ==='
+          ./gradlew --version
+          echo '=== GRADLE TASK DISCOVERY ==='
+          if ! ./gradlew :app:tasks --no-daemon --stacktrace --console=plain >/tmp/gradle-tasks.txt 2>&1; then
+            cat /tmp/gradle-tasks.txt
+            exit 1
+          fi
+          cat /tmp/gradle-tasks.txt
           grep -q 'assembleDebug' /tmp/gradle-tasks.txt
           echo 'GRADLE PREFLIGHT PASS'
 
@@ -261,8 +268,8 @@ jobs:
         working-directory: ${{ steps.studio.outputs.root }}/web/android
         run: |
           set -euo pipefail
-          ./gradlew :app:compileDebugJavaWithJavac --no-daemon --stacktrace
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          ./gradlew :app:compileDebugJavaWithJavac --no-daemon --stacktrace --console=plain
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace --console=plain
           APK="$(find app/build/outputs/apk/debug -type f -name '*.apk' -print -quit)"
           test -s "$APK"
           cp "$APK" /tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
