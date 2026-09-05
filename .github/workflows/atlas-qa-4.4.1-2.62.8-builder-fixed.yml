@@ -234,8 +234,8 @@ jobs:
             "$APKANALYZER" manifest version-name "$APK" || true
             exit 1
           fi
-          if ! unzip -l "$APK" | grep -q 'assets/index.html'; then
-            echo 'ERROR: assets/index.html missing from APK'
+          if ! unzip -l "$APK" | grep -Eq 'assets/(public/)?index\.html'; then
+            echo 'ERROR: packaged index.html missing from APK'
             exit 1
           fi
           echo 'ASSETS INDEX PASS'
