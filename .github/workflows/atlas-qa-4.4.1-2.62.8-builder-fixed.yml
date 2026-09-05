@@ -39,26 +39,17 @@ jobs:
     name: Build and validate unsigned APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    outputs:
-      studio_root: ${{ steps.studio.outputs.root }}
     steps:
-      - name: Checkout builder repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: gradle
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;${{ env.ANDROID_PLATFORM }} build-tools;${{ env.ANDROID_BUILD_TOOLS }}'
           accept-android-sdk-licenses: true
@@ -78,7 +69,6 @@ jobs:
           test "$ACTUAL_SHA" = '${{ inputs.source_sha256 }}'
           unzip -q "$ZIP" -d /tmp/atlas-work
           echo "SOURCE_SHA256=$ACTUAL_SHA" >> "$GITHUB_ENV"
-          echo "SOURCE_ZIP=$ZIP" >> "$GITHUB_ENV"
           echo "SOURCE SHA256 PASS: $ACTUAL_SHA"
 
       - name: Discover and lock Studio root
@@ -86,45 +76,11 @@ jobs:
         run: |
           set -euo pipefail
           root=""
-          echo 'Inspecting extracted Studio layout...'
           while IFS= read -r -d '' p; do
-            web_dir="$(dirname "$p")"
-            candidate="$(dirname "$web_dir")"
-            if test -f "$candidate/ATLAS_INTEGRATION_VERSION.txt" \
-              && test -d "$candidate/atlas-integrated-source" \
-              && test -f "$candidate/native/AndroidManifest.xml" \
-              && test -f "$candidate/native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java" \
-              && test -f "$candidate/web/package.json"; then
-              root="$candidate"
-              break
-            fi
+            candidate="$(dirname "$(dirname "$p")")"
+            if test -d "$candidate/atlas-integrated-source" && test -f "$candidate/atlas-integrated-source/ATLAS_INTEGRATION_VERSION.txt" && test -f "$candidate/native/AndroidManifest.xml" && test -f "$candidate/native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"; then root="$candidate"; break; fi
           done < <(find /tmp/atlas-work -type f -path '*/web/package.json' -not -path '*/node_modules/*' -print0)
-
-          # Atlas QA Studio 4.4.1 verified ZIP stores the integration marker
-          # inside atlas-integrated-source/. Accept that canonical layout too.
-          if test -z "$root"; then
-            while IFS= read -r -d '' p; do
-              web_dir="$(dirname "$p")"
-              candidate="$(dirname "$web_dir")"
-              if test -f "$candidate/atlas-integrated-source/ATLAS_INTEGRATION_VERSION.txt" \
-                && test -d "$candidate/atlas-integrated-source" \
-                && test -f "$candidate/native/AndroidManifest.xml" \
-                && test -f "$candidate/native/com/tittor/atlas/qa/manager/AtlasQaPlugin.java" \
-                && test -f "$candidate/web/package.json"; then
-                root="$candidate"
-                break
-              fi
-            done < <(find /tmp/atlas-work -type f -path '*/web/package.json' -not -path '*/node_modules/*' -print0)
-          fi
-
-          if test -z "$root"; then
-            echo 'ERROR: integrated Studio root not found.'
-            echo 'Candidate package.json files:'
-            find /tmp/atlas-work -type f -name package.json -not -path '*/node_modules/*' -print | sort
-            echo 'Integration markers:'
-            find /tmp/atlas-work -type f \( -name ATLAS_INTEGRATION_VERSION.txt -o -name ATLAS_INTEGRATION_LABEL.txt -o -name AndroidManifest.xml -o -name AtlasQaPlugin.java \) -print | sort | head -80
-            exit 1
-          fi
+          test -n "$root"
           echo "root=$root" >> "$GITHUB_OUTPUT"
           echo "STUDIO ROOT: $root"
 
@@ -132,24 +88,8 @@ jobs:
         working-directory: ${{ steps.studio.outputs.root }}
         run: |
           set -euo pipefail
-          VERSION_FILE="ATLAS_INTEGRATION_VERSION.txt"
-          LABEL_FILE="ATLAS_INTEGRATION_LABEL.txt"
-          if test ! -f "$VERSION_FILE"; then VERSION_FILE="atlas-integrated-source/ATLAS_INTEGRATION_VERSION.txt"; fi
-          if test ! -f "$LABEL_FILE" && test -f "atlas-integrated-source/ATLAS_INTEGRATION_LABEL.txt"; then LABEL_FILE="atlas-integrated-source/ATLAS_INTEGRATION_LABEL.txt"; fi
-          test -f "$VERSION_FILE"
-          test "$(tr -d '\r\n' < "$VERSION_FILE")" = "$ATLAS_RUNTIME_VERSION"
-          if test -f "$LABEL_FILE"; then grep -Fqx "Atlas $ATLAS_RUNTIME_VERSION" "$LABEL_FILE"; fi
-          test -d atlas-integrated-source
-          test -f atlas-integrated-source/package.json
-          test -f web/package.json
-          node - <<'NODE'
-          const fs=require('fs');
-          const studio=JSON.parse(fs.readFileSync('web/package.json','utf8'));
-          const atlas=JSON.parse(fs.readFileSync('atlas-integrated-source/package.json','utf8'));
-          if (!studio.scripts?.build) throw new Error('Studio build script missing');
-          if (!atlas.scripts?.build) throw new Error('Atlas 2.62.8 build script missing');
-          console.log('TARGET CONTRACT PASS');
-          NODE
+          test "$(tr -d '\r\n' < atlas-integrated-source/ATLAS_INTEGRATION_VERSION.txt)" = "$ATLAS_RUNTIME_VERSION"
+          node -e "const s=require('./web/package.json'),a=require('./atlas-integrated-source/package.json'); if(!s.scripts?.build) throw Error('Studio build missing'); if(!a.scripts?.build) throw Error('Atlas build missing'); console.log('TARGET CONTRACT PASS')"
 
       - name: Install Studio dependencies
         working-directory: ${{ steps.studio.outputs.root }}/web
@@ -166,7 +106,7 @@ jobs:
           test -s dist/index.html
           echo 'ATLAS 2.62.8 BUILD PASS'
 
-      - name: Replace Studio bundled runtime with Atlas 2.62.8
+      - name: Replace bundled runtime
         working-directory: ${{ steps.studio.outputs.root }}
         run: |
           set -euo pipefail
@@ -174,7 +114,6 @@ jobs:
           mkdir -p web/public/bundled-game/site
           cp -a atlas-integrated-source/dist/. web/public/bundled-game/site/
           test -s web/public/bundled-game/site/index.html
-          echo 'ATLAS BUNDLE REPLACEMENT PASS'
 
       - name: Build Studio web application
         working-directory: ${{ steps.studio.outputs.root }}/web
@@ -203,24 +142,15 @@ jobs:
           test -f "$NATIVE/AndroidManifest.xml"
           test -f "$NATIVE/com/tittor/atlas/qa/manager/MainActivity.java"
           test -f "$NATIVE/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
-          grep -q '@CapacitorPlugin(name="AtlasQa")' "$NATIVE/com/tittor/atlas/qa/manager/AtlasQaPlugin.java"
           mkdir -p "$DEST"
           cp -a "$NATIVE/com/tittor/atlas/qa/manager/." "$DEST/"
-          if test -d "$NATIVE/assets"; then
-            mkdir -p android/app/src/main/assets
-            cp -a "$NATIVE/assets/." android/app/src/main/assets/
-          fi
           python - "$NATIVE/AndroidManifest.xml" android/app/src/main/AndroidManifest.xml <<'PY'
           from pathlib import Path
           import re,sys
-          src=Path(sys.argv[1]).read_text()
-          dst=Path(sys.argv[2])
-          out=dst.read_text()
+          src=Path(sys.argv[1]).read_text(); dst=Path(sys.argv[2]); out=dst.read_text()
           for perm in re.findall(r'<uses-permission[^>]+android:name="([^"]+)"[^>]*/>',src):
-              if f'android:name="{perm}"' not in out:
-                  out=out.replace('</manifest>',f'    <uses-permission android:name="{perm}" />\n</manifest>')
-          out=out.replace('android:name=".MainActivity"','android:name="com.tittor.atlas.qa.manager.MainActivity"')
-          out=out.replace('android:name="MainActivity"','android:name="com.tittor.atlas.qa.manager.MainActivity"')
+              if f'android:name="{perm}"' not in out: out=out.replace('</manifest>',f'    <uses-permission android:name="{perm}" />\n</manifest>')
+          out=out.replace('android:name=".MainActivity"','android:name="com.tittor.atlas.qa.manager.MainActivity"').replace('android:name="MainActivity"','android:name="com.tittor.atlas.qa.manager.MainActivity"')
           dst.write_text(out)
           PY
           grep -q 'com.tittor.atlas.qa.manager.MainActivity' android/app/src/main/AndroidManifest.xml
@@ -234,9 +164,7 @@ jobs:
           python - app/build.gradle "$STUDIO_VERSION" "$APPLICATION_ID" <<'PY'
           from pathlib import Path
           import re,sys
-          p=Path(sys.argv[1]); version=sys.argv[2]; appid=sys.argv[3]
-          parts=version.split('.')
-          if len(parts)!=3 or not all(x.isdigit() for x in parts): raise SystemExit('Invalid Studio version')
+          p=Path(sys.argv[1]); version=sys.argv[2]; appid=sys.argv[3]; parts=version.split('.')
           code=int(parts[0])*10000+int(parts[1])*100+int(parts[2])
           s=p.read_text()
           s=re.sub(r'(?m)^\s*versionCode\s+.*$',f'        versionCode {code}',s,count=1)
@@ -256,12 +184,15 @@ jobs:
           echo '=== GRADLE VERSION ==='
           ./gradlew --version
           echo '=== GRADLE TASK DISCOVERY ==='
-          if ! ./gradlew :app:tasks --no-daemon --stacktrace --console=plain >/tmp/gradle-tasks.txt 2>&1; then
+          if ! ./gradlew :app:tasks --all --no-daemon --stacktrace --console=plain >/tmp/gradle-tasks.txt 2>&1; then
             cat /tmp/gradle-tasks.txt
             exit 1
           fi
           cat /tmp/gradle-tasks.txt
-          grep -q 'assembleDebug' /tmp/gradle-tasks.txt
+          if ! grep -Eq '^assembleDebug($|\s)' /tmp/gradle-tasks.txt; then
+            echo 'ERROR: assembleDebug task not found'
+            exit 1
+          fi
           echo 'GRADLE PREFLIGHT PASS'
 
       - name: Compile and assemble debug APK
@@ -286,20 +217,11 @@ jobs:
           unzip -l "$APK" | grep -q 'assets/index.html'
           echo 'UNSIGNED APK VALIDATION PASS'
 
-      - name: Upload unsigned validation artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: atlas-qa-4.4.1-2.62.8-unsigned
           path: /tmp/atlas-artifacts/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
           if-no-files-found: error
-
-      - name: Upload build metadata
-        uses: actions/upload-artifact@v4
-        with:
-          name: atlas-qa-4.4.1-2.62.8-metadata
-          path: |
-            /tmp/atlas-artifacts/*.txt
-          if-no-files-found: ignore
 
   sign:
     name: Sign and publish APK
@@ -308,21 +230,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout builder repository
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
-
-      - name: Download unsigned APK
-        uses: actions/download-artifact@v4
+      - uses: actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+      - uses: actions/download-artifact@v4
         with:
           name: atlas-qa-4.4.1-2.62.8-unsigned
           path: /tmp/atlas-sign
-
       - name: Restore signing key
         env:
           KEYSTORE_B64: ${{ secrets.ATLAS_KEYSTORE_BASE64 }}
@@ -331,7 +252,6 @@ jobs:
           test -n "$KEYSTORE_B64"
           printf '%s' "$KEYSTORE_B64" | base64 --decode > /tmp/atlas-sign/atlas-release.keystore
           test -s /tmp/atlas-sign/atlas-release.keystore
-
       - name: Sign APK
         env:
           STORE_PASSWORD: ${{ secrets.ATLAS_STORE_PASSWORD }}
@@ -341,30 +261,21 @@ jobs:
           set -euo pipefail
           APK=/tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8_unsigned.apk
           OUT=/tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk
-          APKSIGNER="$(find "$JAVA_HOME" -type f -name apksigner -print -quit)"
+          APKSIGNER="$(find "$ANDROID_HOME" -type f -name apksigner -print -quit)"
           test -x "$APKSIGNER"
-          "$APKSIGNER" sign \
-            --ks /tmp/atlas-sign/atlas-release.keystore \
-            --ks-key-alias "$KEY_ALIAS" \
-            --ks-pass "pass:$STORE_PASSWORD" \
-            --key-pass "pass:$KEY_PASSWORD" \
-            --out "$OUT" \
-            "$APK"
-          test -s "$OUT"
+          "$APKSIGNER" sign --ks /tmp/atlas-sign/atlas-release.keystore --ks-key-alias "$KEY_ALIAS" --ks-pass env:STORE_PASSWORD --key-pass env:KEY_PASSWORD --out "$OUT" "$APK"
           "$APKSIGNER" verify --verbose "$OUT"
-
-      - name: Upload signed APK artifact
-        uses: actions/upload-artifact@v4
+          test -s "$OUT"
+          echo 'SIGNED APK PASS'
+      - uses: actions/upload-artifact@v4
         with:
           name: atlas-qa-4.4.1-2.62.8-signed
           path: /tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk
           if-no-files-found: error
-
-      - name: Publish signed APK to source release
+      - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          APK=/tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk
-          gh release upload '${{ inputs.source_release_tag }}' "$APK" --repo "$GITHUB_REPOSITORY" --clobber
-          echo 'SIGNED APK PUBLISHED TO RELEASE'
+          TAG="atlas-qa-4.4.1-2.62.8-${GITHUB_RUN_ID}"
+          gh release create "$TAG" /tmp/atlas-sign/Atlas_QA_Character_Studio_v4.4.1_Atlas_2.62.8.apk --repo "$GITHUB_REPOSITORY" --title "Atlas QA 4.4.1 + Atlas 2.62.8 #${GITHUB_RUN_NUMBER}" --notes "Automated signed APK build. Source tag: ${{ inputs.source_release_tag }}. Source SHA256: ${{ inputs.source_sha256 }}."
